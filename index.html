@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <script>
-  const APP_VERSION = "38.0.0"; 
+  const APP_VERSION = "40.0.0"; 
   if (localStorage.getItem('app_version') !== APP_VERSION) {
     if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
     localStorage.setItem('app_version', APP_VERSION);
@@ -187,7 +187,7 @@ table.stats-table th { background: var(--bg-header); color: #fff; border: 1px so
     <h1>سامانه مدیریت شیفت <span class="admin-badge">مدیر سیستم</span></h1>
     <div class="controls">
       <span class="user-info" id="currentUserName"></span>
-      <button class="tool-btn" onclick="openExcel()">خروجی اکسل</button>
+      <button class="tool-btn" onclick="openExcel()">خروجی CSV</button>
       <button class="tool-btn admin-only" onclick="openStaff()">پرسنل</button>
       <button class="tool-btn admin-only" onclick="openLogs()">گزارش‌ها</button>
       <button class="tool-btn" onclick="openChangePassword()">تغییر رمز</button>
@@ -297,24 +297,47 @@ let currentSession = null;
 const sb = {
   auth: {
     signInWithPassword: async ({ email, password }) => {
-      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      if (!res.ok) return { error: data };
-      currentSession = data;
-      localStorage.setItem('sb_session', JSON.stringify(data));
-      return { data: { user: data.user }, error: null };
+      try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) return { error: { message: data.error_description || data.msg || "نام کاربری یا رمز عبور اشتباه است." } };
+        currentSession = data;
+        localStorage.setItem('sb_session', JSON.stringify(data));
+        return { data: { user: data.user }, error: null };
+      } catch (e) { return { error: { message: "خطای شبکه: " + e.message } }; }
     },
     getSession: async () => {
       const saved = localStorage.getItem('sb_session');
-      if (saved) { currentSession = JSON.parse(saved); return { data: { session: currentSession } }; }
+      if (saved) {
+        try {
+          currentSession = JSON.parse(saved);
+          const expiresAt = currentSession.expires_at || 0;
+          const now = Math.floor(Date.now() / 1000);
+          if (expiresAt - now < 300 && currentSession.refresh_token) {
+            const refreshRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+              body: JSON.stringify({ refresh_token: currentSession.refresh_token })
+            });
+            if (refreshRes.ok) {
+              currentSession = await refreshRes.json();
+              localStorage.setItem('sb_session', JSON.stringify(currentSession));
+            } else {
+              localStorage.removeItem('sb_session');
+              return { data: { session: null } };
+            }
+          }
+          return { data: { session: currentSession } };
+        } catch (e) { return { data: { session: null } }; }
+      }
       return { data: { session: null } };
     },
     signOut: async () => {
-      if (currentSession) {
+      if (currentSession && currentSession.access_token) {
         await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
           method: 'POST',
           headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentSession.access_token}` }
@@ -336,25 +359,16 @@ const sb = {
       limit: (n) => { query += `&limit=${n}`; return req; },
       eq: (col, val) => { query += `&${col}=eq.${val}`; return req; },
       single: () => { req._single = true; return req; },
-      insert: (data) => {
-        const method = 'POST';
-        const body = JSON.stringify(data);
-        req._method = method; req._body = body;
-        return req;
-      },
-      update: (data) => {
-        const method = 'PATCH';
-        const body = JSON.stringify(data);
-        req._method = method; req._body = body;
-        return req;
-      },
+      insert: (data) => { req._method = 'POST'; req._body = JSON.stringify(data); return req; },
+      update: (data) => { req._method = 'PATCH'; req._body = JSON.stringify(data); return req; },
       delete: () => { req._method = 'DELETE'; return req; },
       then: async (resolve, reject) => {
         try {
           let url = `${SUPABASE_URL}/rest/v1/${query || table}`;
+          const token = currentSession ? currentSession.access_token : SUPABASE_ANON_KEY;
           const headers = {
             'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${currentSession ? currentSession.access_token : SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Prefer': 'return=representation'
           };
@@ -373,9 +387,10 @@ const sb = {
   },
   rpc: async (fn, args) => {
     try {
+      const token = currentSession ? currentSession.access_token : SUPABASE_ANON_KEY;
       const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
         method: 'POST',
-        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentSession ? currentSession.access_token : SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(args)
       });
       if (!res.ok) return { error: await res.json() };
@@ -506,8 +521,8 @@ async function doLogin() {
   if (!email) { err.textContent = "نام کاربری یافت نشد."; return; }
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
   if (error) { err.textContent = "رمز عبور اشتباه است."; return; }
-  const { data: p } = await sb.from("profiles").select("*").eq("id", data.user.id).single();
-  if (!p) { err.textContent = "پروفایل یافت نشد."; return; }
+  const { data: p, error: profileErr } = await sb.from("profiles").select("*").eq("id", data.user.id).single();
+  if (!p || profileErr) { err.textContent = "پروفایل یافت نشد."; return; }
   currentUser = p; isAdmin = !!p.is_admin; isGuest = (p.name === "کاربر مهمان");
   
   if ((pass === "654321" || !p.password_set) && !p.is_admin && !isGuest) { 
