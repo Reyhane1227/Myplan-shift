@@ -80,12 +80,8 @@ body.dark-mode .val-minus{background:#7f1d1d;color:#fecaca}
 .staff-item{display:flex;justify-content:space-between;align-items:center;background:var(--th-bg);padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border-color);gap:8px;flex-wrap:wrap}
 .staff-item .staff-info{flex:1;min-width:100px;font-size:13px;font-weight:700}
 .staff-item input.req-input{width:70px;padding:6px;border:1px solid var(--border-color);border-radius:6px;font-family:inherit;font-size:12px;background:var(--input-bg);color:var(--text-main);text-align:center;font-weight:700}
-.btn-add-staff{display:flex;gap:8px;margin-top:15px;flex-wrap:wrap}
-.btn-add-staff input{flex:1;min-width:100px;padding:10px 12px;border:1px solid var(--border-color);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--input-bg);color:var(--text-main);outline:none}
-.btn-add-staff button{padding:10px 18px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:inherit;font-weight:700;font-size:13px}
 .btn-del{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;font-size:12px}
 body.dark-mode .btn-del{background:#7f1d1d;color:#fecaca;border-color:#dc2626}
-.btn-secondary{background:var(--th-bg);color:var(--text-main);border:1px solid var(--border-color);padding:10px 16px;border-radius:var(--radius-sm);cursor:pointer;font-family:inherit;font-weight:700;font-size:12px}
 .dialog-box{background:var(--bg-card);color:var(--text-main);border-radius:var(--radius-md);max-width:420px;width:100%;padding:24px;box-shadow:var(--shadow-lg)}
 .dialog-box h3{font-size:16px;margin-bottom:10px;font-weight:900}
 .dialog-box p{font-size:13px;margin-bottom:16px;color:var(--text-muted);white-space:pre-line;line-height:1.8}
@@ -187,7 +183,7 @@ body.dark-mode .info-banner{background:linear-gradient(135deg,#1e3a8a,#1e40af);c
 <div class="modal-overlay" id="staffModal"><div class="modal-content"><div class="modal-header"><h2>👥 پرسنل</h2><button class="modal-close" onclick="closeModal('staffModal')">×</button></div><div class="modal-body"><div class="staff-list" id="staffList"></div></div></div></div>
 <div class="modal-overlay" id="logsModal"><div class="modal-content"><div class="modal-header"><h2>📝 گزارش تغییرات</h2><button class="modal-close" onclick="closeModal('logsModal')">×</button></div><div class="modal-body" id="logsBody"></div></div></div>
 
-<!-- Recovery Modal (OTP-based) -->
+<!-- Recovery Modal -->
 <div class="modal-overlay" id="recoveryModal">
   <div class="modal-content">
     <div class="modal-header">
@@ -243,22 +239,19 @@ const ZONES = [
 ];
 
 /* ============ JALALI BASE ============ */
-// مبدأ: ۱ آبان ۱۴۰۵
 let BASE_DATE_UTC;
 function initBaseDate(){
-  // اگر jalaali بارگذاری شده، از آن استفاده می‌کنیم
   if (typeof jalaali !== "undefined"){
-    const g = jalaali.toGregorian(1405, 8, 1); // 1 آبان 1405
+    const g = jalaali.toGregorian(1405, 8, 1);
     BASE_DATE_UTC = Date.UTC(g.gy, g.gm - 1, g.gd);
   } else {
-    // fallback: 23 اکتبر 2026
     BASE_DATE_UTC = Date.UTC(2026, 9, 23);
   }
 }
 
 function getDayInfo(i){
   const d = new Date(BASE_DATE_UTC + i * 86400000);
-  const wd = d.getUTCDay(); // 0=یکشنبه ... 6=شنبه
+  const wd = d.getUTCDay();
   let jDay = i + 1, jMonth = MONTH;
   let weekday = WEEKDAYS_FA[wd];
   let isFriday = wd === 5;
@@ -266,7 +259,6 @@ function getDayInfo(i){
   if (typeof jalaali !== "undefined"){
     const j = jalaali.toJalaali(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
     jDay = j.jd;
-    // روز هفته شمسی: شنبه=0 ... جمعه=6
     const faWd = (wd + 1) % 7;
     weekday = ["شنبه","یکشنبه","دوشنبه","سه‌شنبه","چهارشنبه","پنجشنبه","جمعه"][faWd];
     isFriday = faWd === 6;
@@ -399,11 +391,6 @@ async function doLogin(){
   const pass = document.getElementById("loginPassword").value;
   const err = document.getElementById("loginError");
   if (!name || !pass){ err.textContent = "نام و رمز را وارد کنید"; return; }
-  err.textContent = "در حالasync function doLogin(){
-  const name = document.getElementById("loginName").value;
-  const pass = document.getElementById("loginPassword").value;
-  const err = document.getElementById("loginError");
-  if (!name || !pass){ err.textContent = "نام و رمز را وارد کنید"; return; }
   err.textContent = "در حال ورود...";
 
   const email = await getEmailByName(name);
@@ -469,7 +456,6 @@ async function doRecovery(){
     const email = await getEmailByName(name);
     if (!email) throw new Error("ایمیل کاربر یافت نشد.");
 
-    // verifyOtp با type=recovery کاربر را لاگین موقت می‌کند
     const { error: verifyErr } = await sb.auth.verifyOtp({
       email, token: code, type: "recovery"
     });
@@ -649,7 +635,6 @@ async function onShiftChange(sel){
     return;
   }
 
-  // حذف شیفت
   if (!val){
     if (prevOwner){
       const p = PERSONNEL.find(x => x.name === prevOwner);
@@ -669,11 +654,9 @@ async function onShiftChange(sel){
     return;
   }
 
-  // ثبت شیفت
   const targetPerson = PERSONNEL.find(x => x.name === val);
   if (!targetPerson){ sel.value = prevOwner; return; }
 
-  // قوانین
   const todayShifts = findPersonShiftOnDay(val, d);
   const simulatedToday = [...todayShifts, shiftType];
   const uniqToday = [...new Set(simulatedToday)];
@@ -817,7 +800,6 @@ async function onLeaveChange(person, sel, td){
   const pObj = PERSONNEL.find(x => x.name === person);
   if (!pObj) return;
 
-  // حذف (تغییر به خالی)
   if (!newDayVal){
     const old = state.leaves[person] || {};
     for (const day of Object.keys(old)){
@@ -838,7 +820,6 @@ async function onLeaveChange(person, sel, td){
     await alertDlg("⛔ در این روز شیفت دارید."); sel.value = ""; return;
   }
 
-  // فراخوانی RPC اتمیک (بررسی ظرفیت + درج در یک تراکنش)
   try {
     const { error } = await sb.rpc("insert_leave_with_capacity", {
       p_day: dayIdx, p_user_id: pObj.id
@@ -1080,7 +1061,8 @@ function openExcel(){
   });
   for (let d = 0; d < DAYS; d++){
     const info = getDayInfo(d);
-    const rowBg = info.isFriday ? "FEF3C7    const dayFontColor = info.isFriday ? "DC2626" : "1E293B";
+    const rowBg = info.isFriday ? "FEF3C7" : "FFFFFF";
+    const dayFontColor = info.isFriday ? "DC2626" : "1E293B";
     styleCell(ws1, d + 2, 0, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: dayFontColor } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter });
     styleCell(ws1, d + 2, 1, { font: { name: "Vazirmatn", sz: 10, color: { rgb: "64748B" } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter });
     for (let c = 2; c < row2.length; c++){
@@ -1090,7 +1072,7 @@ function openExcel(){
   ws1["!freeze"] = { xSplit: 2, ySplit: 2 };
   XLSX.utils.book_append_sheet(wb, ws1, "برنامه شیفت");
 
-  /* --- محاسبه آمار برای شیت‌های بعدی --- */
+  /* --- محاسبه آمار --- */
   const m = {}, e = {}, n = {}, h = {}, lc = {};
   PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; });
   Object.keys(state.leaves).forEach(per => {
@@ -1202,7 +1184,6 @@ function openExcel(){
   }
   XLSX.utils.book_append_sheet(wb, ws4, "خلاصه");
 
-  /* --- دانلود --- */
   const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
   const blob = new Blob([wbout], { type: "application/octet-stream" });
   const a = document.createElement("a");
