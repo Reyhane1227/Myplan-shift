@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.0/dist/jalaali.min.js"></script>
 
 <script>
-  const APP_VERSION = "20.0.0";
+  const APP_VERSION = "22.0.0";
   const savedVersion = localStorage.getItem('app_version');
   if (savedVersion !== APP_VERSION) {
     if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
@@ -131,13 +131,15 @@ table.stats-table th { background:var(--bg-header); color:#fff; }
 
 <div id="loadingScreen">
   <div class="spinner"></div>
-  <div style="font-weight:600; color:var(--text-muted);">در حال اتصال...</div>
+  <div id="loadingText" style="font-weight:600; color:var(--text-muted); text-align:center; padding:0 20px;">
+    در حال اتصال به سرور...
+  </div>
 </div>
 
 <div id="loginScreen" style="display:none;">
   <div class="login-container">
     <h2 style="text-align:center; font-size:20px; margin-bottom:8px;">ورود به سیستم</h2>
-    <p style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:24px;">نام خود را انتخاب کنید و رمز عبور را وارد کنید</p>
+    <p style="text-align:center; font-size:12px; color:var(--text-muted); margin-bottom:24px;">لطفاً نام خود را انتخاب کنید</p>
     
     <div class="form-group">
       <label>نام کاربری</label>
@@ -225,6 +227,7 @@ table.stats-table th { background:var(--bg-header); color:#fff; }
 </div>
 
 <script>
+// ================== تنظیمات ==================
 const SUPABASE_URL = "https://hghkjhvboyemimpqwkkn.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaGtqaHZib3llbWltcHF3a2tuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM1NDM3NzIsImV4cCI6MjEwOTExOTc3Mn0.WuxsGGv3GjuEaX_zsZqTigLKY4j9Tt6-b9b5fMaGZQs";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -286,7 +289,7 @@ async function init() {
     initBaseDate();
     const zf = document.getElementById("zoneFilter"); ZONES.forEach(z => { const o = document.createElement("option"); o.value = z.name; o.textContent = z.name; zf.appendChild(o); });
     
-    const timeout = new Promise(resolve => setTimeout(() => resolve({ data: { session: null }, timeout: true }), 3000));
+    const timeout = new Promise(resolve => setTimeout(() => resolve({ data: { session: null }, timeout: true }), 5000));
     const result = await Promise.race([sb.auth.getSession(), timeout]);
     
     if (result.timeout) { 
@@ -414,7 +417,7 @@ async function openChangePassword() {
 
 async function loadAll() {
   const { data: p } = await sb.from("profiles").select("*").order("name");
-  PERSONNEL = (p || []).map(x => ({ id: x.id, name: x.name, req: x.required_hours || 0, is_admin: !!x.is_admin }));
+  PERSONNEL = (p || []).map(x => ({ id: x.id, name: x.name, req: x.required_hours || 0, is_admin: !!x.is_admin, password_set: x.password_set }));
   const { data: s } = await sb.from("shifts").select("*");
   const { data: l } = await sb.from("leaves").select("*");
   state.shifts = {}; state.leaves = {};
