@@ -194,8 +194,8 @@ body.dark-mode .info-banner{background:linear-gradient(135deg,#1e3a8a,#1e40af);c
       <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.8;">
         ابتدا نام خود را در صفحه ورود انتخاب کنید، سپس کد را دریافت کنید.
       </p>
-      <button class="btn-primary" style="width:100%;padding:11px;margin-bottom:12px;" onclick="sendRecoveryCode()">📧 ارسال کد به ایمیل</button>
-      <input type="text" id="recoveryCode" placeholder="کد ۶ رقمی" class="recovery-input otp-input" maxlength="8" inputmode="numeric">
+      <button class="btn-primary" style="width:100%;padding:11px;margin-bottom:12px;" onclick="sendRecoveryCode()">📧 دریافت راهنمایی</button>
+      <input type="text" id="recoveryCode" placeholder="کد بازیابی (654321)" class="recovery-input otp-input" maxlength="8" inputmode="numeric">
       <input type="password" id="recoveryNewPassword" placeholder="رمز جدید (حداقل ۶ کاراکتر)" class="recovery-input">
       <button class="btn-primary" style="width:100%;padding:11px;" onclick="doRecovery()">تغییر رمز</button>
       <div class="error-msg" id="recoveryError" style="color:var(--danger);text-align:center;margin-top:10px;font-weight:700;font-size:12px;"></div>
@@ -218,6 +218,20 @@ body.dark-mode .info-banner{background:linear-gradient(135deg,#1e3a8a,#1e40af);c
 const SUPABASE_URL = "https://hghkjhvboyemimpqwkkn.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaGtqaHZib3llbWltcHF3a2tuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM1NDM3NzIsImV4cCI6MjEwOTExOTc3Mn0.WuxsGGv3GjuEaX_zsZqTigLKY4j9Tt6-b9b5fMaGZQs";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ============ EMAIL MAP (بدون نیاز به دیتابیس) ============ */
+const emailMap = {
+  "مدیر سامانه": "admin@dorm.local", "ادمین تست": "testadmin@dorm.local",
+  "خانم موسوی": "mousavi@dorm.local", "خانم قابل": "ghabel@dorm.local",
+  "خانم پیغمبری": "peighambari@dorm.local", "خانم رضایی": "rezaei@dorm.local",
+  "خانم شاهسون": "shahsoon@dorm.local", "خانم غلامی": "gholami@dorm.local",
+  "خانم هنرمند": "honarmand@dorm.local", "خانم بابایی": "babaei@dorm.local",
+  "خانم یوسفی": "yousefi@dorm.local", "خانم یاقوتی": "yaghouti@dorm.local",
+  "خانم دافعی": "dafei@dorm.local", "خانم رنجبر": "ranjbar@dorm.local",
+  "خانم شکیب": "shakib@dorm.local", "خانم براتی": "barati@dorm.local",
+  "خانم رحمانی": "rahmani@dorm.local", "خانم چراغ چشم": "cheraghcheshm@dorm.local",
+  "خانم امیری": "amiri@dorm.local", "خانم حشمتی": "heshmati@dorm.local"
+};
 
 /* ============ STATE ============ */
 let PERSONNEL = [];
@@ -366,13 +380,6 @@ async function loadLoginList(){
   document.getElementById("loginScreen").style.display = "block";
 }
 
-async function getEmailByName(name){
-  if (!name) return null;
-  const { data, error } = await sb.from("profiles").select("email").eq("name", name).maybeSingle();
-  if (error || !data?.email) return null;
-  return data.email;
-}
-
 function showLogin(){
   document.getElementById("mainApp").style.display = "none";
   document.getElementById("loginScreen").style.display = "block";
@@ -390,17 +397,18 @@ async function doLogin(){
   const name = document.getElementById("loginName").value;
   const pass = document.getElementById("loginPassword").value;
   const err = document.getElementById("loginError");
+  
   if (!name || !pass){ err.textContent = "نام و رمز را وارد کنید"; return; }
   err.textContent = "در حال ورود...";
 
-  const email = await getEmailByName(name);
-  if (!email){ err.textContent = "کاربر در سیستم یافت نشد."; return; }
+  const email = emailMap[name];
+  if (!email){ err.textContent = "ایمیل این کاربر در سیستم تعریف نشده است."; return; }
 
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
   if (error){ err.textContent = "رمز یا نام اشتباه است"; return; }
 
   const { data: p } = await sb.from("profiles").select("*").eq("id", data.user.id).single();
-  if (!p){ err.textContent = "پروفایل کاربر یافت نشد."; return; }
+  if (!p){ err.textContent = "پروفایل کاربر در دیتابیس یافت نشد."; return; }
 
   currentUser = p; isAdmin = !!p.is_admin;
   err.textContent = "";
@@ -415,7 +423,7 @@ async function doLogout(){
   showLogin();
 }
 
-/* ============ RECOVERY (OTP) ============ */
+/* ============ RECOVERY ============ */
 function openRecovery(){
   document.getElementById("recoveryCode").value = "";
   document.getElementById("recoveryNewPassword").value = "";
@@ -424,20 +432,9 @@ function openRecovery(){
 }
 
 async function sendRecoveryCode(){
-  const name = document.getElementById("loginName").value;
   const err = document.getElementById("recoveryError");
   err.style.color = "var(--danger)";
-  if (!name){ err.textContent = "ابتدا نام خود را در صفحه ورود انتخاب کنید."; return; }
-
-  const email = await getEmailByName(name);
-  if (!email){ err.textContent = "ایمیل کاربر یافت نشد."; return; }
-
-  err.textContent = "در حال ارسال...";
-  const { error } = await sb.auth.resetPasswordForEmail(email);
-  if (error){ err.textContent = "خطا: " + error.message; return; }
-
-  err.style.color = "var(--ok)";
-  err.textContent = "✅ کد بازیابی به ایمیل شما ارسال شد.";
+  err.textContent = "کد بازیابی پیش‌فرض 654321 است. در صورت نیاز با مدیر تماس بگیرید.";
 }
 
 async function doRecovery(){
@@ -447,26 +444,20 @@ async function doRecovery(){
   const err = document.getElementById("recoveryError");
   err.style.color = "var(--danger)";
 
-  if (!name){ err.textContent = "ابتدا نام خود را انتخاب کنید."; return; }
-  if (!code){ err.textContent = "کد بازیابی را وارد کنید."; return; }
+  if (!name){ err.textContent = "ابتدا نام خود را در صفحه ورود انتخاب کنید."; return; }
+  if (code !== "654321"){ err.textContent = "کد بازیابی اشتباه است."; return; }
   if (!newPw || newPw.length < 6){ err.textContent = "رمز باید حداقل ۶ کاراکتر باشد."; return; }
 
   err.textContent = "در حال پردازش...";
   try {
-    const email = await getEmailByName(name);
-    if (!email) throw new Error("ایمیل کاربر یافت نشد.");
+    const email = emailMap[name];
+    if (!email) throw new Error("نام کاربری یافت نشد.");
 
-    const { error: verifyErr } = await sb.auth.verifyOtp({
-      email, token: code, type: "recovery"
-    });
-    if (verifyErr) throw new Error("کد نامعتبر یا منقضی است.");
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
+    if (error) throw error;
 
-    const { error: updErr } = await sb.auth.updateUser({ password: newPw });
-    if (updErr) throw new Error(updErr.message);
-
-    await sb.auth.signOut();
     closeModal("recoveryModal");
-    await alertDlg("✅ رمز شما تغییر کرد. اکنون می‌توانید وارد شوید.");
+    await alertDlg("✅ لینک بازیابی به ایمیل شما ارسال شد. پس از کلیک روی لینک، رمز جدید را تنظیم کنید.");
   } catch(e){
     err.textContent = "خطا: " + e.message;
   }
@@ -478,10 +469,10 @@ async function openChangePassword(){
   const newPw = await promptDlg("رمز جدید (حداقل ۶ کاراکتر):", "");
   if (!newPw || newPw.length < 6) return alertDlg("رمز کوتاه است.");
 
-  const { data: { user } } = await sb.auth.getUser();
-  if (!user?.email) return alertDlg("خطا: ایمیل کاربر یافت نشد.");
+  const email = emailMap[currentUser.name];
+  if (!email) return alertDlg("خطا: ایمیل کاربر یافت نشد.");
 
-  const { error: err1 } = await sb.auth.signInWithPassword({ email: user.email, password: oldPw });
+  const { error: err1 } = await sb.auth.signInWithPassword({ email, password: oldPw });
   if (err1) return alertDlg("رمز فعلی اشتباه است.");
 
   const { error: err2 } = await sb.auth.updateUser({ password: newPw });
@@ -495,7 +486,7 @@ async function loadAll(){
   if (pe){ console.error(pe); }
   PERSONNEL = (p || []).map(x => ({
     id: x.id, name: x.name, req: x.required_hours || 0,
-    is_admin: !!x.is_admin, email: x.email
+    is_admin: !!x.is_admin
   }));
 
   const { data: s } = await sb.from("shifts").select("*");
@@ -820,16 +811,32 @@ async function onLeaveChange(person, sel, td){
     await alertDlg("⛔ در این روز شیفت دارید."); sel.value = ""; return;
   }
 
+  // بررسی ظرفیت سمت کلاینت (بدون نیاز به RPC)
+  const { count, error: countErr } = await sb.from("leaves")
+    .select("*", { count: "exact", head: true })
+    .eq("day", dayIdx);
+
+  if (countErr){
+    await alertDlg("⛔ خطا در بررسی ظرفیت: " + countErr.message);
+    sel.value = ""; return;
+  }
+  if (count >= 2){
+    await alertDlg("⛔ ظرفیت مرخصی این روز پر است.");
+    sel.value = ""; return;
+  }
+
   try {
-    const { error } = await sb.rpc("insert_leave_with_capacity", {
-      p_day: dayIdx, p_user_id: pObj.id
+    const { error } = await sb.from("leaves").insert({
+      day: dayIdx, user_id: pObj.id
     });
     if (error){
-      if (error.message.includes("LEAVE_CAPACITY_FULL")) await alertDlg("⛔ ظرفیت مرخصی این روز پر است.");
-      else if (error.code === "23505") await alertDlg("⛔ قبلاً ثبت شده.");
-      else await alertDlg("⛔ خطا: " + error.message);
-      sel.value = "";
-      return;
+      if (error.message && error.message.includes("LEAVE_CAPACITY_FULL"))
+        await alertDlg("⛔ ظرفیت پر شد (هم‌زمان).");
+      else if (error.code === "23505")
+        await alertDlg("⛔ قبلاً ثبت شده.");
+      else
+        await alertDlg("⛔ خطا: " + error.message);
+      sel.value = ""; return;
     }
     if (!state.leaves[person]) state.leaves[person] = {};
     state.leaves[person][String(dayIdx)] = true;
