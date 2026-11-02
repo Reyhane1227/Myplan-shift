@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <script>
-  const APP_VERSION = "40.0.0"; 
+  const APP_VERSION = "41.0.0"; 
   if (localStorage.getItem('app_version') !== APP_VERSION) {
     if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
     localStorage.setItem('app_version', APP_VERSION);
@@ -18,26 +18,18 @@
 </script>
 
 <style>
+/* ... استایل‌های قبلی بدون تغییر ... */
 :root { 
-  --bg-body: #f1f5f9; 
-  --bg-card: #ffffff; 
-  --bg-header: #1e293b;
-  --text-main: #334155; 
-  --text-muted: #64748b;
-  --border: #cbd5e1; 
-  --primary: #0f172a; 
-  --primary-hover: #1e293b;
-  --accent: #2563eb;
-  --danger: #b91c1c; 
-  --danger-bg: #fef2f2;
-  --radius: 6px; 
-  --radius-sm: 4px;
+  --bg-body: #f1f5f9; --bg-card: #ffffff; --bg-header: #1e293b;
+  --text-main: #334155; --text-muted: #64748b; --border: #cbd5e1; 
+  --primary: #0f172a; --primary-hover: #1e293b; --accent: #2563eb;
+  --danger: #b91c1c; --danger-bg: #fef2f2;
+  --radius: 6px; --radius-sm: 4px;
   --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', sans-serif; }
 body { background: var(--bg-body); color: var(--text-main); min-height: 100vh; font-size: 13px; display: flex; flex-direction: column; overflow-x: hidden; }
 .container { max-width: 1400px; margin: 0 auto; padding: 20px; flex: 1; width: 100%; }
-
 .app-header { background: var(--bg-header); color: #fff; padding: 16px 24px; border-radius: var(--radius); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; box-shadow: var(--shadow); border-bottom: 3px solid #0f172a; }
 .app-header h1 { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
 .app-header h1::before { content: ''; display: inline-block; width: 8px; height: 24px; background: var(--accent); border-radius: 2px; }
@@ -49,7 +41,6 @@ body.is-admin .admin-badge { display: inline-block; }
 .admin-only { display: none; }
 body.is-admin .admin-only, body.is-guest .admin-only { display: inline-block; }
 .user-info { background: rgba(255,255,255,0.05); padding: 8px 16px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; }
-
 .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; background: var(--bg-card); padding: 10px 20px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); }
 .tabs-nav { display: flex; gap: 4px; overflow-x: auto; }
 .tab-btn { padding: 10px 24px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap; transition: all 0.2s; border-bottom: 2px solid transparent; }
@@ -60,7 +51,6 @@ body.is-admin .admin-only, body.is-guest .admin-only { display: inline-block; }
 .filter-box select { border: 1px solid var(--border); background: #fff; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; outline: none; cursor: pointer; color: var(--text-main); }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
-
 .table-container { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); overflow-x: auto; margin-bottom: 24px; box-shadow: var(--shadow); }
 table { width: 100%; border-collapse: collapse; text-align: center; }
 th, td { border: 1px solid var(--border); padding: 10px 6px; }
@@ -75,23 +65,19 @@ tr.is-friday .day-cell, tr.is-friday .date-cell { color: var(--danger); font-wei
 .bg-z3 { background: #fff7ed; color: #7c2d12; border-bottom: 2px solid #f97316; }
 .bg-z4 { background: #fefce8; color: #713f12; border-bottom: 2px solid #eab308; }
 .bg-z5 { background: #faf5ff; color: #4c1d95; border-bottom: 2px solid #a855f7; }
-
 select.s-cell { width: 100%; height: 34px; border: 1px solid transparent; background: transparent; font-size: 12px; font-weight: 600; text-align: center; outline: none; cursor: pointer; border-radius: var(--radius-sm); color: var(--text-main); transition: all 0.2s; }
 select.s-cell:hover { background: #fff; border-color: var(--border); }
 select.s-cell.mine { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
 select.s-cell.locked { opacity: 0.4; cursor: not-allowed; background: #f1f5f9; color: transparent; }
-
 .section-card { background: var(--bg-card); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; border: 1px solid var(--border); box-shadow: var(--shadow); }
 .section-card h3 { font-size: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; font-weight: 800; color: var(--text-main); }
 .info-banner { background: #eff6ff; color: #1e40af; padding: 14px; border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 13px; border-right: 4px solid var(--accent); font-weight: 500; line-height: 1.6; }
-
 table.leave-table select { width: 100%; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; text-align: center; background: #fff; outline: none; color: var(--text-main); cursor: pointer; font-family: inherit; }
 table.leave-table select:focus { border-color: var(--accent); }
 table.stats-table th { background: var(--bg-header); color: #fff; border: 1px solid #334155; }
 .leave-name-cell, .stat-name { font-weight: 800; text-align: right; padding-right: 16px !important; background: #f8fafc; color: var(--text-main); white-space: nowrap; }
 .val-plus { color: #15803d; font-weight: 800; background: #dcfce7; border-radius: 4px; padding: 4px 8px; display: inline-block; min-width: 40px; }
 .val-minus { color: var(--danger); font-weight: 800; background: var(--danger-bg); border-radius: 4px; padding: 4px 8px; display: inline-block; min-width: 40px; }
-
 .overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.8); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(2px); }
 .overlay.active { display: flex; }
 .modal { background: var(--bg-card); width: 100%; max-width: 600px; border-radius: var(--radius); overflow: hidden; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
@@ -112,7 +98,6 @@ table.stats-table th { background: var(--bg-header); color: #fff; border: 1px so
 .btn-danger:hover { background: #991b1b; }
 .btn-cancel { background: transparent; border: 1px solid var(--border); padding: 12px 28px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-family: inherit; color: var(--text-main); font-size: 14px; transition: background 0.2s; }
 .btn-cancel:hover { background: #f1f5f9; }
-
 .login-container { max-width: 420px; margin: 80px auto; background: var(--bg-card); padding: 40px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-top: 4px solid var(--bg-header); }
 .login-container h2 { text-align: center; font-size: 22px; margin-bottom: 8px; font-weight: 900; color: var(--text-main); }
 .login-container p { text-align: center; font-size: 13px; color: var(--text-muted); margin-bottom: 32px; }
@@ -124,17 +109,14 @@ table.stats-table th { background: var(--bg-header); color: #fff; border: 1px so
 .btn-full:hover { background: #1d4ed8; }
 .error-msg { color: var(--danger); font-size: 13px; text-align: center; margin-top: 16px; font-weight: 600; min-height: 20px; }
 .support-text { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 24px; padding-top: 20px; border-top: 1px dashed var(--border); }
-
 #loadingScreen { position: fixed; inset: 0; background: var(--bg-body); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
 .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 20px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-
 .staff-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f8fafc; border-radius: var(--radius-sm); margin-bottom: 10px; border: 1px solid var(--border); }
 .staff-item input { width: 80px; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: center; font-family: inherit; color: var(--text-main); font-weight: 700; outline: none; }
 .staff-item input:focus { border-color: var(--accent); }
 .btn-del { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 700; font-size: 12px; font-family: inherit; transition: all 0.2s; }
 .btn-del:hover { background: #fee2e2; }
-
 .mandatory-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.95); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
 .mandatory-overlay.active { display: flex; }
 .mandatory-box { background: var(--bg-card); width: 100%; max-width: 480px; border-radius: var(--radius); padding: 40px; text-align: center; border-top: 6px solid var(--accent); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
@@ -144,7 +126,6 @@ table.stats-table th { background: var(--bg-header); color: #fff; border: 1px so
 .mandatory-box input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 .mandatory-box button { width: 100%; padding: 16px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-weight: 800; font-size: 16px; cursor: pointer; font-family: inherit; transition: background 0.2s; }
 .mandatory-box button:hover { background: #1d4ed8; }
-
 @media (max-width: 768px) { 
   .app-header { flex-direction: column; text-align: center; padding: 16px; } 
   .toolbar { flex-direction: column; align-items: stretch; padding: 12px; } 
@@ -158,7 +139,7 @@ table.stats-table th { background: var(--bg-header); color: #fff; border: 1px so
 </style>
 </head>
 <body>
-
+<!-- ... کدهای HTML (لودینگ، لاگین، مین‌اپ و مودال‌ها) بدون تغییر ... -->
 <div id="loadingScreen">
   <div class="spinner"></div>
   <div style="font-weight:600; color:var(--text-muted); font-size:14px;">در حال اتصال به سامانه...</div>
@@ -444,7 +425,6 @@ function formatDateTime(isoString) {
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove("active"); }
-
 function dialog(opts) { 
   return new Promise(r => { 
     const o = document.getElementById("dialogOverlay"), t = document.getElementById("dialogTitle"), m = document.getElementById("dialogMessage"), i = document.getElementById("dialogInput"), a = document.getElementById("dialogActions"); 
@@ -466,7 +446,6 @@ function dialog(opts) {
     o.classList.add("active"); 
   }); 
 }
-
 const alertDlg = m => dialog({ message: m }), confirmDlg = (m, d) => dialog({ message: m, confirm: true, danger: d }), promptDlg = (m, def) => dialog({ message: m, input: true, def: def });
 
 async function init() {
@@ -493,7 +472,12 @@ async function init() {
 
 async function loadLoginList() { 
   try { 
-    const { data } = await sb.from("profiles").select("name,is_admin").order("name"); 
+    // این بخش با هدرهای استاندارد درخواست را ارسال می‌کند تا لیست کاربران بازگردانده شود
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=name,is_admin&order=name`, {
+      method: 'GET',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
     const s = document.getElementById("loginName"); 
     s.innerHTML = '<option value="">انتخاب کنید...</option>'; 
     (data || []).forEach(p => { 
@@ -821,7 +805,7 @@ async function loadLogs() {
 function openExcel() {
   if (!isAdmin && !isGuest) { alertDlg("خروجی CSV فقط برای مدیر سامانه و کاربر مهمان فعال است."); return; }
   
-  let csvContent = "\uFEFF"; // برای نمایش صحیح فارسی در اکسل
+  let csvContent = "\uFEFF"; 
   csvContent += "روز,تاریخ";
   ZONES.forEach(z => z.cols.forEach(c => csvContent += `,${z.name} (${c})`));
   csvContent += "\n";
