@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  const APP_VERSION = "43.0.0"; 
+  const APP_VERSION = "44.0.0"; 
   if (localStorage.getItem('app_version') !== APP_VERSION) {
     if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
     localStorage.setItem('app_version', APP_VERSION);
@@ -233,7 +233,7 @@ table.stats-table th { background: var(--bg-header); color: #fff; border: 1px so
 
 <script>
 // ==========================================
-// توابع تاریخ شمسی (بدون نیاز به کتابخانه)
+// توابع تاریخ شمسی
 // ==========================================
 function toJalaali(gy, gm, gd) {
   const g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
@@ -273,18 +273,11 @@ function toGregorian(jy, jm, jd) {
 const SUPABASE_URL = "https://gicnlpxzbchnjmawjtry.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY25scHh6YmNobmptYXdqdHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNTEwNTEsImV4cCI6MjEwODgyNzA1MX0.d6fgrBVmSoZ13KVzQg1m9V4DBwhR4aQNpf-ImfSPmVo";
 
-let sb;
+let sb = null;
 let currentSession = null;
 
-try {
-  if (typeof supabase === 'undefined') throw new Error("کتابخانه Supabase لود نشد (اینترنت خود را بررسی کنید).");
-  sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-} catch(e) {
-  document.getElementById("loginError").textContent = "خطا: " + e.message;
-}
-
 // ==========================================
-// متغیرها و منطق برنامه
+// متغیرها
 // ==========================================
 const emailMap = { 
   "مدیر سامانه":"admin@dorm.local", "خانم موسوی":"mousavi@dorm.local", 
@@ -305,6 +298,9 @@ const MONTH = "آبان", DAYS = 30, HOURS = { "صبح": 6.5, "عصر": 5.5, "ش
 const ZONES = [{ name: "بهارستان ۱", cols: ["صبح", "عصر", "شب"], cls: "bg-z1" }, { name: "بهارستان ۲", cols: ["صبح", "عصر", "شب"], cls: "bg-z2" }, { name: "بهارستان ۳", cols: ["صبح", "عصر", "شب"], cls: "bg-z3" }, { name: "نجمه خاتون", cols: ["صبح", "عصر", "شب"], cls: "bg-z4" }, { name: "گلشن", cols: ["صبح", "عصر"], cls: "bg-z5" }];
 let BASE_DATE_UTC;
 
+// ==========================================
+// توابع کمکی
+// ==========================================
 function initBaseDate() { 
   const g = toGregorian(1405, 8, 1); 
   BASE_DATE_UTC = Date.UTC(g.gy, g.gm - 1, g.gd); 
@@ -351,22 +347,41 @@ function dialog(opts) {
 }
 const alertDlg = m => dialog({ message: m }), confirmDlg = (m, d) => dialog({ message: m, confirm: true, danger: d }), promptDlg = (m, def) => dialog({ message: m, input: true, def: def });
 
+// ==========================================
+// شروع برنامه (با مدیریت خطا و تایم‌اوت)
+// ==========================================
 async function init() {
+  // ایجاد یک تایمر برای جلوگیری از گیر کردن در صفحه لودینگ
+  const loadingTimeout = setTimeout(() => {
+    document.getElementById("loadingScreen").style.display = "none";
+    document.getElementById("loginScreen").style.display = "block";
+    document.getElementById("loginError").textContent = "زمان اتصال به سرور به پایان رسید. لطفاً اینترنت خود را بررسی کنید.";
+  }, 7000);
+
   try {
     initBaseDate();
     const zf = document.getElementById("zoneFilter"); 
     ZONES.forEach(z => { const o = document.createElement("option"); o.value = z.name; o.textContent = z.name; zf.appendChild(o); });
+
+    if (typeof supabase === 'undefined') throw new Error("کتابخانه Supabase لود نشد.");
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     const { data: { session } } = await sb.auth.getSession();
     if (session && session.user) { 
       const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single(); 
-      if (p) { currentUser = p; isAdmin = !!p.is_admin; isGuest = (p.name === "کاربر مهمان"); await loadAll(); showMain(); return; } 
+      if (p) { 
+        clearTimeout(loadingTimeout);
+        currentUser = p; isAdmin = !!p.is_admin; isGuest = (p.name === "کاربر مهمان"); await loadAll(); showMain(); return; 
+      } 
     }
+    
+    clearTimeout(loadingTimeout);
     await loadLoginList();
   } catch (e) { 
+    clearTimeout(loadingTimeout);
     document.getElementById("loadingScreen").style.display = "none"; 
     document.getElementById("loginScreen").style.display = "block"; 
-    document.getElementById("loginError").textContent = "خطا در اتصال به سرور: " + e.message; 
+    document.getElementById("loginError").textContent = "خطا: " + e.message; 
     loadLoginList(); 
   }
 }
@@ -379,7 +394,7 @@ async function loadLoginList() {
     const s = document.getElementById("loginName"); 
     s.innerHTML = '<option value="">انتخاب کنید...</option>'; 
     if (!data || data.length === 0) {
-      err.textContent = "خطا: لیست کاربران از دیتابیس دریافت نشد. (RLS یا دیتابیس را بررسی کنید)";
+      err.textContent = "خطا: لیست کاربران از دیتابیس دریافت نشد.";
     } else {
       (data || []).forEach(p => { 
         const o = document.createElement("option"); o.value = p.name; o.textContent = p.name + (p.is_admin ? " (مدیر)" : ""); s.appendChild(o); 
@@ -401,6 +416,9 @@ function showMain() {
   renderAll(); 
 }
 
+// ==========================================
+// ورود و خروج
+// ==========================================
 async function doLogin() {
   const name = document.getElementById("loginName").value;
   const pass = document.getElementById("loginPassword").value;
@@ -455,6 +473,8 @@ async function doLogin() {
   }
 }
 
+async function doLogout() { await sb.auth.signOut(); currentUser = null; isAdmin = false; isGuest = false; await loadLoginList(); }
+
 async function setMandatoryPassword() {
   const newPw = document.getElementById("newPersonalPassword").value, confirmPw = document.getElementById("confirmPersonalPassword").value, errDiv = document.getElementById("mandatoryError");
   if (!newPw || newPw.length < 8) { errDiv.textContent = "رمز باید حداقل ۸ رقم باشد."; return; }
@@ -474,8 +494,6 @@ async function setMandatoryPassword() {
     currentUser = p; isAdmin = !!p.is_admin; isGuest = (p.name === "کاربر مهمان"); await loadAll(); showMain();
   } catch(e) { errDiv.textContent = "خطا: " + e.message; }
 }
-
-async function doLogout() { await sb.auth.signOut(); currentUser = null; isAdmin = false; isGuest = false; await loadLoginList(); }
 
 async function openChangePassword() {
   const newPw = await promptDlg("رمز جدید (۸ رقمی):", "");
@@ -497,36 +515,28 @@ async function loadAll() {
   (l || []).forEach(x => { const per = PERSONNEL.find(z => z.id === x.user_id); if (per) { if (!state.leaves[per.name]) state.leaves[per.name] = {}; state.leaves[per.name][String(x.day)] = true; } });
 }
 
-function renderAll() { 
-  renderTable(); 
-  renderLeaves(); 
-  renderStats(); 
-}
+// ==========================================
+// رندر کردن جدول‌ها
+// ==========================================
+function renderAll() { renderTable(); renderLeaves(); renderStats(); }
 
 function renderTable() {
   const selectedZone = document.getElementById("zoneFilter").value;
   const zonesToRender = selectedZone === "all" ? ZONES : ZONES.filter(z => z.name === selectedZone);
   const visiblePersonnel = PERSONNEL.filter(p => !p.is_admin);
-  
-  const thead = document.getElementById("tableHead");
-  thead.innerHTML = "";
+  const thead = document.getElementById("tableHead"); thead.innerHTML = "";
   
   const tr1 = document.createElement("tr");
   const thDay = document.createElement("th"); thDay.rowSpan = 2; thDay.className = "day-cell"; thDay.textContent = "روز"; tr1.appendChild(thDay);
   const thDate = document.createElement("th"); thDate.rowSpan = 2; thDate.className = "date-cell"; thDate.textContent = "تاریخ"; tr1.appendChild(thDate);
-  zonesToRender.forEach(z => {
-    const th = document.createElement("th"); th.className = z.cls; th.colSpan = z.cols.length; th.textContent = z.name; tr1.appendChild(th);
-  });
+  zonesToRender.forEach(z => { const th = document.createElement("th"); th.className = z.cls; th.colSpan = z.cols.length; th.textContent = z.name; tr1.appendChild(th); });
   thead.appendChild(tr1);
   
   const tr2 = document.createElement("tr");
-  zonesToRender.forEach(z => z.cols.forEach(c => {
-    const th = document.createElement("th"); th.className = z.cls; th.textContent = c; tr2.appendChild(th);
-  }));
+  zonesToRender.forEach(z => z.cols.forEach(c => { const th = document.createElement("th"); th.className = z.cls; th.textContent = c; tr2.appendChild(th); }));
   thead.appendChild(tr2);
 
-  const tb = document.getElementById("tableBody"); 
-  tb.innerHTML = "";
+  const tb = document.getElementById("tableBody"); tb.innerHTML = "";
   
   for (let d = 0; d < DAYS; d++) {
     const info = getDayInfo(d), tr = document.createElement("tr"); 
@@ -541,18 +551,15 @@ function renderTable() {
       const owner = state.shifts[key] || "", empty = document.createElement("option"); empty.value = ""; empty.textContent = "—"; sel.appendChild(empty);
       
       const canSeeAll = isAdmin || isGuest;
-      
       if (canSeeAll) { 
         visiblePersonnel.forEach(p => { const o = document.createElement("option"); o.value = p.name; o.textContent = p.name; sel.appendChild(o); }); 
-        sel.value = owner; 
-        sel.addEventListener("change", () => onShiftChange(sel)); 
+        sel.value = owner; sel.addEventListener("change", () => onShiftChange(sel)); 
       } else { 
         if (owner && owner !== currentUser.name) { 
           const taken = document.createElement("option"); taken.value = "__taken__"; taken.textContent = "—"; sel.appendChild(taken); sel.value = "__taken__"; sel.disabled = true; sel.classList.add("locked"); 
         } else { 
           const me = document.createElement("option"); me.value = currentUser.name; me.textContent = currentUser.name; sel.appendChild(me); 
-          sel.value = owner; 
-          sel.addEventListener("change", () => onShiftChange(sel)); 
+          sel.value = owner; sel.addEventListener("change", () => onShiftChange(sel)); 
           if (owner === currentUser.name) sel.classList.add("mine"); 
         } 
       }
@@ -562,21 +569,11 @@ function renderTable() {
   }
 }
 
-function findPersonShiftOnDay(person, dayIdx) { 
-  const arr = []; 
-  ZONES.forEach(z => z.cols.forEach(s => { if (state.shifts[`${dayIdx}|${z.name}|${s}`] === person) arr.push(s); })); 
-  return arr; 
-}
-
-function countFridayDays(person) { 
-  let c = 0; 
-  for (let d = 0; d < DAYS; d++) if (getDayInfo(d).isFriday && findPersonShiftOnDay(person, d).length > 0) c++; 
-  return c; 
-}
+function findPersonShiftOnDay(person, dayIdx) { const arr = []; ZONES.forEach(z => z.cols.forEach(s => { if (state.shifts[`${dayIdx}|${z.name}|${s}`] === person) arr.push(s); })); return arr; }
+function countFridayDays(person) { let c = 0; for (let d = 0; d < DAYS; d++) if (getDayInfo(d).isFriday && findPersonShiftOnDay(person, d).length > 0) c++; return c; }
 
 async function onShiftChange(sel) {
   const key = sel.dataset.key, val = sel.value, d = +sel.dataset.day, zone = sel.dataset.zone, shiftType = sel.dataset.shift, prevOwner = state.shifts[key] || "";
-  
   if (!isAdmin && !isGuest && val && val !== currentUser.name) { alertDlg("شما فقط مجاز به تغییر شیفت خودتان هستید."); sel.value = prevOwner; return; }
   
   if (!val) { 
@@ -591,6 +588,7 @@ async function onShiftChange(sel) {
   const todayShifts = findPersonShiftOnDay(val, d), simulatedToday = [...todayShifts, shiftType], uniqToday = [...new Set(simulatedToday)];
   const prevShifts = d > 0 ? findPersonShiftOnDay(val, d - 1) : [], nextShifts = d < DAYS - 1 ? findPersonShiftOnDay(val, d + 1) : [];
   let issues = [];
+  
   if (uniqToday.includes("صبح") && uniqToday.includes("شب")) issues.push("ترکیب صبح و شب مجاز نیست.");
   if (simulatedToday.length > 2) issues.push("بیش از دو شیفت مجاز نیست.");
   if (simulatedToday.length !== uniqToday.length) issues.push("تکرار شیفت مجاز نیست.");
@@ -603,6 +601,7 @@ async function onShiftChange(sel) {
   const personLeaves = state.leaves[val] || {}; if (Object.prototype.hasOwnProperty.call(personLeaves, String(d))) issues.push("در این روز مرخصی دارید.");
   
   if (issues.length > 0) { await alertDlg("قوانین:\n• " + issues.join("\n• ")); sel.value = prevOwner; return; }
+  
   try {
     if (prevOwner) { const oldP = PERSONNEL.find(x => x.name === prevOwner); if (oldP) await sb.from("shifts").delete().eq("day", d).eq("zone", zone).eq("shift_type", shiftType).eq("user_id", oldP.id); }
     const { error } = await sb.from("shifts").insert({ day: d, zone, shift_type: shiftType, user_id: targetPerson.id });
@@ -695,8 +694,10 @@ function switchTab(n, btn) {
   document.getElementById("zoneFilterBox").classList.toggle("active", n === 'shifts');
 }
 
+// ==========================================
+// پنل مدیر و گزارش‌ها
+// ==========================================
 function openStaff() { if (!isAdmin && !isGuest) return alertDlg("دسترسی غیرمجاز."); renderStaffList(); document.getElementById("staffModal").classList.add("active"); }
-
 function renderStaffList() {
   const l = document.getElementById("staffList"); l.innerHTML = "";
   PERSONNEL.filter(p => !p.is_admin).forEach(p => {
@@ -705,7 +706,6 @@ function renderStaffList() {
     l.appendChild(d);
   });
   if (isGuest) return; 
-  
   l.querySelectorAll("input.req-input").forEach(inp => inp.addEventListener("change", async () => {
     const idx = +inp.dataset.idx, v = parseFloat(inp.value); if (isNaN(v) || v < 0) { inp.value = PERSONNEL[idx].req; return; }
     const { error } = await sb.from("profiles").update({ required_hours: v }).eq("id", PERSONNEL[idx].id); if (error) { await alertDlg("خطا"); inp.value = PERSONNEL[idx].req; return; }
@@ -717,19 +717,13 @@ function renderStaffList() {
   }));
 }
 
-function openLogs() { 
-  if (!isAdmin && !isGuest) return alertDlg("دسترسی غیرمجاز."); 
-  loadLogs(); 
-  document.getElementById("logsModal").classList.add("active"); 
-}
-
+function openLogs() { if (!isAdmin && !isGuest) return alertDlg("دسترسی غیرمجاز."); loadLogs(); document.getElementById("logsModal").classList.add("active"); }
 async function loadLogs() {
   const b = document.getElementById("logsBody"); b.innerHTML = "<div style='text-align:center;padding:20px;'>در حال بارگذاری...</div>";
   try {
     const { data, error } = await sb.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(100);
     if (error) throw error; 
     if (!data || data.length === 0) { b.innerHTML = "<p style='text-align:center;padding:30px;'>گزارشی یافت نشد.</p>"; return; }
-    
     b.innerHTML = "<div style='display:flex;flex-direction:column;gap:10px;'>" + data.map(l => {
       const name = PERSONNEL.find(p => p.id === l.user_id)?.name || 'نامشخص', exactDate = formatDateTime(l.created_at);
       let color = "#64748b", bg = "rgba(0,0,0,0.05)";
@@ -741,12 +735,11 @@ async function loadLogs() {
 }
 
 // ==========================================
-// تغییر یافته: خروجی CSV برای همه کاربران
+// خروجی CSV (اصلاح شده برای همه کاربران)
 // ==========================================
 function openExcel() {
-  // حذف شرط محدودکننده برای کاربران عادی
-  
-  let csvContent = "\uFEFF"; // برای نمایش صحیح فارسی در اکسل
+  // حذف شرط محدودکننده
+  let csvContent = "\uFEFF"; 
   csvContent += "روز,تاریخ";
   ZONES.forEach(z => z.cols.forEach(c => csvContent += `,${z.name} (${c})`));
   csvContent += "\n";
@@ -758,12 +751,10 @@ function openExcel() {
       const key = `${d}|${z.name}|${c}`;
       const person = state.shifts[key] || "";
       
-      // منطق فیلتر کردن داده‌ها بر اساس سطح دسترسی
+      // بررسی سطح دسترسی
       if (isAdmin || isGuest) {
-        // مدیر و مهمان: همه شیفت‌ها را می‌بینند
         csvContent += (person ? `,${person}` : ",-");
       } else {
-        // کاربر عادی: فقط شیفت‌های خودش را می‌بیند (بقیه خالی می‌مانند)
         csvContent += (person === currentUser.name ? `,${person}` : ",-");
       }
     }));
