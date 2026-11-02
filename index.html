@@ -7,13 +7,11 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-<!-- لود کتابخانه‌ها از سرورهای پایدار -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<!-- فقط کتابخانه اکسل از اینترنت لود می‌شود (برای خروجی حرفه‌ای) -->
 <script src="https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
 <script>
-  const APP_VERSION = "45.0.0"; 
+  const APP_VERSION = "46.0.0"; 
   if (localStorage.getItem('app_version') !== APP_VERSION) {
     if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
     localStorage.setItem('app_version', APP_VERSION);
@@ -22,6 +20,7 @@
 </script>
 
 <style>
+/* ... استایل‌ها دقیقاً مشابه قبل ... */
 :root { 
   --bg-body: #f1f5f9; --bg-card: #ffffff; --bg-header: #1e293b;
   --text-main: #334155; --text-muted: #64748b; --border: #cbd5e1; 
@@ -276,8 +275,115 @@ function toGregorian(jy, jm, jd) {
 const SUPABASE_URL = "https://gicnlpxzbchnjmawjtry.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY25scHh6YmNobmptYXdqdHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNTEwNTEsImV4cCI6MjEwODgyNzA1MX0.d6fgrBVmSoZ13KVzQg1m9V4DBwhR4aQNpf-ImfSPmVo";
 
-let sb = null;
 let currentSession = null;
+
+// ==========================================
+// پیاده‌سازی بومی (بدون کتابخانه) برای Supabase
+// ==========================================
+const sb = {
+  auth: {
+    signInWithPassword: async ({ email, password }) => {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) return { error: { status: res.status, message: data.error_description || data.msg || "نام کاربری یا رمز عبور اشتباه است." } };
+        currentSession = data;
+        localStorage.setItem('sb_session', JSON.stringify(data));
+        return { data: { user: data.user }, error: null };
+      } catch (e) { return { error: { message: "خطای شبکه: " + e.message } }; }
+    },
+    getSession: async () => {
+      const saved = localStorage.getItem('sb_session');
+      if (saved) {
+        try {
+          currentSession = JSON.parse(saved);
+          const expiresAt = currentSession.expires_at || 0;
+          const now = Math.floor(Date.now() / 1000);
+          if (expiresAt - now < 300 && currentSession.refresh_token) {
+            const refreshRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+              body: JSON.stringify({ refresh_token: currentSession.refresh_token })
+            });
+            if (refreshRes.ok) {
+              currentSession = await refreshRes.json();
+              localStorage.setItem('sb_session', JSON.stringify(currentSession));
+            } else {
+              localStorage.removeItem('sb_session');
+              return { data: { session: null } };
+            }
+          }
+          return { data: { session: currentSession } };
+        } catch (e) { return { data: { session: null } }; }
+      }
+      return { data: { session: null } };
+    },
+    signOut: async () => {
+      if (currentSession && currentSession.access_token) {
+        await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+          method: 'POST',
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentSession.access_token}` }
+        });
+      }
+      currentSession = null;
+      localStorage.removeItem('sb_session');
+    }
+  },
+  from: (table) => {
+    let query = '';
+    const req = {
+      select: (cols = '*', opts = {}) => {
+        query = `${table}?select=${cols}`;
+        if (opts.count) req._count = true;
+        return req;
+      },
+      order: (col, { ascending }) => { query += `&order=${col}.${ascending ? 'asc' : 'desc'}`; return req; },
+      limit: (n) => { query += `&limit=${n}`; return req; },
+      eq: (col, val) => { query += `&${col}=eq.${val}`; return req; },
+      single: () => { req._single = true; return req; },
+      insert: (data) => { req._method = 'POST'; req._body = JSON.stringify(data); return req; },
+      update: (data) => { req._method = 'PATCH'; req._body = JSON.stringify(data); return req; },
+      delete: () => { req._method = 'DELETE'; return req; },
+      then: async (resolve, reject) => {
+        try {
+          let url = `${SUPABASE_URL}/rest/v1/${query || table}`;
+          const token = currentSession ? currentSession.access_token : SUPABASE_ANON_KEY;
+          const headers = {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          };
+          const options = { method: req._method || 'GET', headers };
+          if (req._body) options.body = req._body;
+          
+          const res = await fetch(url, options);
+          const data = await res.json();
+          if (!res.ok) throw { message: data.message || 'خطای دیتابیس' };
+          if (req._single && Array.isArray(data)) resolve({ data: data[0] || null, error: null });
+          else resolve({ data, error: null });
+        } catch (err) { resolve({ data: null, error: err }); }
+      }
+    };
+    return req;
+  },
+  rpc: async (fn, args) => {
+    try {
+      const token = currentSession ? currentSession.access_token : SUPABASE_ANON_KEY;
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(args)
+      });
+      if (!res.ok) return { error: await res.json() };
+      return { data: await res.json(), error: null };
+    } catch (e) { return { error: e }; }
+  }
+};
 
 // ==========================================
 // متغیرها
@@ -301,49 +407,35 @@ const MONTH = "آبان", DAYS = 30, HOURS = { "صبح": 6.5, "عصر": 5.5, "ش
 const ZONES = [{ name: "بهارستان ۱", cols: ["صبح", "عصر", "شب"], cls: "bg-z1" }, { name: "بهارستان ۲", cols: ["صبح", "عصر", "شب"], cls: "bg-z2" }, { name: "بهارستان ۳", cols: ["صبح", "عصر", "شب"], cls: "bg-z3" }, { name: "نجمه خاتون", cols: ["صبح", "عصر", "شب"], cls: "bg-z4" }, { name: "گلشن", cols: ["صبح", "عصر"], cls: "bg-z5" }];
 let BASE_DATE_UTC;
 
-// ==========================================
-// توابع کمکی
-// ==========================================
-function initBaseDate() { 
-  const g = toGregorian(1405, 8, 1); 
-  BASE_DATE_UTC = Date.UTC(g.gy, g.gm - 1, g.gd); 
-}
-
+function initBaseDate() { const g = toGregorian(1405, 8, 1); BASE_DATE_UTC = Date.UTC(g.gy, g.gm - 1, g.gd); }
 function getDayInfo(i) { 
   const d = new Date(BASE_DATE_UTC + i * 86400000);
   const j = toJalaali(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
-  const utcDay = d.getUTCDay(); 
-  const faWd = (utcDay + 1) % 7; 
+  const utcDay = d.getUTCDay(); const faWd = (utcDay + 1) % 7; 
   const weekdayNames = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
   return { weekday: weekdayNames[faWd], isFriday: faWd === 6, jDay: j.jd, jMonth: MONTH }; 
 }
-
 function formatDateTime(isoString) { 
-  try {
-    const d = new Date(isoString);
-    const j = toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate()); 
-    return `${j.jd} ${MONTH} ${j.jy} - ساعت ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; 
-  } catch(e) { return isoString; }
+  try { const d = new Date(isoString); const j = toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate()); return `${j.jd} ${MONTH} ${j.jy} - ساعت ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; } catch(e) { return isoString; }
 }
 
+// ==========================================
+// توابع رابط کاربری
+// ==========================================
 function closeModal(id) { document.getElementById(id).classList.remove("active"); }
 function dialog(opts) { 
   return new Promise(r => { 
     const o = document.getElementById("dialogOverlay"), t = document.getElementById("dialogTitle"), m = document.getElementById("dialogMessage"), i = document.getElementById("dialogInput"), a = document.getElementById("dialogActions"); 
-    t.textContent = opts.title || ""; m.textContent = opts.message || ""; i.value = opts.def || ""; 
-    i.style.display = opts.input ? "block" : "none"; a.innerHTML = ""; 
+    t.textContent = opts.title || ""; m.textContent = opts.message || ""; i.value = opts.def || ""; i.style.display = opts.input ? "block" : "none"; a.innerHTML = ""; 
     const finish = v => { o.classList.remove("active"); r(v); }; 
     if (opts.input) { 
       a.innerHTML = `<button class="btn-primary" id="dOk">تأیید</button><button class="btn-cancel" id="dCancel">انصراف</button>`; 
-      document.getElementById("dOk").onclick = () => finish(i.value.trim()); 
-      document.getElementById("dCancel").onclick = () => finish(null); 
+      document.getElementById("dOk").onclick = () => finish(i.value.trim()); document.getElementById("dCancel").onclick = () => finish(null); 
     } else if (opts.confirm) { 
       a.innerHTML = `<button class="${opts.danger ? 'btn-danger' : 'btn-primary'}" id="dOk">تأیید</button><button class="btn-cancel" id="dCancel">انصراف</button>`; 
-      document.getElementById("dOk").onclick = () => finish(true); 
-      document.getElementById("dCancel").onclick = () => finish(false); 
+      document.getElementById("dOk").onclick = () => finish(true); document.getElementById("dCancel").onclick = () => finish(false); 
     } else { 
-      a.innerHTML = `<button class="btn-primary" id="dOk">متوجه شدم</button>`; 
-      document.getElementById("dOk").onclick = () => finish(true); 
+      a.innerHTML = `<button class="btn-primary" id="dOk">متوجه شدم</button>`; document.getElementById("dOk").onclick = () => finish(true); 
     } 
     o.classList.add("active"); 
   }); 
@@ -351,39 +443,26 @@ function dialog(opts) {
 const alertDlg = m => dialog({ message: m }), confirmDlg = (m, d) => dialog({ message: m, confirm: true, danger: d }), promptDlg = (m, def) => dialog({ message: m, input: true, def: def });
 
 // ==========================================
-// شروع برنامه (با مدیریت خطا و تایم‌اوت)
+// شروع برنامه (بدون وابستگی به اینترنت برای Supabase)
 // ==========================================
 async function init() {
-  const loadingTimeout = setTimeout(() => {
-    document.getElementById("loadingScreen").style.display = "none";
-    document.getElementById("loginScreen").style.display = "block";
-    document.getElementById("loginError").textContent = "زمان اتصال به سرور به پایان رسید. لطفاً اینترنت خود را بررسی کنید.";
-  }, 7000);
-
   try {
     initBaseDate();
     const zf = document.getElementById("zoneFilter"); 
     ZONES.forEach(z => { const o = document.createElement("option"); o.value = z.name; o.textContent = z.name; zf.appendChild(o); });
-
-    if (typeof supabase === 'undefined') throw new Error("کتابخانه Supabase لود نشد.");
-    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
-    const { data: { session } } = await sb.auth.getSession();
+    const sessionRes = await sb.auth.getSession();
+    const session = sessionRes.data.session;
+    
     if (session && session.user) { 
       const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single(); 
-      if (p) { 
-        clearTimeout(loadingTimeout);
-        currentUser = p; isAdmin = !!p.is_admin; isGuest = (p.name === "کاربر مهمان"); await loadAll(); showMain(); return; 
-      } 
+      if (p) { currentUser = p; isAdmin = !!p.is_admin; isGuest = (p.name === "کاربر مهمان"); await loadAll(); showMain(); return; } 
     }
-    
-    clearTimeout(loadingTimeout);
     await loadLoginList();
   } catch (e) { 
-    clearTimeout(loadingTimeout);
     document.getElementById("loadingScreen").style.display = "none"; 
     document.getElementById("loginScreen").style.display = "block"; 
-    document.getElementById("loginError").textContent = "خطا: " + e.message; 
+    document.getElementById("loginError").textContent = "خطا در اتصال به سرور: " + e.message; 
     loadLoginList(); 
   }
 }
@@ -419,7 +498,7 @@ function showMain() {
 }
 
 // ==========================================
-// ورود و خروج
+// ورود/خروج
 // ==========================================
 async function doLogin() {
   const name = document.getElementById("loginName").value;
@@ -441,7 +520,7 @@ async function doLogin() {
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
     
     if (error) {
-      if (error.status === 400 || error.status === 401 || error.message.includes("Invalid")) {
+      if (error.status === 400 || error.status === 401 || (error.message && error.message.includes("Invalid"))) {
         throw new Error("رمز عبور اشتباه است. (اگر رمز پیش‌فرض است، 654321 را وارد کنید)");
       }
       throw new Error(error.message);
@@ -450,21 +529,16 @@ async function doLogin() {
     const { data: p, error: profileErr } = await sb.from("profiles").select("*").eq("id", data.user.id).single();
     if (profileErr || !p) throw new Error("پروفایل کاربر در دیتابیس یافت نشد.");
 
-    currentUser = p; 
-    isAdmin = !!p.is_admin; 
-    isGuest = (p.name === "کاربر مهمان");
+    currentUser = p; isAdmin = !!p.is_admin; isGuest = (p.name === "کاربر مهمان");
 
     if ((pass === "654321" || !p.password_set) && !p.is_admin && !isGuest) { 
       pendingUserData = { id: p.id, name: p.name, email: email }; 
       err.textContent = ""; 
       document.getElementById("loginScreen").style.display = "none"; 
-      document.getElementById("mandatoryPasswordModal").classList.add("active"); 
-      return; 
+      document.getElementById("mandatoryPasswordModal").classList.add("active"); return; 
     }
 
-    err.textContent = ""; 
-    await loadAll(); 
-    showMain();
+    err.textContent = ""; await loadAll(); showMain();
 
   } catch (e) {
     err.style.color = "#b91c1c";
@@ -737,7 +811,7 @@ async function loadLogs() {
 }
 
 // ==========================================
-// خروجی اکسل حرفه‌ای
+// خروجی اکسل
 // ==========================================
 function openExcel() {
   if (typeof XLSX === "undefined") { alertDlg("کتابخانه اکسل بارگذاری نشد. لطفاً صفحه را رفرش کنید."); return; }
@@ -761,7 +835,7 @@ function openExcel() {
   function styleCell(ws, r, c, st) { const ref = XLSX.utils.encode_cell({ r, c }); if (!ws[ref]) ws[ref] = { v: "", t: "s" }; ws[ref].s = st; }
   function applyRange(ws, r1, c1, r2, c2, st) { for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) styleCell(ws, r, c, st); }
 
-  // شیت ۱: برنامه شیفت‌ها
+  // شیت ۱
   const sheet1 = [["روز", "تاریخ"]]; 
   zonesToExport.forEach(z => z.cols.forEach(() => sheet1[0].push(z.name)));
   const row2 = ["", ""]; 
@@ -806,7 +880,7 @@ function openExcel() {
   ws1["!freeze"] = { xSplit: 2, ySplit: 2 }; 
   XLSX.utils.book_append_sheet(wb, ws1, selectedZone === "all" ? "کل شیفت‌ها" : `شیفت ${selectedZone}`);
 
-  // شیت ۲: آمار کارکرد
+  // شیت ۲
   const m = {}, e = {}, n = {}, h = {}, lc = {}; 
   PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; }); 
   Object.keys(state.leaves).forEach(per => { if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length; });
@@ -849,7 +923,7 @@ function openExcel() {
   ws2["!freeze"] = { ySplit: 1 }; 
   XLSX.utils.book_append_sheet(wb, ws2, "آمار کارکرد");
 
-  // شیت ۳: مرخصی‌ها
+  // شیت ۳
   const sheet3 = [["نام", "مرخصی ۱", "مرخصی ۲", "مرخصی ۳", "مرخصی ۴", "مرخصی ۵", "تعداد کل"]];
   const leaveList = (isAdmin || isGuest) ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
   
@@ -883,7 +957,7 @@ function openExcel() {
   a.href = URL.createObjectURL(blob); 
   a.download = selectedZone === "all" ? `گزارش-شیفت-${MONTH}-۱۴۰۵.xlsx` : `گزارش-شیفت-${selectedZone}-${MONTH}-۱۴۰۵.xlsx`; 
   a.click(); URL.revokeObjectURL(a.href); 
-  alertDlg("فایل اکسل با موفقیت دانلود شد.");
+  alertDlg("فایل اکسل حرفه‌ای با موفقیت دانلود شد.");
 }
 
 window.addEventListener("load", init);
