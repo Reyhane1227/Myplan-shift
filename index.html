@@ -12,12 +12,11 @@
 <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.0/dist/jalaali.min.js"></script>
 
 <script>
-  const APP_VERSION = "27.0.0"; 
-  const savedVersion = localStorage.getItem('app_version');
-  if (savedVersion !== APP_VERSION) {
+  const APP_VERSION = "29.0.0"; 
+  if (localStorage.getItem('app_version') !== APP_VERSION) {
     if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
     localStorage.setItem('app_version', APP_VERSION);
-    if (savedVersion !== null) window.location.reload(true);
+    if (localStorage.getItem('app_version') !== null) window.location.reload(true);
   }
 </script>
 
@@ -32,36 +31,26 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', sans-serif; }
 body { background: var(--bg-body); color: var(--text-main); min-height: 100vh; font-size: 13px; display: flex; flex-direction: column; overflow-x: hidden; }
 .container { max-width: 1400px; margin: 0 auto; padding: 16px; flex: 1; width: 100%; }
-
-/* Header */
-.app-header { background: var(--bg-header); color: #fff; padding: 14px 20px; border-radius: var(--radius); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.app-header { background: var(--bg-header); color: #fff; padding: 14px 20px; border-radius: var(--radius); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
 .app-header h1 { font-size: 16px; font-weight: 800; }
-.admin-badge { display: none; font-size: 11px; background: rgba(255,255,255,0.15); padding: 2px 10px; border-radius: 20px; font-weight: 600; }
+.admin-badge { display: none; font-size: 11px; background: rgba(255,255,255,0.15); padding: 2px 10px; border-radius: 20px; }
 body.is-admin .admin-badge { display: inline-block; }
 .controls { display: flex; gap: 6px; flex-wrap: wrap; }
-.tool-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #e2e8f0; padding: 6px 14px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+.tool-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #e2e8f0; padding: 6px 14px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px; font-weight: 600; }
 .tool-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
 .admin-only { display: none; }
 body.is-admin .admin-only { display: inline-block; }
 .user-info { background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; }
-
-/* Toolbar */
-.toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; background: var(--bg-card); padding: 8px 16px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.tabs-nav { display: flex; gap: 4px; overflow-x: auto; padding: 2px; }
-.tab-btn { padding: 8px 20px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap; transition: all 0.2s; }
-.tab-btn:hover { background: var(--bg-body); color: var(--text-main); }
+.toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; background: var(--bg-card); padding: 8px 16px; border-radius: var(--radius); border: 1px solid var(--border); }
+.tabs-nav { display: flex; gap: 4px; overflow-x: auto; }
+.tab-btn { padding: 8px 20px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap; }
 .tab-btn.active { background: var(--primary); color: #fff; }
 .filter-box { display: none; align-items: center; gap: 8px; background: var(--bg-body); padding: 4px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 .filter-box.active { display: flex; }
 .filter-box select { border: none; background: transparent; font-size: 13px; font-weight: 700; outline: none; cursor: pointer; color: var(--text-main); }
-
-/* Panels */
 .tab-panel { display: none; }
-.tab-panel.active { display: block; animation: fadeIn 0.2s; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-/* Tables */
-.table-container { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); overflow-x: auto; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.tab-panel.active { display: block; }
+.table-container { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); overflow-x: auto; margin-bottom: 20px; }
 table { width: 100%; border-collapse: collapse; text-align: center; }
 th, td { border: 1px solid var(--border); padding: 10px 4px; }
 th { background: #f8fafc; color: var(--text-muted); font-weight: 800; font-size: 12px; position: sticky; top: 0; z-index: 10; }
@@ -70,97 +59,72 @@ td { font-size: 12px; background: #fff; color: var(--text-main); }
 .date-cell { width: 70px; color: var(--text-muted); font-size: 11px; background: #f8fafc; }
 tr.is-friday td { background: #fffbeb; }
 tr.is-friday .day-cell, tr.is-friday .date-cell { color: var(--danger); font-weight: 800; }
-
 .bg-z1 { background: #eff6ff; color: #1d4ed8; border-bottom: 2px solid #3b82f6; }
 .bg-z2 { background: #f0fdf4; color: #15803d; border-bottom: 2px solid #22c55e; }
 .bg-z3 { background: #fff7ed; color: #c2410c; border-bottom: 2px solid #f97316; }
 .bg-z4 { background: #fefce8; color: #a16207; border-bottom: 2px solid #eab308; }
 .bg-z5 { background: #faf5ff; color: #7e22ce; border-bottom: 2px solid #a855f7; }
-
-select.s-cell { width: 100%; height: 32px; border: 1px solid transparent; background: transparent; font-size: 11px; font-weight: 700; text-align: center; outline: none; cursor: pointer; border-radius: 4px; color: var(--text-main); transition: all 0.15s; }
+select.s-cell { width: 100%; height: 32px; border: 1px solid transparent; background: transparent; font-size: 11px; font-weight: 700; text-align: center; outline: none; cursor: pointer; border-radius: 4px; color: var(--text-main); }
 select.s-cell:hover { background: #fff; border-color: #cbd5e1; }
 select.s-cell.mine { background: #dcfce7; color: #166534; border-color: #86efac; }
 select.s-cell.locked { opacity: 0.6; cursor: not-allowed; background: #f1f5f9; }
 select.s-cell.taken { color: var(--danger); font-weight: 800; background: var(--danger-bg); }
-
-/* Cards */
-.section-card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.section-card h3 { font-size: 15px; margin-bottom: 16px; border-bottom: 2px solid var(--border); padding-bottom: 12px; font-weight: 800; color: var(--text-main); }
+.section-card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+.section-card h3 { font-size: 15px; margin-bottom: 16px; border-bottom: 2px solid var(--border); padding-bottom: 12px; font-weight: 800; }
 .info-banner { background: rgba(37,99,235,0.05); color: var(--primary); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 12px; border-right: 4px solid var(--primary); font-weight: 600; line-height: 1.7; }
 table.leave-table select { width: 100%; height: 32px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; text-align: center; background: #fff; outline: none; color: var(--text-main); cursor: pointer; }
 table.stats-table th { background: var(--bg-header); color: #fff; }
 .leave-name-cell, .stat-name { font-weight: 800; text-align: right; padding-right: 12px !important; background: #f8fafc; color: var(--text-main); white-space: nowrap; }
 .val-plus { color: #059669; font-weight: 800; background: #d1fae5; border-radius: 4px; padding: 2px 6px; display: inline-block; }
 .val-minus { color: var(--danger); font-weight: 800; background: var(--danger-bg); border-radius: 4px; padding: 2px 6px; display: inline-block; }
-
-/* Modals */
-.overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.7); z-index: 1000; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(2px); }
+.overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.7); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
 .overlay.active { display: flex; }
-.modal { background: var(--bg-card); width: 100%; max-width: 600px; border-radius: var(--radius); overflow: hidden; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px rgba(0,0,0,0.2); }
+.modal { background: var(--bg-card); width: 100%; max-width: 600px; border-radius: var(--radius); overflow: hidden; max-height: 90vh; display: flex; flex-direction: column; }
 .modal-header { background: #f8fafc; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
 .modal-close { background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
 .modal-body { padding: 20px; overflow-y: auto; }
-.dialog { background: var(--bg-card); width: 100%; max-width: 400px; border-radius: var(--radius); padding: 24px; text-align: center; box-shadow: 0 20px 25px rgba(0,0,0,0.2); }
+.dialog { background: var(--bg-card); width: 100%; max-width: 400px; border-radius: var(--radius); padding: 24px; text-align: center; }
 .dialog h3 { margin-bottom: 10px; font-size: 17px; }
 .dialog p { color: var(--text-muted); margin-bottom: 20px; font-size: 13px; line-height: 1.7; white-space: pre-line; }
 .dialog input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 20px; outline: none; font-family: inherit; color: var(--text-main); }
 .dialog-actions { display: flex; gap: 8px; justify-content: center; }
-.btn-primary { background: var(--primary); color: #fff; border: none; padding: 10px 24px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+.btn-primary { background: var(--primary); color: #fff; border: none; padding: 10px 24px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-family: inherit; }
 .btn-primary:hover { background: var(--primary-hover); }
 .btn-danger { background: var(--danger); color: #fff; border: none; padding: 10px 24px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-family: inherit; }
 .btn-cancel { background: transparent; border: 1px solid var(--border); padding: 10px 24px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-family: inherit; color: var(--text-main); }
-.btn-cancel:hover { background: #f1f5f9; }
-
-/* Login */
-.login-container { max-width: 400px; margin: 60px auto; background: var(--bg-card); padding: 32px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-.login-container h2 { text-align: center; font-size: 20px; margin-bottom: 8px; color: var(--text-main); font-weight: 900; }
+.login-container { max-width: 400px; margin: 60px auto; background: var(--bg-card); padding: 32px; border-radius: var(--radius); border: 1px solid var(--border); }
+.login-container h2 { text-align: center; font-size: 20px; margin-bottom: 8px; font-weight: 900; }
 .login-container p { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 24px; }
 .form-group { margin-bottom: 16px; }
 .form-group label { display: block; font-size: 12.5px; font-weight: 700; margin-bottom: 6px; color: var(--text-muted); }
-.form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #f8fafc; outline: none; font-family: inherit; color: var(--text-main); font-size: 14px; transition: border-color 0.2s; }
+.form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #f8fafc; outline: none; font-family: inherit; color: var(--text-main); font-size: 14px; }
 .form-group input:focus, .form-group select:focus { border-color: var(--primary); background: #fff; }
-.btn-full { width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-sm); font-weight: 800; font-size: 15px; cursor: pointer; margin-top: 10px; font-family: inherit; transition: background 0.2s; }
+.btn-full { width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-sm); font-weight: 800; font-size: 15px; cursor: pointer; margin-top: 10px; font-family: inherit; }
 .btn-full:hover { background: var(--primary-hover); }
 .error-msg { color: var(--danger); font-size: 12.5px; text-align: center; margin-top: 12px; font-weight: 600; min-height: 18px; }
 .support-text { text-align: center; font-size: 11.5px; color: var(--text-muted); margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--border); }
-
-/* Loading */
 #loadingScreen { position: fixed; inset: 0; background: var(--bg-body); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
 .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-
-/* Staff list */
 .staff-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f8fafc; border-radius: var(--radius-sm); margin-bottom: 8px; border: 1px solid var(--border); }
 .staff-item input { width: 70px; padding: 6px; border: 1px solid var(--border); border-radius: 4px; text-align: center; font-family: inherit; color: var(--text-main); }
 .btn-del { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: 700; font-size: 12px; font-family: inherit; }
-.btn-del:hover { background: var(--danger-bg); }
-
-/* Mandatory Password */
 .mandatory-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.95); z-index: 2000; justify-content: center; align-items: center; padding: 16px; }
 .mandatory-overlay.active { display: flex; }
-.mandatory-box { background: var(--bg-card); width: 100%; max-width: 450px; border-radius: var(--radius); padding: 32px; text-align: center; border: 3px solid var(--primary); box-shadow: 0 0 40px rgba(37,99,235,0.4); }
+.mandatory-box { background: var(--bg-card); width: 100%; max-width: 450px; border-radius: var(--radius); padding: 32px; text-align: center; border: 3px solid var(--primary); }
 .mandatory-box h2 { color: var(--primary); font-size: 20px; margin-bottom: 12px; }
 .mandatory-box p { color: var(--text-muted); font-size: 13px; margin-bottom: 20px; line-height: 1.7; }
 .mandatory-box input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 16px; outline: none; font-family: inherit; font-size: 15px; text-align: center; letter-spacing: 2px; color: var(--text-main); }
 .mandatory-box input:focus { border-color: var(--primary); }
 .mandatory-box button { width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-sm); font-weight: 800; font-size: 15px; cursor: pointer; font-family: inherit; }
-
-@media (max-width: 768px) {
-  .app-header { flex-direction: column; text-align: center; padding: 16px; }
-  .toolbar { flex-direction: column; align-items: stretch; padding: 12px; }
-  .tabs-nav { overflow-x: auto; }
-  th, td { padding: 6px 2px; font-size: 11px; }
-  select.s-cell { font-size: 10px; height: 28px; }
-}
+@media (max-width: 768px) { .app-header { flex-direction: column; text-align: center; } .toolbar { flex-direction: column; align-items: stretch; } .tabs-nav { overflow-x: auto; } th, td { padding: 6px 2px; font-size: 11px; } select.s-cell { font-size: 10px; height: 28px; } }
 </style>
 </head>
 <body>
 
 <div id="loadingScreen">
   <div class="spinner"></div>
-  <div id="loadingText" style="font-weight:600; color:var(--text-muted); text-align:center; padding:0 20px;">
-    در حال اتصال به سرور...
-  </div>
+  <div style="font-weight:600; color:var(--text-muted);">در حال اتصال...</div>
 </div>
 
 <div id="loginScreen" style="display:none;">
@@ -193,7 +157,6 @@ table.stats-table th { background: var(--bg-header); color: #fff; }
       <button class="tool-btn" onclick="doLogout()" style="color:#fca5a5;">خروج</button>
     </div>
   </div>
-  
   <div class="toolbar">
     <div class="tabs-nav">
       <button class="tab-btn active" onclick="switchTab('shifts', this)">برنامه شیفت‌ها</button>
@@ -205,7 +168,6 @@ table.stats-table th { background: var(--bg-header); color: #fff; }
       <select id="zoneFilter" onchange="renderTable()"><option value="all">همه خوابگاه‌ها</option></select>
     </div>
   </div>
-
   <div id="panel-shifts" class="tab-panel active">
     <div class="table-container">
       <table>
@@ -214,20 +176,18 @@ table.stats-table th { background: var(--bg-header); color: #fff; }
       </table>
     </div>
   </div>
-
   <div id="panel-leaves" class="tab-panel">
     <div class="section-card">
       <h3>مدیریت مرخصی‌ها</h3>
-      <div class="info-banner">⚠️ حداکثر ۲ نفر در هر روز می‌توانند مرخصی بگیرند. روزهای جمعه مجاز نیست.</div>
+      <div class="info-banner">حداکثر ۲ نفر در هر روز. جمعه‌ها مجاز نیست.</div>
       <div style="overflow-x:auto">
         <table class="leave-table"><thead><tr><th>نام</th><th>مرخصی ۱</th><th>مرخصی ۲</th><th>مرخصی ۳</th><th>مرخصی ۴</th><th>مرخصی ۵</th></tr></thead><tbody id="leaveTableBody"></tbody></table>
       </div>
     </div>
   </div>
-
   <div id="panel-stats" class="tab-panel">
     <div class="section-card">
-      <h3>آمار کارکرد ماهانه</h3>
+      <h3>آمار کارکرد</h3>
       <div style="overflow-x:auto">
         <table class="stats-table"><thead><tr><th>نام</th><th>موظفی</th><th>صبح</th><th>عصر</th><th>شب</th><th>تعطیلات</th><th>مرخصی</th><th>کارکرد</th><th>اضافه</th><th>کسر</th></tr></thead><tbody id="statsBody"></tbody></table>
       </div>
@@ -242,7 +202,7 @@ table.stats-table th { background: var(--bg-header); color: #fff; }
 <div class="mandatory-overlay" id="mandatoryPasswordModal">
   <div class="mandatory-box">
     <h2>🔐 تنظیم رمز عبور شخصی</h2>
-    <p>شما با رمز موقت وارد شده‌اید. برای امنیت حساب، لطفاً یک رمز عبور ۸ رقمی (فقط عدد) برای خود تعریف کنید.</p>
+    <p>برای امنیت حساب، لطفاً یک رمز عبور ۸ رقمی (فقط عدد) برای خود تعریف کنید.</p>
     <input type="password" id="newPersonalPassword" placeholder="رمز ۸ رقمی جدید..." maxlength="8" inputmode="numeric" onkeydown="if(event.key==='Enter')setMandatoryPassword()">
     <input type="password" id="confirmPersonalPassword" placeholder="تکرار رمز ۸ رقمی..." maxlength="8" inputmode="numeric" onkeydown="if(event.key==='Enter')setMandatoryPassword()">
     <div class="error-msg" id="mandatoryError" style="margin-bottom:16px;"></div>
@@ -251,7 +211,6 @@ table.stats-table th { background: var(--bg-header); color: #fff; }
 </div>
 
 <script>
-// ================== تنظیمات اتصال ==================
 const SUPABASE_URL = "https://gicnlpxzbchnjmawjtry.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY25scHh6YmNobmptYXdqdHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNTEwNTEsImV4cCI6MjEwODgyNzA1MX0.d6fgrBVmSoZ13KVzQg1m9V4DBwhR4aQNpf-ImfSPmVo";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -266,8 +225,7 @@ const emailMap = {
   "خانم رنجبر":"ranjbar@dorm.local", "خانم شکیب":"shakib@dorm.local", 
   "خانم براتی":"barati@dorm.local", "خانم رحمانی":"rahmani@dorm.local", 
   "خانم چراغ چشم":"cheraghcheshm@dorm.local", "خانم امیری":"amiri@dorm.local", 
-  "خانم حشمتی":"heshmati@dorm.local",
-  "کاربر مهمان":"guest@dorm.local", "کاربر شیفت":"shift@dorm.local"
+  "خانم حشمتی":"heshmati@dorm.local", "کاربر مهمان":"guest@dorm.local", "کاربر شیفت":"shift@dorm.local"
 };
 
 let PERSONNEL = [], state = { shifts: {}, leaves: {} }, currentUser = null, isAdmin = false;
@@ -278,154 +236,59 @@ const WEEKDAYS_FA = ["یکشنبه", "دوشنبه", "سه‌شنبه", "چها�
 let BASE_DATE_UTC;
 
 function initBaseDate() { const g = jalaali.toGregorian(1405, 8, 1); BASE_DATE_UTC = Date.UTC(g.gy, g.gm - 1, g.gd); }
-function getDayInfo(i) {
-  const d = new Date(BASE_DATE_UTC + i * 86400000), wd = d.getUTCDay(), j = jalaali.toJalaali(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
-  const faWd = (wd + 1) % 7;
-  return { weekday: ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"][faWd], isFriday: faWd === 6, jDay: j.jd, jMonth: MONTH };
-}
-function formatDateTime(isoString) {
-  const d = new Date(isoString), j = jalaali.toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate());
-  return `${j.jd} ${MONTH} ${j.jy} - ساعت ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-}
+function getDayInfo(i) { const d = new Date(BASE_DATE_UTC + i * 86400000), wd = d.getUTCDay(), j = jalaali.toJalaali(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()); const faWd = (wd + 1) % 7; return { weekday: ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"][faWd], isFriday: faWd === 6, jDay: j.jd, jMonth: MONTH }; }
+function formatDateTime(isoString) { const d = new Date(isoString), j = jalaali.toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate()); return `${j.jd} ${MONTH} ${j.jy} - ساعت ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
 function closeModal(id) { document.getElementById(id).classList.remove("active"); }
-
-function dialog(opts) {
-  return new Promise(r => {
-    const o = document.getElementById("dialogOverlay"), t = document.getElementById("dialogTitle"), m = document.getElementById("dialogMessage"), i = document.getElementById("dialogInput"), a = document.getElementById("dialogActions");
-    t.textContent = opts.title || ""; m.textContent = opts.message || ""; i.value = opts.def || ""; i.style.display = opts.input ? "block" : "none"; a.innerHTML = "";
-    const finish = v => { o.classList.remove("active"); r(v); };
-    if (opts.input) {
-      a.innerHTML = `<button class="btn-primary" id="dOk">تأیید</button><button class="btn-cancel" id="dCancel">انصراف</button>`;
-      document.getElementById("dOk").onclick = () => finish(i.value.trim()); document.getElementById("dCancel").onclick = () => finish(null);
-    } else if (opts.confirm) {
-      a.innerHTML = `<button class="${opts.danger ? 'btn-danger' : 'btn-primary'}" id="dOk">تأیید</button><button class="btn-cancel" id="dCancel">انصراف</button>`;
-      document.getElementById("dOk").onclick = () => finish(true); document.getElementById("dCancel").onclick = () => finish(false);
-    } else {
-      a.innerHTML = `<button class="btn-primary" id="dOk">متوجه شدم</button>`; document.getElementById("dOk").onclick = () => finish(true);
-    }
-    o.classList.add("active");
-  });
-}
+function dialog(opts) { return new Promise(r => { const o = document.getElementById("dialogOverlay"), t = document.getElementById("dialogTitle"), m = document.getElementById("dialogMessage"), i = document.getElementById("dialogInput"), a = document.getElementById("dialogActions"); t.textContent = opts.title || ""; m.textContent = opts.message || ""; i.value = opts.def || ""; i.style.display = opts.input ? "block" : "none"; a.innerHTML = ""; const finish = v => { o.classList.remove("active"); r(v); }; if (opts.input) { a.innerHTML = `<button class="btn-primary" id="dOk">تأیید</button><button class="btn-cancel" id="dCancel">انصراف</button>`; document.getElementById("dOk").onclick = () => finish(i.value.trim()); document.getElementById("dCancel").onclick = () => finish(null); } else if (opts.confirm) { a.innerHTML = `<button class="${opts.danger ? 'btn-danger' : 'btn-primary'}" id="dOk">تأیید</button><button class="btn-cancel" id="dCancel">انصراف</button>`; document.getElementById("dOk").onclick = () => finish(true); document.getElementById("dCancel").onclick = () => finish(false); } else { a.innerHTML = `<button class="btn-primary" id="dOk">متوجه شدم</button>`; document.getElementById("dOk").onclick = () => finish(true); } o.classList.add("active"); }); }
 const alertDlg = m => dialog({ message: m }), confirmDlg = (m, d) => dialog({ message: m, confirm: true, danger: d }), promptDlg = (m, def) => dialog({ message: m, input: true, def: def });
 
-// ================== احراز هویت ==================
 async function init() {
   try {
     initBaseDate();
     const zf = document.getElementById("zoneFilter"); ZONES.forEach(z => { const o = document.createElement("option"); o.value = z.name; o.textContent = z.name; zf.appendChild(o); });
-    
     const timeout = new Promise(resolve => setTimeout(() => resolve({ data: { session: null }, timeout: true }), 5000));
     const result = await Promise.race([sb.auth.getSession(), timeout]);
-    
-    if (result.timeout) { 
-      document.getElementById("loadingScreen").style.display = "none"; 
-      document.getElementById("loginScreen").style.display = "block"; 
-      document.getElementById("loginError").textContent = "اتصال به سرور برقرار نشد. لطفاً فیلترشکن خود را روشن کنید."; 
-      loadLoginList(); return; 
-    }
-
+    if (result.timeout) { document.getElementById("loadingScreen").style.display = "none"; document.getElementById("loginScreen").style.display = "block"; document.getElementById("loginError").textContent = "اتصال به سرور برقرار نشد. لطفاً فیلترشکن خود را روشن کنید."; loadLoginList(); return; }
     const { data: { session } } = result;
-    if (session && session.user) {
-      const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
-      if (p) { currentUser = p; isAdmin = !!p.is_admin; await loadAll(); showMain(); return; }
-    }
+    if (session && session.user) { const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single(); if (p) { currentUser = p; isAdmin = !!p.is_admin; await loadAll(); showMain(); return; } }
     await loadLoginList();
-  } catch (e) { 
-    document.getElementById("loadingScreen").style.display = "none"; 
-    document.getElementById("loginScreen").style.display = "block"; 
-    document.getElementById("loginError").textContent = "خطا در اتصال به سرور."; 
-    loadLoginList(); 
-  }
+  } catch (e) { document.getElementById("loadingScreen").style.display = "none"; document.getElementById("loginScreen").style.display = "block"; document.getElementById("loginError").textContent = "خطا در اتصال به سرور."; loadLoginList(); }
 }
-
-async function loadLoginList() {
-  try {
-    const { data } = await sb.from("profiles").select("name,is_admin").order("name");
-    const s = document.getElementById("loginName"); 
-    s.innerHTML = '<option value="">انتخاب کنید...</option>';
-    (data || []).forEach(p => { const o = document.createElement("option"); o.value = p.name; o.textContent = p.name + (p.is_admin ? " (مدیر)" : ""); s.appendChild(o); });
-  } catch(e){}
-  document.getElementById("loadingScreen").style.display = "none"; 
-  document.getElementById("loginScreen").style.display = "block";
-}
-
-function showMain() { 
-  document.getElementById("loginScreen").style.display = "none"; 
-  document.getElementById("mainApp").style.display = "block"; 
-  document.body.classList.toggle("is-admin", isAdmin); 
-  document.getElementById("currentUserName").textContent = currentUser.name; 
-  renderAll(); 
-}
-
+async function loadLoginList() { try { const { data } = await sb.from("profiles").select("name,is_admin").order("name"); const s = document.getElementById("loginName"); s.innerHTML = '<option value="">انتخاب کنید...</option>'; (data || []).forEach(p => { const o = document.createElement("option"); o.value = p.name; o.textContent = p.name + (p.is_admin ? " (مدیر)" : ""); s.appendChild(o); }); } catch(e){} document.getElementById("loadingScreen").style.display = "none"; document.getElementById("loginScreen").style.display = "block"; }
+function showMain() { document.getElementById("loginScreen").style.display = "none"; document.getElementById("mainApp").style.display = "block"; document.body.classList.toggle("is-admin", isAdmin); document.getElementById("currentUserName").textContent = currentUser.name; renderAll(); }
 async function doLogin() {
-  const name = document.getElementById("loginName").value;
-  const pass = document.getElementById("loginPassword").value;
-  const err = document.getElementById("loginError");
-  
+  const name = document.getElementById("loginName").value, pass = document.getElementById("loginPassword").value, err = document.getElementById("loginError");
   if (!name || !pass) { err.textContent = "نام و رمز را وارد کنید"; return; }
   err.textContent = "در حال بررسی...";
-  
   const email = emailMap[name];
   if (!email) { err.textContent = "نام کاربری یافت نشد."; return; }
-  
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
   if (error) { err.textContent = "رمز عبور اشتباه است."; return; }
-  
   const { data: p } = await sb.from("profiles").select("*").eq("id", data.user.id).single();
   if (!p) { err.textContent = "پروفایل یافت نشد."; return; }
-  
   currentUser = p; isAdmin = !!p.is_admin;
-  
-  if ((pass === "654321" || !p.password_set) && !p.is_admin) {
-    pendingUserData = { id: p.id, name: p.name, email: email };
-    err.textContent = "";
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("mandatoryPasswordModal").classList.add("active");
-    return;
-  }
-  
-  err.textContent = "";
-  await loadAll(); showMain();
+  if ((pass === "654321" || !p.password_set) && !p.is_admin) { pendingUserData = { id: p.id, name: p.name, email: email }; err.textContent = ""; document.getElementById("loginScreen").style.display = "none"; document.getElementById("mandatoryPasswordModal").classList.add("active"); return; }
+  err.textContent = ""; await loadAll(); showMain();
 }
-
 async function setMandatoryPassword() {
-  const newPw = document.getElementById("newPersonalPassword").value;
-  const confirmPw = document.getElementById("confirmPersonalPassword").value;
-  const errDiv = document.getElementById("mandatoryError");
-  
+  const newPw = document.getElementById("newPersonalPassword").value, confirmPw = document.getElementById("confirmPersonalPassword").value, errDiv = document.getElementById("mandatoryError");
   if (!newPw || newPw.length < 8) { errDiv.textContent = "رمز باید حداقل ۸ رقم باشد."; return; }
   if (!/^\d+$/.test(newPw)) { errDiv.textContent = "رمز باید فقط شامل عدد باشد."; return; }
   if (newPw !== confirmPw) { errDiv.textContent = "تکرار رمز مطابقت ندارد."; return; }
   if (newPw === "654321") { errDiv.textContent = "نمی‌توانید از رمز موقت استفاده کنید."; return; }
-  
   errDiv.textContent = "در حال ثبت...";
-  
   try {
     const { error } = await sb.rpc("set_my_password", { p_new_password: newPw });
     if (error) throw error;
-    
-    await sb.from("audit_logs").insert({
-      user_id: pendingUserData.id,
-      action: "تغییر رمز عبور",
-      details: { message: "کاربر رمز عبور اولیه خود را تنظیم کرد." }
-    });
-    
+    await sb.from("audit_logs").insert({ user_id: pendingUserData.id, action: "تغییر رمز عبور", details: { message: "کاربر رمز عبور اولیه خود را تنظیم کرد." } });
     document.getElementById("mandatoryPasswordModal").classList.remove("active");
     alertDlg("✅ رمز شما تنظیم شد. اکنون وارد سیستم می‌شوید.");
-    
     const { data: loginData, error: loginErr } = await sb.auth.signInWithPassword({ email: pendingUserData.email, password: newPw });
     if (loginErr) { alertDlg("خطا در ورود: " + loginErr.message); return; }
-    
-    const { data: p } = await sb.from("profiles").select("*").eq("id", loginData.user.id).single();
-    currentUser = p; isAdmin = !!p.is_admin;
-    await loadAll(); showMain();
-  } catch(e) {
-    errDiv.textContent = "خطا: " + e.message;
-  }
+    const { data: p } = await sb.from("profiles").select("*").eq("id", loginData.user.id).single(); currentUser = p; isAdmin = !!p.is_admin; await loadAll(); showMain();
+  } catch(e) { errDiv.textContent = "خطا: " + e.message; }
 }
-
 async function doLogout() { await sb.auth.signOut(); currentUser = null; isAdmin = false; await loadLoginList(); }
-
 async function openChangePassword() {
   const newPw = await promptDlg("رمز جدید (۸ رقمی):", "");
   if (!newPw || newPw.length < 8) return alertDlg("رمز باید حداقل ۸ رقم باشد.");
@@ -433,11 +296,8 @@ async function openChangePassword() {
     const { error } = await sb.rpc("set_my_password", { p_new_password: newPw });
     if (error) return alertDlg("خطا: " + error.message);
     alertDlg("✅ رمز با موفقیت تغییر کرد.");
-  } catch (e) {
-    alertDlg("خطا: " + e.message);
-  }
+  } catch (e) { alertDlg("خطا: " + e.message); }
 }
-
 async function loadAll() {
   const { data: p } = await sb.from("profiles").select("*").order("name");
   PERSONNEL = (p || []).map(x => ({ id: x.id, name: x.name, req: x.required_hours || 0, is_admin: !!x.is_admin, password_set: x.password_set }));
@@ -447,17 +307,12 @@ async function loadAll() {
   (s || []).forEach(x => { const per = PERSONNEL.find(z => z.id === x.user_id); if (per) state.shifts[`${x.day}|${x.zone}|${x.shift_type}`] = per.name; });
   (l || []).forEach(x => { const per = PERSONNEL.find(z => z.id === x.user_id); if (per) { if (!state.leaves[per.name]) state.leaves[per.name] = {}; state.leaves[per.name][String(x.day)] = true; } });
 }
-
 function renderAll() { renderTable(); renderLeaves(); renderStats(); }
-
 function renderTable() {
   const selectedZone = document.getElementById("zoneFilter").value, zonesToRender = selectedZone === "all" ? ZONES : ZONES.filter(z => z.name === selectedZone), visiblePersonnel = PERSONNEL.filter(p => !p.is_admin);
   const zr = document.getElementById("zoneHeaderRow"); Array.from(zr.children).forEach((el, i) => { if (i >= 2) el.remove(); });
   const sh = document.getElementById("subHeader"); sh.innerHTML = "";
-  zonesToRender.forEach(z => {
-    const th = document.createElement("th"); th.className = z.cls; th.colSpan = z.cols.length; th.textContent = z.name; zr.appendChild(th);
-    z.cols.forEach(c => { const s = document.createElement("th"); s.className = z.cls; s.textContent = c; sh.appendChild(s); });
-  });
+  zonesToRender.forEach(z => { const th = document.createElement("th"); th.className = z.cls; th.colSpan = z.cols.length; th.textContent = z.name; zr.appendChild(th); z.cols.forEach(c => { const s = document.createElement("th"); s.className = z.cls; s.textContent = c; sh.appendChild(s); }); });
   const tb = document.getElementById("tableBody"); tb.innerHTML = "";
   for (let d = 0; d < DAYS; d++) {
     const info = getDayInfo(d), tr = document.createElement("tr"); if (info.isFriday) tr.classList.add("is-friday");
@@ -466,22 +321,15 @@ function renderTable() {
       const td = document.createElement("td"), key = `${d}|${z.name}|${c}`, sel = document.createElement("select");
       sel.className = "s-cell"; sel.dataset.key = key; sel.dataset.day = d; sel.dataset.zone = z.name; sel.dataset.shift = c;
       const owner = state.shifts[key] || "", empty = document.createElement("option"); empty.value = ""; empty.textContent = "—"; sel.appendChild(empty);
-      if (isAdmin) {
-        visiblePersonnel.forEach(p => { const o = document.createElement("option"); o.value = p.name; o.textContent = p.name; sel.appendChild(o); });
-        sel.value = owner; sel.addEventListener("change", () => onShiftChange(sel));
-      } else {
-        if (owner && owner !== currentUser.name) { const taken = document.createElement("option"); taken.value = "__taken__"; taken.textContent = owner; sel.appendChild(taken); sel.value = "__taken__"; sel.disabled = true; sel.classList.add("locked", "taken"); }
-        else { const me = document.createElement("option"); me.value = currentUser.name; me.textContent = currentUser.name; sel.appendChild(me); sel.value = owner; sel.addEventListener("change", () => onShiftChange(sel)); if (owner === currentUser.name) sel.classList.add("mine"); }
-      }
+      if (isAdmin) { visiblePersonnel.forEach(p => { const o = document.createElement("option"); o.value = p.name; o.textContent = p.name; sel.appendChild(o); }); sel.value = owner; sel.addEventListener("change", () => onShiftChange(sel)); }
+      else { if (owner && owner !== currentUser.name) { const taken = document.createElement("option"); taken.value = "__taken__"; taken.textContent = owner; sel.appendChild(taken); sel.value = "__taken__"; sel.disabled = true; sel.classList.add("locked", "taken"); } else { const me = document.createElement("option"); me.value = currentUser.name; me.textContent = currentUser.name; sel.appendChild(me); sel.value = owner; sel.addEventListener("change", () => onShiftChange(sel)); if (owner === currentUser.name) sel.classList.add("mine"); } }
       td.appendChild(sel); tr.appendChild(td);
     }));
     tb.appendChild(tr);
   }
 }
-
 function findPersonShiftOnDay(person, dayIdx) { const arr = []; ZONES.forEach(z => z.cols.forEach(s => { if (state.shifts[`${dayIdx}|${z.name}|${s}`] === person) arr.push(s); })); return arr; }
 function countFridayDays(person) { let c = 0; for (let d = 0; d < DAYS; d++) if (getDayInfo(d).isFriday && findPersonShiftOnDay(person, d).length > 0) c++; return c; }
-
 async function onShiftChange(sel) {
   const key = sel.dataset.key, val = sel.value, d = +sel.dataset.day, zone = sel.dataset.zone, shiftType = sel.dataset.shift, prevOwner = state.shifts[key] || "";
   if (!isAdmin && val && val !== currentUser.name) { alertDlg("فقط شیفت خودتان را تغییر دهید."); sel.value = prevOwner; return; }
@@ -508,7 +356,6 @@ async function onShiftChange(sel) {
     state.shifts[key] = val; sel.classList.toggle("mine", !isAdmin && val === currentUser.name); alertDlg("شیفت ثبت شد."); renderStats();
   } catch (e) { await alertDlg("خطا: " + e.message); sel.value = prevOwner; }
 }
-
 function renderLeaves() {
   const tb = document.getElementById("leaveTableBody"); tb.innerHTML = "";
   const list = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
@@ -526,7 +373,6 @@ function renderLeaves() {
     tb.appendChild(tr);
   });
 }
-
 async function onLeaveChange(person, sel, td) {
   if (!isAdmin && person !== currentUser.name) { sel.value = ""; return; }
   const newDayVal = sel.value, rowSelects = [];
@@ -553,14 +399,12 @@ async function onLeaveChange(person, sel, td) {
     if (!state.leaves[person]) state.leaves[person] = {}; state.leaves[person][String(dayIdx)] = true; renderStats(); alertDlg("مرخصی ثبت شد.");
   } catch (e) { await alertDlg("خطا: " + e.message); sel.value = ""; }
 }
-
 function calcShiftHours(type, dayIdx, req) {
   const base = HOURS[type], is184 = req === 184, info = getDayInfo(dayIdx), nxt = getDayInfo(dayIdx + 1);
   if (type === "صبح" || type === "عصر") { if (info.isFriday) return { total: base * 1.5, holiday: base * 0.5 }; return { total: base, holiday: 0 }; }
   let h = 0; if (is184) { if (nxt.isFriday) h = 7.5; else if (info.isFriday) h = 4.5; } else { if (info.isFriday) h = 12; }
   return { total: base + h * 0.5, holiday: h * 0.5 };
 }
-
 function renderStats() {
   const tb = document.getElementById("statsBody"); tb.innerHTML = "";
   const list = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
@@ -576,7 +420,6 @@ function renderStats() {
     tb.appendChild(tr);
   });
 }
-
 function switchTab(n, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -584,7 +427,6 @@ function switchTab(n, btn) {
   btn.classList.add('active');
   document.getElementById("zoneFilterBox").classList.toggle("active", n === 'shifts');
 }
-
 function openStaff() { if (!isAdmin) return alertDlg("دسترسی غیرمجاز."); renderStaffList(); document.getElementById("staffModal").classList.add("active"); }
 function renderStaffList() {
   const l = document.getElementById("staffList"); l.innerHTML = "";
@@ -603,7 +445,6 @@ function renderStaffList() {
     await sb.from("profiles").delete().eq("id", p.id); await loadAll(); renderStaffList(); renderAll();
   }));
 }
-
 function openLogs() { if (!isAdmin) return alertDlg("دسترسی غیرمجاز."); loadLogs(); document.getElementById("logsModal").classList.add("active"); }
 async function loadLogs() {
   const b = document.getElementById("logsBody"); b.innerHTML = "<div style='text-align:center;padding:20px;'>در حال بارگذاری...</div>";
@@ -619,7 +460,6 @@ async function loadLogs() {
     }).join('') + "</div>";
   } catch (e) { b.innerHTML = "<p style='color:red;text-align:center;padding:20px;'>خطا: " + e.message + "</p>"; }
 }
-
 function openExcel() {
   if (typeof XLSX === "undefined") { alertDlg("کتابخانه اکسل بارگذاری نشد."); return; }
   if (PERSONNEL.length === 0) { alertDlg("پرسنل خالی است."); return; }
@@ -629,7 +469,6 @@ function openExcel() {
   const ZONE_HEADER_BG = { "بهارستان ۱": "0369A1", "بهارستان ۲": "15803D", "بهارستان ۳": "C2410C", "نجمه خاتون": "A16207", "گلشن": "6B21A8" };
   function styleCell(ws, r, c, st) { const ref = XLSX.utils.encode_cell({ r, c }); if (!ws[ref]) ws[ref] = { v: "", t: "s" }; ws[ref].s = st; }
   function applyRange(ws, r1, c1, r2, c2, st) { for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) styleCell(ws, r, c, st); }
-  
   const sheet1 = [["روز", "تاریخ"]]; zonesToExport.forEach(z => z.cols.forEach(() => sheet1[0].push(z.name)));
   const row2 = ["", ""]; zonesToExport.forEach(z => z.cols.forEach(c => row2.push(c))); sheet1.push(row2);
   for (let d = 0; d < DAYS; d++) { const info = getDayInfo(d); const row = [info.weekday, `${info.jDay} ${info.jMonth}`]; zonesToExport.forEach(zone => zone.cols.forEach(shiftType => { const person = state.shifts[`${d}|${zone.name}|${shiftType}`] || ""; if (!isAdmin && person && person !== currentUser.name) row.push("—"); else row.push(person); })); sheet1.push(row); }
@@ -639,10 +478,8 @@ function openExcel() {
   let col = 2; zonesToExport.forEach(zone => { const bg = ZONE_HEADER_BG[zone.name] || "1E293B"; const st = { font: ST.fontHeader, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }; for (let i = 0; i < zone.cols.length; i++) { styleCell(ws1, 0, col + i, st); styleCell(ws1, 1, col + i, st); } col += zone.cols.length; });
   for (let d = 0; d < DAYS; d++) { const info = getDayInfo(d); const rowBg = info.isFriday ? "FEF3C7" : "FFFFFF"; const dayFontColor = info.isFriday ? "DC2626" : "1E293B"; styleCell(ws1, d + 2, 0, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: dayFontColor } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); styleCell(ws1, d + 2, 1, { font: { name: "Vazirmatn", sz: 10, color: { rgb: "64748B" } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); for (let c = 2; c < row2.length; c++) { styleCell(ws1, d + 2, c, { font: ST.fontBold, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); } }
   ws1["!freeze"] = { xSplit: 2, ySplit: 2 }; XLSX.utils.book_append_sheet(wb, ws1, selectedZone === "all" ? "کل شیفت‌ها" : `شیفت ${selectedZone}`);
-
   const m = {}, e = {}, n = {}, h = {}, lc = {}; PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; }); Object.keys(state.leaves).forEach(per => { if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length; });
   for (let d = 0; d < DAYS; d++) { ZONES.forEach(z => z.cols.forEach(t => { const person = state.shifts[`${d}|${z.name}|${t}`]; if (!person) return; const p = PERSONNEL.find(x => x.name === person); if (!p) return; const { holiday } = calcShiftHours(t, d, p.req); h[person] += holiday; if (t === "صبح") m[person] += HOURS[t]; else if (t === "عصر") e[person] += HOURS[t]; else n[person] += HOURS[t]; })); }
-
   const sheet2 = [["نام", "موظفی", "صبح", "عصر", "شب", "تعطیلات", "مرخصی", "کارکرد کل", "اضافه کار", "کسری کار"]];
   const statList = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
   statList.forEach(p => { const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name], lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100; const total = Math.round((ts + lh) * 10) / 10, diff = Math.round((total - p.req) * 10) / 10; sheet2.push([p.name, p.req, m[p.name], e[p.name], n[p.name], Math.round(h[p.name] * 10) / 10, lh, total, diff > 0 ? diff : 0, diff < 0 ? Math.abs(diff) : 0]); });
@@ -650,7 +487,6 @@ function openExcel() {
   applyRange(ws2, 0, 0, 0, 9, { font: ST.fontHeader, fill: { fgColor: { rgb: "0F172A" } }, border: ST.border, alignment: ST.alignCenter });
   for (let r = 1; r <= statList.length; r++) { const bg = r % 2 === 0 ? "F8FAFC" : "FFFFFF"; applyRange(ws2, r, 0, r, 9, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }); styleCell(ws2, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight }); if (sheet2[r][8] > 0) styleCell(ws2, r, 8, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "059669" } }, fill: { fgColor: { rgb: "D1FAE5" } }, border: ST.border, alignment: ST.alignCenter }); if (sheet2[r][9] > 0) styleCell(ws2, r, 9, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "DC2626" } }, fill: { fgColor: { rgb: "FEE2E2" } }, border: ST.border, alignment: ST.alignCenter }); }
   ws2["!freeze"] = { ySplit: 1 }; XLSX.utils.book_append_sheet(wb, ws2, "آمار کارکرد");
-
   const sheet3 = [["نام", "مرخصی ۱", "مرخصی ۲", "مرخصی ۳", "مرخصی ۴", "مرخصی ۵", "تعداد کل"]];
   const leaveList = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
   leaveList.forEach(p => { const leaves = state.leaves[p.name] || {}, days = Object.keys(leaves).map(Number).sort((a, b) => a - b); const row = [p.name]; for (let i = 0; i < 5; i++) { if (days[i] !== undefined) { const info = getDayInfo(days[i]); row.push(`${info.weekday} ${info.jDay} ${info.jMonth}`); } else { row.push("—"); } } row.push(days.length); sheet3.push(row); });
@@ -658,10 +494,8 @@ function openExcel() {
   applyRange(ws3, 0, 0, 0, 6, { font: ST.fontHeader, fill: { fgColor: { rgb: "7C2D12" } }, border: ST.border, alignment: ST.alignCenter });
   for (let r = 1; r <= leaveList.length; r++) { const bg = r % 2 === 0 ? "FFF7ED" : "FFFFFF"; applyRange(ws3, r, 0, r, 6, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }); styleCell(ws3, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight }); }
   ws3["!freeze"] = { ySplit: 1 }; XLSX.utils.book_append_sheet(wb, ws3, "مرخصی‌ها");
-
   const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" }); const blob = new Blob([wbout], { type: "application/octet-stream" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = selectedZone === "all" ? `گزارش-شیفت-${MONTH}-۱۴۰۵.xlsx` : `گزارش-شیفت-${selectedZone}-${MONTH}-۱۴۰۵.xlsx`; a.click(); URL.revokeObjectURL(a.href); alertDlg("فایل اکسل دانلود شد.");
 }
-
 window.addEventListener("load", init);
 </script>
 </body>
