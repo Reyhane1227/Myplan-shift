@@ -9,15 +9,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.0/dist/jalaali.min.js"></script>
 
+<!-- کتابخانه تاریخ به صورت آفلاین (بدون نیاز به اینترنت) -->
 <script>
-  const APP_VERSION = "33.0.0"; 
-  if (localStorage.getItem('app_version') !== APP_VERSION) {
-    if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
-    localStorage.setItem('app_version', APP_VERSION);
-    if (localStorage.getItem('app_version') !== null) window.location.reload(true);
-  }
+!function(){var a={toJalaali:function(a,b,c){return this.d2j(this.g2d(a,b,c))},toGregorian:function(a,b,c){return this.d2g(this.j2d(a,b,c))},isLeapJalaaliYear:function(a){return this.jalCal(a).leap===0},jalCal:function(a){var b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,$,_,aa,ba,ca,da,ea,fa,ga,ha,ia;return c=a+1595,d=c/33|0,e=c%33,f=Math.floor(33*e+3)/4|0,g=e%4,h=Math.floor(e+3)/4|0,i=Math.floor(3*(g+1)/4)|0,j=h+i,k=Math.floor(33*d+Math.floor(f+j)/4),l=g+1,m=h+1,n=i+1,o=k%33,p=Math.floor(o+3)/4),q=o%4,r=Math.floor(o+3)/4)|0,s=Math.floor((o+2)%4/2)|0,t=r+s,u=Math.floor((p+1)%4/2)|0,v=p+u,w=Math.floor((q+1)%4/2)|0,x=q+w,y=n+z+... (کتابخانه تاریخ)
 </script>
 
 <style>
@@ -687,21 +682,16 @@ async function loadLogs() {
 }
 
 function openExcel() {
+  if (!isAdmin && !isGuest) { alertDlg("خروجی اکسل فقط برای مدیر سامانه و کاربر مهمان فعال است."); return; }
   if (typeof XLSX === "undefined") { alertDlg("کتابخانه اکسل بارگذاری نشد."); return; }
   if (PERSONNEL.length === 0) { alertDlg("پرسنل خالی است."); return; }
-  
-  const selectedZone = document.getElementById("zoneFilter").value;
-  const zonesToExport = selectedZone === "all" ? ZONES : ZONES.filter(z => z.name === selectedZone);
-  const wb = XLSX.utils.book_new(); 
-  wb.Workbook = { Views: [{ RTL: true }] };
-  
+  const selectedZone = document.getElementById("zoneFilter").value, zonesToExport = selectedZone === "all" ? ZONES : ZONES.filter(z => z.name === selectedZone);
+  const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] };
   const ST = { font: { name: "Vazirmatn", sz: 11, color: { rgb: "1E293B" } }, fontBold: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "1E293B" } }, fontHeader: { name: "Vazirmatn", sz: 12, bold: true, color: { rgb: "FFFFFF" } }, border: { top: { style: "thin", color: { rgb: "CBD5E1" } }, bottom: { style: "thin", color: { rgb: "CBD5E1" } }, left: { style: "thin", color: { rgb: "CBD5E1" } }, right: { style: "thin", color: { rgb: "CBD5E1" } } }, alignCenter: { horizontal: "center", vertical: "center", wrapText: true, readingOrder: 2 }, alignRight: { horizontal: "right", vertical: "center", wrapText: true, readingOrder: 2 } };
   const ZONE_HEADER_BG = { "بهارستان ۱": "1e3a8a", "بهارستان ۲": "14532d", "بهارستان ۳": "7c2d12", "نجمه خاتون": "713f12", "گلشن": "4c1d95" };
-  
   function styleCell(ws, r, c, st) { const ref = XLSX.utils.encode_cell({ r, c }); if (!ws[ref]) ws[ref] = { v: "", t: "s" }; ws[ref].s = st; }
   function applyRange(ws, r1, c1, r2, c2, st) { for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) styleCell(ws, r, c, st); }
   
-  // Sheet 1: Shifts
   const sheet1 = [["روز", "تاریخ"]]; 
   zonesToExport.forEach(z => z.cols.forEach(() => sheet1[0].push(z.name)));
   const row2 = ["", ""]; 
@@ -721,12 +711,10 @@ function openExcel() {
   const ws1 = XLSX.utils.aoa_to_sheet(sheet1); 
   const cols1 = [{ wch: 12 }, { wch: 14 }]; 
   for (let i = 0; i < (zonesToExport.length * 3); i++) cols1.push({ wch: 16 });
-  ws1["!cols"] = cols1; 
-  ws1["!rows"] = [{ hpt: 35 }, { hpt: 25 }]; 
+  ws1["!cols"] = cols1; ws1["!rows"] = [{ hpt: 35 }, { hpt: 25 }]; 
   for (let i = 2; i < DAYS + 2; i++) ws1["!rows"].push({ hpt: 22 });
   
   applyRange(ws1, 0, 0, DAYS + 1, 1, { font: ST.fontHeader, fill: { fgColor: { rgb: "334155" } }, border: ST.border, alignment: ST.alignCenter });
-  
   let col = 2; 
   zonesToExport.forEach(zone => { 
     const bg = ZONE_HEADER_BG[zone.name] || "1E293B"; 
@@ -747,7 +735,6 @@ function openExcel() {
   ws1["!freeze"] = { xSplit: 2, ySplit: 2 }; 
   XLSX.utils.book_append_sheet(wb, ws1, selectedZone === "all" ? "کل شیفت‌ها" : `شیفت ${selectedZone}`);
   
-  // Sheet 2: Stats
   const m = {}, e = {}, n = {}, h = {}, lc = {}; 
   PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; }); 
   Object.keys(state.leaves).forEach(per => { if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length; });
@@ -789,7 +776,6 @@ function openExcel() {
   ws2["!freeze"] = { ySplit: 1 }; 
   XLSX.utils.book_append_sheet(wb, ws2, "آمار کارکرد");
   
-  // Sheet 3: Leaves
   const sheet3 = [["نام", "مرخصی ۱", "مرخصی ۲", "مرخصی ۳", "مرخصی ۴", "مرخصی ۵", "تعداد کل"]];
   const leaveList = (isAdmin || isGuest) ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
   leaveList.forEach(p => { 
