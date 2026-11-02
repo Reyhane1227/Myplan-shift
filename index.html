@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.0/dist/jalaali.min.js"></script>
 
 <script>
-  const APP_VERSION = "26.0.0"; 
+  const APP_VERSION = "27.0.0"; 
   const savedVersion = localStorage.getItem('app_version');
   if (savedVersion !== APP_VERSION) {
     if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
@@ -376,7 +376,6 @@ async function doLogin() {
   
   currentUser = p; isAdmin = !!p.is_admin;
   
-  // اگر رمز 654321 بود یا رمز تنظیم نشده بود، به صفحه تنظیم رمز برو
   if ((pass === "654321" || !p.password_set) && !p.is_admin) {
     pendingUserData = { id: p.id, name: p.name, email: email };
     err.textContent = "";
