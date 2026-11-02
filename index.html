@@ -7,12 +7,10 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-<!-- استفاده از کتابخانه رسمی Supabase برای اتصال پایدارتر -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  const APP_VERSION = "42.0.0"; 
+  const APP_VERSION = "43.0.0"; 
   if (localStorage.getItem('app_version') !== APP_VERSION) {
     if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
     localStorage.setItem('app_version', APP_VERSION);
@@ -270,7 +268,7 @@ function toGregorian(jy, jm, jd) {
 }
 
 // ==========================================
-// تنظیمات Supabase (با استفاده از کتابخانه رسمی)
+// تنظیمات Supabase
 // ==========================================
 const SUPABASE_URL = "https://gicnlpxzbchnjmawjtry.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY25scHh6YmNobmptYXdqdHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNTEwNTEsImV4cCI6MjEwODgyNzA1MX0.d6fgrBVmSoZ13KVzQg1m9V4DBwhR4aQNpf-ImfSPmVo";
@@ -404,23 +402,57 @@ function showMain() {
 }
 
 async function doLogin() {
-  const name = document.getElementById("loginName").value, pass = document.getElementById("loginPassword").value, err = document.getElementById("loginError");
-  if (!name || !pass) { err.textContent = "نام و رمز را وارد کنید"; return; }
-  err.textContent = "در حال بررسی...";
-  const email = emailMap[name];
-  if (!email) { err.textContent = "نام کاربری یافت نشد."; return; }
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) { err.textContent = "رمز عبور اشتباه است."; return; }
-  const { data: p } = await sb.from("profiles").select("*").eq("id", data.user.id).single();
-  if (!p) { err.textContent = "پروفایل یافت نشد."; return; }
-  currentUser = p; isAdmin = !!p.is_admin; isGuest = (p.name === "کاربر مهمان");
+  const name = document.getElementById("loginName").value;
+  const pass = document.getElementById("loginPassword").value;
+  const err = document.getElementById("loginError");
+  const btn = document.getElementById("loginBtn");
+
+  if (!name || !pass) { err.textContent = "نام کاربری و رمز عبور را وارد کنید"; return; }
   
-  if ((pass === "654321" || !p.password_set) && !p.is_admin && !isGuest) { 
-    pendingUserData = { id: p.id, name: p.name, email: email }; err.textContent = ""; 
-    document.getElementById("loginScreen").style.display = "none"; 
-    document.getElementById("mandatoryPasswordModal").classList.add("active"); return; 
+  err.style.color = "#2563eb";
+  err.textContent = "در حال بررسی اطلاعات...";
+  btn.disabled = true;
+  btn.textContent = "لطفاً صبر کنید...";
+
+  try {
+    const email = emailMap[name];
+    if (!email) throw new Error("ایمیل این کاربر در سیستم تعریف نشده است.");
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    
+    if (error) {
+      if (error.status === 400 || error.status === 401 || error.message.includes("Invalid")) {
+        throw new Error("رمز عبور اشتباه است. (اگر رمز پیش‌فرض است، 654321 را وارد کنید)");
+      }
+      throw new Error(error.message);
+    }
+
+    const { data: p, error: profileErr } = await sb.from("profiles").select("*").eq("id", data.user.id).single();
+    if (profileErr || !p) throw new Error("پروفایل کاربر در دیتابیس یافت نشد.");
+
+    currentUser = p; 
+    isAdmin = !!p.is_admin; 
+    isGuest = (p.name === "کاربر مهمان");
+
+    if ((pass === "654321" || !p.password_set) && !p.is_admin && !isGuest) { 
+      pendingUserData = { id: p.id, name: p.name, email: email }; 
+      err.textContent = ""; 
+      document.getElementById("loginScreen").style.display = "none"; 
+      document.getElementById("mandatoryPasswordModal").classList.add("active"); 
+      return; 
+    }
+
+    err.textContent = ""; 
+    await loadAll(); 
+    showMain();
+
+  } catch (e) {
+    err.style.color = "#b91c1c";
+    err.textContent = e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "ورود به سیستم";
   }
-  err.textContent = ""; await loadAll(); showMain();
 }
 
 async function setMandatoryPassword() {
@@ -708,10 +740,13 @@ async function loadLogs() {
   } catch (e) { b.innerHTML = "<p style='color:red;text-align:center;padding:20px;'>خطا: " + e.message + "</p>"; }
 }
 
+// ==========================================
+// تغییر یافته: خروجی CSV برای همه کاربران
+// ==========================================
 function openExcel() {
-  if (!isAdmin && !isGuest) { alertDlg("خروجی CSV فقط برای مدیر سامانه و کاربر مهمان فعال است."); return; }
+  // حذف شرط محدودکننده برای کاربران عادی
   
-  let csvContent = "\uFEFF"; 
+  let csvContent = "\uFEFF"; // برای نمایش صحیح فارسی در اکسل
   csvContent += "روز,تاریخ";
   ZONES.forEach(z => z.cols.forEach(c => csvContent += `,${z.name} (${c})`));
   csvContent += "\n";
@@ -722,7 +757,15 @@ function openExcel() {
     ZONES.forEach(z => z.cols.forEach(c => {
       const key = `${d}|${z.name}|${c}`;
       const person = state.shifts[key] || "";
-      csvContent += (person ? `,${person}` : ",-");
+      
+      // منطق فیلتر کردن داده‌ها بر اساس سطح دسترسی
+      if (isAdmin || isGuest) {
+        // مدیر و مهمان: همه شیفت‌ها را می‌بینند
+        csvContent += (person ? `,${person}` : ",-");
+      } else {
+        // کاربر عادی: فقط شیفت‌های خودش را می‌بیند (بقیه خالی می‌مانند)
+        csvContent += (person === currentUser.name ? `,${person}` : ",-");
+      }
     }));
     csvContent += "\n";
   }
