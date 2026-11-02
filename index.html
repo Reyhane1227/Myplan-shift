@@ -9,123 +9,186 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.0/dist/jalaali.min.js"></script>
 <style>
-:root{--bg-body:#f1f5f9;--bg-card:#fff;--bg-header-grad:linear-gradient(135deg,#1e293b,#0f172a);--text-main:#0f172a;--text-muted:#64748b;--border-color:#e2e8f0;--th-bg:#f8fafc;--input-bg:#fff;--primary:#3b82f6;--danger:#ef4444;--warn:#f59e0b;--ok:#10b981;--shadow-md:0 4px 12px rgba(15,23,42,.08);--shadow-lg:0 10px 30px rgba(15,23,42,.12);--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--transition:all .2s}
-body.dark-mode{--bg-body:#0f172a;--bg-card:#1e293b;--bg-header-grad:linear-gradient(135deg,#1e293b,#020617);--text-main:#f1f5f9;--text-muted:#94a3b8;--border-color:#334155;--th-bg:#0f172a;--input-bg:#0f172a;--primary:#60a5fa}
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Vazirmatn',Tahoma,sans-serif}
-body{background:var(--bg-body);color:var(--text-main);padding:10px;min-height:100vh;line-height:1.6;font-size:13px;transition:background .3s,color .3s}
+:root{
+  --bg-body:#f4f7f6;
+  --bg-card:#ffffff;
+  --bg-header:linear-gradient(135deg, #0f172a, #1e293b);
+  --text-main:#1e293b;
+  --text-muted:#64748b;
+  --border:#e2e8f0;
+  --primary:#3b82f6;
+  --primary-hover:#2563eb;
+  --danger:#ef4444;
+  --warn:#f59e0b;
+  --ok:#10b981;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.05);
+  --shadow-md:0 4px 15px rgba(0,0,0,0.05);
+  --shadow-lg:0 10px 25px rgba(0,0,0,0.1);
+  --radius:12px;
+  --radius-sm:8px;
+}
+body.dark-mode{
+  --bg-body:#0f172a;
+  --bg-card:#1e293b;
+  --bg-header:linear-gradient(135deg, #020617, #1e293b);
+  --text-main:#f8fafc;
+  --text-muted:#94a3b8;
+  --border:#334155;
+  --primary:#60a5fa;
+  --primary-hover:#3b82f6;
+  --shadow-md:0 4px 15px rgba(0,0,0,0.3);
+  --shadow-lg:0 10px 25px rgba(0,0,0,0.4);
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Vazirmatn',sans-serif}
+body{background:var(--bg-body);color:var(--text-main);min-height:100vh;padding:16px;font-size:14px;transition:background .3s,color .3s}
 .container{max-width:1400px;margin:0 auto}
-.app-header{background:var(--bg-header-grad);color:#fff;padding:14px 18px;border-radius:var(--radius-lg);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;box-shadow:var(--shadow-lg)}
-.app-header h1{font-size:16px;font-weight:900;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.admin-badge{display:none;font-size:11px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;padding:4px 10px;border-radius:20px}
+
+/* Header */
+.app-header{background:var(--bg-header);color:#fff;padding:16px 20px;border-radius:var(--radius);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;box-shadow:var(--shadow-lg);margin-bottom:24px}
+.app-header h1{font-size:18px;font-weight:900;display:flex;align-items:center;gap:10px}
+.admin-badge{display:none;font-size:12px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#78350f;padding:4px 12px;border-radius:20px;font-weight:700}
 body.is-admin .admin-badge{display:inline-flex}
-body.is-admin .admin-only{display:inline-flex!important}
-.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.tool-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;width:40px;height:40px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;transition:var(--transition)}
-.tool-btn:hover{background:rgba(255,255,255,.2);transform:translateY(-2px)}
-.tool-btn.danger{background:rgba(239,68,68,.3)}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tool-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;width:42px;height:42px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;transition:all 0.2s}
+.tool-btn:hover{background:rgba(255,255,255,0.25);transform:translateY(-2px)}
 .tool-btn.admin-only{display:none}
-.user-info{background:rgba(255,255,255,.1);padding:6px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
-.alert-box,.warn-box{display:none;padding:14px 18px;border-radius:var(--radius-md);margin-bottom:14px;font-size:13px;font-weight:700;box-shadow:var(--shadow-md);position:sticky;top:12px;z-index:100;border-right:5px solid}
-.alert-box{background:#fef2f2;color:#991b1b;border-right-color:var(--danger)}
-.warn-box{background:#fffbeb;color:#92400e;border-right-color:var(--warn)}
-body.dark-mode .alert-box{background:#450a0a;color:#fecaca}
-body.dark-mode .warn-box{background:#451a03;color:#fde68a}
-.tabs-nav{display:flex;gap:6px;margin-bottom:16px;background:var(--bg-card);padding:6px;border-radius:var(--radius-md);border:1px solid var(--border-color);overflow-x:auto}
-.tab-btn{flex:1;min-width:120px;padding:11px 14px;border:none;background:transparent;color:var(--text-muted);font-family:inherit;font-size:13px;font-weight:800;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);white-space:nowrap}
-.tab-btn.active{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff}
-.tab-panel{display:none}.tab-panel.active{display:block}
-.table-container{background:var(--bg-card);border-radius:var(--radius-md);box-shadow:var(--shadow-md);border:1px solid var(--border-color);overflow-x:auto;margin-bottom:18px}
-table.main-table{width:100%;border-collapse:separate;border-spacing:0;text-align:center;font-size:12px}
-th,td{border-bottom:1px solid var(--border-color);border-left:1px solid var(--border-color);padding:8px 4px}
+body.is-admin .tool-btn.admin-only{display:flex}
+.user-info{background:rgba(255,255,255,0.15);padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;backdrop-filter:blur(4px)}
+
+/* Tabs */
+.tabs-nav{display:flex;gap:8px;margin-bottom:24px;background:var(--bg-card);padding:8px;border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow-x:auto}
+.tab-btn{flex:1;min-width:130px;padding:12px;border:none;background:transparent;color:var(--text-muted);font-size:14px;font-weight:700;border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s}
+.tab-btn:hover{background:rgba(59,130,246,0.05)}
+.tab-btn.active{background:var(--primary);color:#fff;box-shadow:0 4px 10px rgba(59,130,246,0.3)}
+.tab-panel{display:none;animation:fadeIn 0.3s ease}
+.tab-panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* Tables */
+.table-wrapper{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-md);border:1px solid var(--border);overflow-x:auto;margin-bottom:24px}
+table{width:100%;border-collapse:separate;border-spacing:0;text-align:center}
+th,td{border-bottom:1px solid var(--border);border-left:1px solid var(--border);padding:10px 6px}
 th:last-child,td:last-child{border-left:none}
-th{font-weight:900;font-size:12px;background:var(--th-bg);position:sticky;top:0;z-index:2}
-thead tr:nth-child(2) th{top:36px}
-.day-cell{font-weight:900;width:70px;white-space:nowrap}
-.date-cell{font-size:11px;width:70px;color:var(--text-muted);white-space:nowrap}
-tr.is-friday td{background:linear-gradient(90deg,#fef3c7,#fffbeb)}
-body.dark-mode tr.is-friday td{background:linear-gradient(90deg,#422006,#1e293b)}
+th{background:#f8fafc;color:var(--text-muted);font-weight:700;font-size:13px;position:sticky;top:0;z-index:2}
+body.dark-mode th{background:#0f172a}
+.day-cell{font-weight:800;width:80px;white-space:nowrap;color:var(--text-main)}
+.date-cell{font-size:12px;width:80px;color:var(--text-muted);white-space:nowrap}
+tr.is-friday td{background:rgba(254,243,199,0.4)}
+body.dark-mode tr.is-friday td{background:rgba(69,26,3,0.4)}
 tr.is-friday .day-cell,tr.is-friday .date-cell{color:#dc2626;font-weight:900}
-.bg-z1{background:#e0f2fe!important;color:#0369a1!important}
-.bg-z2{background:#dcfce7!important;color:#15803d!important}
-.bg-z3{background:#ffedd5!important;color:#c2410c!important}
-.bg-z4{background:#fef9c3!important;color:#a16207!important}
-.bg-z5{background:#f3e8ff!important;color:#6b21a8!important}
-select.s-cell{width:100%;height:36px;border:1px solid transparent;background:transparent;font-family:inherit;font-size:11px;font-weight:700;text-align:center;text-align-last:center;outline:none;cursor:pointer;appearance:none;border-radius:6px;padding:0 4px}
-select.s-cell.mine{background:linear-gradient(135deg,#bbf7d0,#86efac)!important;color:#166534!important;border-color:#22c55e}
-select.s-cell.locked{opacity:.5;cursor:not-allowed;background:#f1f5f9!important}
+
+/* Zone Colors */
+.bg-z1{background:#e0f2fe;color:#0369a1}
+.bg-z2{background:#dcfce7;color:#15803d}
+.bg-z3{background:#ffedd5;color:#c2410c}
+.bg-z4{background:#fef9c3;color:#a16207}
+.bg-z5{background:#f3e8ff;color:#6b21a8}
+body.dark-mode .bg-z1{background:#0c4a6e;color:#e0f2fe}
+body.dark-mode .bg-z2{background:#064e3b;color:#dcfce7}
+body.dark-mode .bg-z3{background:#7c2d12;color:#ffedd5}
+body.dark-mode .bg-z4{background:#713f12;color:#fef9c3}
+body.dark-mode .bg-z5{background:#4c1d95;color:#f3e8ff}
+
+/* Selects in table */
+select.s-cell{width:100%;height:38px;border:2px solid transparent;background:transparent;font-family:inherit;font-size:12px;font-weight:700;text-align:center;text-align-last:center;outline:none;cursor:pointer;appearance:none;border-radius:6px;padding:0 4px;transition:all 0.2s}
+select.s-cell:hover{background:rgba(0,0,0,0.02)}
+select.s-cell.mine{background:#bbf7d0;color:#166534;border-color:#22c55e}
+body.dark-mode select.s-cell.mine{background:#064e3b;color:#a7f3d0;border-color:#10b981}
+select.s-cell.locked{opacity:0.6;cursor:not-allowed;background:rgba(0,0,0,0.05)}
 select.s-cell.taken{color:#dc2626;font-weight:900}
-.section-box{background:var(--bg-card);border-radius:var(--radius-md);padding:16px;margin-top:18px;border:1px solid var(--border-color);box-shadow:var(--shadow-md)}
-.section-box h3{font-size:14px;margin-bottom:14px;color:var(--primary);border-bottom:2px solid var(--border-color);padding-bottom:10px;font-weight:900}
-.leave-table-wrapper,.stats-table-wrapper{overflow-x:auto;border-radius:var(--radius-sm)}
-table.leave-table,table.stats-table{width:100%;border-collapse:separate;border-spacing:0;text-align:center;font-size:11px;min-width:500px}
-table.leave-table th,table.stats-table th{background:var(--th-bg);padding:10px 6px;border-bottom:2px solid var(--border-color);font-size:11px;font-weight:900}
-table.stats-table th{background:var(--bg-header-grad);color:#fff;position:sticky;top:0}
-table.leave-table td,table.stats-table td{padding:6px;border-bottom:1px solid var(--border-color)}
-.leave-name-cell,.stat-name{font-weight:900;text-align:right;padding-right:12px!important;color:var(--primary);white-space:nowrap;font-size:12px}
-.leave-select{width:100%;height:34px;border:1px solid var(--border-color);border-radius:6px;font-family:inherit;font-size:11px;text-align:center;outline:none;background:var(--bg-body);color:var(--text-main);padding:0 4px;cursor:pointer}
-.leave-select.locked{opacity:.6;cursor:not-allowed}
-.val-plus{color:#059669;font-weight:900;background:#d1fae5;border-radius:4px}
-.val-minus{color:#dc2626;font-weight:900;background:#fee2e2;border-radius:4px}
-body.dark-mode .val-plus{background:#064e3b;color:#a7f3d0}
-body.dark-mode .val-minus{background:#7f1d1d;color:#fecaca}
-.modal-overlay,.dialog-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:1000;justify-content:center;align-items:center;padding:15px;backdrop-filter:blur(8px)}
-.modal-overlay.active,.dialog-overlay.active{display:flex}
-.dialog-overlay{z-index:2000}
-.modal-content{background:var(--bg-card);color:var(--text-main);width:100%;max-width:600px;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);overflow:hidden;max-height:90vh;display:flex;flex-direction:column}
-.modal-header{background:var(--bg-header-grad);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
-.modal-header h2{font-size:15px;font-weight:900}
-.modal-close{background:rgba(255,255,255,.1);border:none;color:#fff;font-size:22px;cursor:pointer;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center}
-.modal-body{padding:20px;overflow-y:auto;font-size:13px;line-height:1.8}
-.staff-list{margin-top:15px;display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto}
-.staff-item{display:flex;justify-content:space-between;align-items:center;background:var(--th-bg);padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--border-color);gap:8px;flex-wrap:wrap}
-.staff-item .staff-info{flex:1;min-width:100px;font-size:13px;font-weight:700}
-.staff-item input.req-input{width:70px;padding:6px;border:1px solid var(--border-color);border-radius:6px;font-family:inherit;font-size:12px;background:var(--input-bg);color:var(--text-main);text-align:center;font-weight:700}
-.btn-del{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;font-size:12px}
-body.dark-mode .btn-del{background:#7f1d1d;color:#fecaca;border-color:#dc2626}
-.dialog-box{background:var(--bg-card);color:var(--text-main);border-radius:var(--radius-md);max-width:420px;width:100%;padding:24px;box-shadow:var(--shadow-lg)}
-.dialog-box h3{font-size:16px;margin-bottom:10px;font-weight:900}
-.dialog-box p{font-size:13px;margin-bottom:16px;color:var(--text-muted);white-space:pre-line;line-height:1.8}
-.dialog-box input{width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;margin-bottom:14px;background:var(--input-bg);color:var(--text-main);outline:none}
-.dialog-actions{display:flex;gap:10px;justify-content:flex-start}
-.dialog-actions button{padding:10px 20px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:13px}
-.btn-primary{background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff}
-.btn-cancel{background:var(--th-bg);color:var(--text-main);border:1px solid var(--border-color)}
-.btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff}
-.login-box{max-width:420px;margin:40px auto;background:var(--bg-card);padding:28px 24px;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);border:1px solid var(--border-color)}
-.login-box h2{font-size:18px;text-align:center;margin-bottom:20px;color:var(--primary)}
-.login-box label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;margin-top:14px}
-.login-box select,.login-box input{width:100%;padding:11px 14px;border:1px solid var(--border-color);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--input-bg);color:var(--text-main);outline:none}
-.login-box button{width:100%;padding:12px;margin-top:20px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;font-weight:700;font-size:14px;cursor:pointer}
-.login-box .forgot-link{display:block;text-align:center;margin-top:14px;font-size:12px;color:var(--primary);cursor:pointer;text-decoration:underline}
-.login-box .error-msg{color:var(--danger);font-size:12px;font-weight:700;margin-top:10px;text-align:center;min-height:18px}
-.info-banner{background:linear-gradient(135deg,#eff6ff,#dbeafe);color:#1e40af;padding:12px 14px;border-radius:var(--radius-sm);margin-bottom:14px;font-size:12px;border-right:4px solid var(--primary);line-height:1.7;font-weight:600}
-body.dark-mode .info-banner{background:linear-gradient(135deg,#1e3a8a,#1e40af);color:#bfdbfe}
-.recovery-input{width:100%;padding:11px;border:1px solid var(--border-color);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--input-bg);color:var(--text-main);outline:none;margin-bottom:12px}
-.otp-input{direction:ltr;text-align:center;letter-spacing:6px;font-size:18px;font-weight:700}
-@media(min-width:768px){body{padding:20px;font-size:14px}.app-header h1{font-size:19px}.tool-btn{width:42px;height:42px}}
-@media print{.app-header,.tool-btn,.modal-overlay,.dialog-overlay,.tabs-nav,.controls{display:none!important}.tab-panel{display:block!important}body{background:#fff;color:#000}}
+
+/* Cards & Sections */
+.section-card{background:var(--bg-card);border-radius:var(--radius);padding:24px;margin-bottom:24px;border:1px solid var(--border);box-shadow:var(--shadow-md)}
+.section-card h3{font-size:16px;margin-bottom:20px;color:var(--primary);display:flex;align-items:center;gap:8px;border-bottom:2px solid var(--border);padding-bottom:12px}
+
+/* Leave Selects */
+table.leave-table select{width:100%;height:36px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;text-align:center;background:var(--bg-body);color:var(--text-main);outline:none;cursor:pointer}
+table.leave-table select:focus{border-color:var(--primary)}
+table.stats-table th{background:var(--bg-header);color:#fff}
+.leave-name-cell,.stat-name{font-weight:800;text-align:right;padding-right:16px!important;color:var(--primary);white-space:nowrap}
+.val-plus{color:#059669;font-weight:900;background:#d1fae5;border-radius:4px;padding:2px 8px}
+.val-minus{color:#dc2626;font-weight:900;background:#fee2e2;border-radius:4px;padding:2px 8px}
+
+/* Alerts */
+.alert-box,.warn-box{display:none;padding:16px;border-radius:var(--radius-sm);margin-bottom:20px;font-weight:700;box-shadow:var(--shadow-sm);border-right:6px solid}
+.alert-box{background:#fef2f2;color:#991b1b;border-color:var(--danger)}
+.warn-box{background:#fffbeb;color:#92400e;border-color:var(--warn)}
+
+/* Modals & Dialogs */
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:1000;justify-content:center;align-items:center;padding:16px;backdrop-filter:blur(4px)}
+.overlay.active{display:flex;animation:fadeIn 0.2s ease}
+.modal{background:var(--bg-card);width:100%;max-width:600px;border-radius:var(--radius);box-shadow:var(--shadow-lg);overflow:hidden;max-height:90vh;display:flex;flex-direction:column}
+.modal-header{background:var(--bg-header);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+.modal-header h2{font-size:16px;font-weight:800}
+.modal-close{background:transparent;border:none;color:#fff;font-size:24px;cursor:pointer;opacity:0.7;transition:opacity 0.2s}
+.modal-close:hover{opacity:1}
+.modal-body{padding:24px;overflow-y:auto}
+.dialog{background:var(--bg-card);width:100%;max-width:400px;border-radius:var(--radius);padding:24px;box-shadow:var(--shadow-lg);text-align:center}
+.dialog h3{font-size:18px;margin-bottom:12px}
+.dialog p{color:var(--text-muted);margin-bottom:20px;line-height:1.6;font-size:14px}
+.dialog input{width:100%;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;margin-bottom:20px;background:var(--bg-body);color:var(--text-main)}
+.dialog-actions{display:flex;gap:12px;justify-content:center}
+.btn-primary{background:var(--primary);color:#fff;border:none;padding:10px 24px;border-radius:var(--radius-sm);font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;transition:background 0.2s}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn-danger{background:var(--danger);color:#fff;border:none;padding:10px 24px;border-radius:var(--radius-sm);font-family:inherit;font-weight:700;font-size:14px;cursor:pointer}
+.btn-cancel{background:var(--bg-body);color:var(--text-main);border:1px solid var(--border);padding:10px 24px;border-radius:var(--radius-sm);font-family:inherit;font-weight:700;font-size:14px;cursor:pointer}
+
+/* Login Screen */
+.login-container{max-width:400px;margin:80px auto;background:var(--bg-card);padding:32px;border-radius:var(--radius);box-shadow:var(--shadow-lg);border:1px solid var(--border)}
+.login-container h2{font-size:22px;text-align:center;margin-bottom:24px;color:var(--primary)}
+.form-group{margin-bottom:20px}
+.form-group label{display:block;font-size:14px;font-weight:700;margin-bottom:8px;color:var(--text-muted)}
+.form-group input,.form-group select{width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;background:var(--bg-body);color:var(--text-main);outline:none;transition:border-color 0.2s}
+.form-group input:focus,.form-group select:focus{border-color:var(--primary)}
+.btn-full{width:100%;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;font-weight:800;font-size:16px;cursor:pointer;transition:background 0.2s;margin-top:10px}
+.btn-full:hover{background:var(--primary-hover)}
+.error-msg{color:var(--danger);font-size:13px;font-weight:700;text-align:center;margin-top:12px;min-height:20px}
+.forgot-link{display:block;text-align:center;margin-top:16px;font-size:13px;color:var(--primary);cursor:pointer;font-weight:700}
+.info-banner{background:rgba(59,130,246,0.1);color:var(--primary);padding:16px;border-radius:var(--radius-sm);margin-bottom:20px;font-size:13px;font-weight:700;border-right:4px solid var(--primary);line-height:1.6}
+
+/* Staff List */
+.staff-item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg-body);border-radius:var(--radius-sm);margin-bottom:10px;border:1px solid var(--border)}
+.staff-item input{width:80px;padding:8px;border:1px solid var(--border);border-radius:6px;text-align:center;font-family:inherit;font-weight:700}
+.btn-del{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:8px 16px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;transition:all 0.2s}
+.btn-del:hover{background:#fca5a5;color:#7f1d1d}
+
+/* Loading */
+#loadingScreen{position:fixed;inset:0;background:var(--bg-body);z-index:9999;display:flex;justify-content:center;align-items:center;flex-direction:column}
+.spinner{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media (max-width: 768px){
+  .app-header{flex-direction:column;text-align:center}
+  .tabs-nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tab-btn{white-space:nowrap;min-width:120px}
+  th,td{padding:8px 4px;font-size:11px}
+  select.s-cell{font-size:10px;height:32px}
+  .app-header h1{font-size:16px}
+}
 </style>
 </head>
 <body>
 
 <!-- Loading -->
-<div id="loadingScreen" style="display:flex;justify-content:center;align-items:center;min-height:100vh;">
-  <div style="text-align:center;">
-    <div style="font-size:48px;margin-bottom:16px;">⏳</div>
-    <div style="font-size:16px;font-weight:700;color:#64748b;">در حال اتصال...</div>
-  </div>
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div style="font-weight:700;color:var(--text-muted)">در حال اتصال به سامانه...</div>
 </div>
 
-<!-- Login -->
+<!-- Login Screen -->
 <div id="loginScreen" style="display:none;">
-  <div class="login-box">
-    <h2>🔐 ورود به سامانه شیفت</h2>
-    <label>👤 نام کاربری:</label>
-    <select id="loginName"><option value="">در حال بارگذاری...</option></select>
-    <label>🔑 رمز عبور:</label>
-    <input type="password" id="loginPassword" placeholder="رمز عبور" onkeydown="if(event.key==='Enter')doLogin()">
-    <button onclick="doLogin()" id="loginBtn">ورود</button>
-    <span class="forgot-link" onclick="openRecovery()">🔁 رمز را فراموش کرده‌اید؟</span>
+  <div class="login-container">
+    <h2>🔐 ورود به سامانه</h2>
+    <div class="form-group">
+      <label>👤 نام کاربری</label>
+      <select id="loginName"><option value="">در حال بارگذاری...</option></select>
+    </div>
+    <div class="form-group">
+      <label>🔑 رمز عبور</label>
+      <input type="password" id="loginPassword" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button onclick="doLogin()" id="loginBtn" class="btn-full">ورود به سیستم</button>
+    <span class="forgot-link" onclick="openRecovery()">رمز عبور خود را فراموش کرده‌اید؟</span>
     <div class="error-msg" id="loginError"></div>
   </div>
 </div>
@@ -135,44 +198,48 @@ body.dark-mode .info-banner{background:linear-gradient(135deg,#1e3a8a,#1e40af);c
   <div class="app-header">
     <h1>📅 برنامه شیفت خوابگاه‌ها <span class="admin-badge">👑 ادمین</span></h1>
     <div class="controls">
-      <span class="user-info" id="userInfoBox">👤 <span id="currentUserName"></span></span>
+      <span class="user-info">👤 <span id="currentUserName"></span></span>
       <button class="tool-btn" onclick="openExcel()" title="خروجی اکسل">📊</button>
-      <button class="tool-btn admin-only" onclick="openStaff()" title="پرسنل">👥</button>
-      <button class="tool-btn admin-only" onclick="openLogs()" title="گزارش تغییرات">📝</button>
-      <button class="tool-btn" onclick="toggleDarkMode()" title="حالت شب">🌙</button>
-      <button class="tool-btn" onclick="openHelp()" title="راهنما">❓</button>
+      <button class="tool-btn admin-only" onclick="openStaff()" title="مدیریت پرسنل">👥</button>
+      <button class="tool-btn admin-only" onclick="openLogs()" title="گزارشات">📝</button>
+      <button class="tool-btn" onclick="toggleDarkMode()" title="تغییر تم">🌙</button>
       <button class="tool-btn" onclick="openChangePassword()" title="تغییر رمز">🔐</button>
-      <button class="tool-btn" onclick="doLogout()" title="خروج">🚪</button>
+      <button class="tool-btn" onclick="doLogout()" style="background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.4)" title="خروج">🚪</button>
     </div>
   </div>
+  
   <div class="alert-box" id="alertBox"></div>
   <div class="warn-box" id="warnBox"></div>
+
   <div class="tabs-nav">
-    <button class="tab-btn active" id="tabBtnShifts" onclick="switchTab('shifts')">📅 شیفت</button>
-    <button class="tab-btn" id="tabBtnLeaves" onclick="switchTab('leaves')">🏖️ مرخصی</button>
-    <button class="tab-btn" id="tabBtnStats" onclick="switchTab('stats')">📊 آمار</button>
+    <button class="tab-btn active" id="tabBtnShifts" onclick="switchTab('shifts')">📅 جدول شیفت‌ها</button>
+    <button class="tab-btn" id="tabBtnLeaves" onclick="switchTab('leaves')">🏖️ مدیریت مرخصی</button>
+    <button class="tab-btn" id="tabBtnStats" onclick="switchTab('stats')">📊 آمار کارکرد</button>
   </div>
+
   <div class="tab-panel active" id="panelShifts">
-    <div class="table-container">
-      <table class="main-table">
+    <div class="table-wrapper">
+      <table>
         <thead><tr id="zoneHeaderRow"><th rowspan="2" class="day-cell">روز</th><th rowspan="2" class="date-cell">تاریخ</th></tr><tr id="subHeader"></tr></thead>
         <tbody id="tableBody"></tbody>
       </table>
     </div>
   </div>
+
   <div class="tab-panel" id="panelLeaves">
-    <div class="section-box">
-      <h3>🏖️ ثبت مرخصی</h3>
+    <div class="section-card">
+      <h3>🏖️ ثبت و مدیریت مرخصی</h3>
       <div class="info-banner">⚠️ حداکثر ۲ نفر در هر روز می‌توانند مرخصی بگیرند. روزهای جمعه مجاز نیست.</div>
-      <div class="leave-table-wrapper">
-        <table class="leave-table"><thead><tr><th>نام</th><th>مرخصی ۱</th><th>مرخصی ۲</th><th>مرخصی ۳</th><th>مرخصی ۴</th><th>مرخصی ۵</th></tr></thead><tbody id="leaveTableBody"></tbody></table>
+      <div style="overflow-x:auto">
+        <table class="leave-table"><thead><tr><th>نام پرسنل</th><th>مرخصی ۱</th><th>مرخصی ۲</th><th>مرخصی ۳</th><th>مرخصی ۴</th><th>مرخصی ۵</th></tr></thead><tbody id="leaveTableBody"></tbody></table>
       </div>
     </div>
   </div>
+
   <div class="tab-panel" id="panelStats">
-    <div class="section-box">
-      <h3>📊 آمار</h3>
-      <div class="stats-table-wrapper">
+    <div class="section-card">
+      <h3>📊 آمار و ساعت کارکرد</h3>
+      <div style="overflow-x:auto">
         <table class="stats-table"><thead><tr><th>نام</th><th>موظفی</th><th>صبح</th><th>عصر</th><th>شب</th><th>تعطیلات</th><th>مرخصی</th><th>کارکرد</th><th>اضافه</th><th>کسر</th></tr></thead><tbody id="statsBody"></tbody></table>
       </div>
     </div>
@@ -180,32 +247,25 @@ body.dark-mode .info-banner{background:linear-gradient(135deg,#1e3a8a,#1e40af);c
 </div>
 
 <!-- Modals -->
-<div class="modal-overlay" id="staffModal"><div class="modal-content"><div class="modal-header"><h2>👥 پرسنل</h2><button class="modal-close" onclick="closeModal('staffModal')">×</button></div><div class="modal-body"><div class="staff-list" id="staffList"></div></div></div></div>
-<div class="modal-overlay" id="logsModal"><div class="modal-content"><div class="modal-header"><h2>📝 گزارش تغییرات</h2><button class="modal-close" onclick="closeModal('logsModal')">×</button></div><div class="modal-body" id="logsBody"></div></div></div>
+<div class="overlay" id="staffModal"><div class="modal"><div class="modal-header"><h2>👥 مدیریت پرسنل</h2><button class="modal-close" onclick="closeModal('staffModal')">×</button></div><div class="modal-body"><div id="staffList"></div></div></div></div>
+<div class="overlay" id="logsModal"><div class="modal"><div class="modal-header"><h2>📝 گزارش تغییرات</h2><button class="modal-close" onclick="closeModal('logsModal')">×</button></div><div class="modal-body" id="logsBody"></div></div></div>
 
-<!-- Recovery Modal -->
-<div class="modal-overlay" id="recoveryModal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>🔁 بازیابی رمز</h2>
-      <button class="modal-close" onclick="closeModal('recoveryModal')">×</button>
-    </div>
+<div class="overlay" id="recoveryModal">
+  <div class="modal">
+    <div class="modal-header"><h2>🔁 بازیابی رمز عبور</h2><button class="modal-close" onclick="closeModal('recoveryModal')">×</button></div>
     <div class="modal-body">
-      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.8;">
-        ابتدا نام خود را در صفحه ورود انتخاب کنید، سپس کد را دریافت کنید.
-      </p>
-      <button class="btn-primary" style="width:100%;padding:11px;margin-bottom:12px;" onclick="sendRecoveryCode()">📧 دریافت راهنمایی</button>
-      <input type="text" id="recoveryCode" placeholder="کد بازیابی (654321)" class="recovery-input otp-input" maxlength="8" inputmode="numeric">
-      <input type="password" id="recoveryNewPassword" placeholder="رمز جدید (حداقل ۶ کاراکتر)" class="recovery-input">
-      <button class="btn-primary" style="width:100%;padding:11px;" onclick="doRecovery()">تغییر رمز</button>
-      <div class="error-msg" id="recoveryError" style="color:var(--danger);text-align:center;margin-top:10px;font-weight:700;font-size:12px;"></div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6;">ابتدا نام خود را در صفحه ورود انتخاب کنید، سپس کد بازیابی را وارد نمایید.</p>
+      <button class="btn-full" style="margin-bottom:16px;background:var(--bg-body);color:var(--text-main);border:1px solid var(--border)" onclick="alertDlg('کد بازیابی پیش‌فرض: 654321')">📧 دریافت کد راهنما</button>
+      <div class="form-group"><input type="text" id="recoveryCode" placeholder="کد بازیابی (654321)" style="text-align:center;letter-spacing:4px;font-size:18px"></div>
+      <div class="form-group"><input type="password" id="recoveryNewPassword" placeholder="رمز عبور جدید"></div>
+      <button class="btn-full" onclick="doRecovery()">تغییر رمز عبور</button>
+      <div class="error-msg" id="recoveryError"></div>
     </div>
   </div>
 </div>
 
-<!-- Dialog -->
-<div class="dialog-overlay" id="dialogOverlay">
-  <div class="dialog-box">
+<div class="overlay" id="dialogOverlay">
+  <div class="dialog">
     <h3 id="dialogTitle"></h3>
     <p id="dialogMessage"></p>
     <input type="text" id="dialogInput" style="display:none;">
@@ -219,7 +279,6 @@ const SUPABASE_URL = "https://hghkjhvboyemimpqwkkn.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaGtqaHZib3llbWltcHF3a2tuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM1NDM3NzIsImV4cCI6MjEwOTExOTc3Mn0.WuxsGGv3GjuEaX_zsZqTigLKY4j9Tt6-b9b5fMaGZQs";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ============ EMAIL MAP (بدون نیاز به دیتابیس) ============ */
 const emailMap = {
   "مدیر سامانه": "admin@dorm.local", "ادمین تست": "testadmin@dorm.local",
   "خانم موسوی": "mousavi@dorm.local", "خانم قابل": "ghabel@dorm.local",
@@ -252,7 +311,7 @@ const ZONES = [
   { name: "گلشن", cols: ["صبح","عصر"], cls: "bg-z5" }
 ];
 
-/* ============ JALALI BASE ============ */
+/* ============ HELPERS ============ */
 let BASE_DATE_UTC;
 function initBaseDate(){
   if (typeof jalaali !== "undefined"){
@@ -262,14 +321,10 @@ function initBaseDate(){
     BASE_DATE_UTC = Date.UTC(2026, 9, 23);
   }
 }
-
 function getDayInfo(i){
   const d = new Date(BASE_DATE_UTC + i * 86400000);
   const wd = d.getUTCDay();
-  let jDay = i + 1, jMonth = MONTH;
-  let weekday = WEEKDAYS_FA[wd];
-  let isFriday = wd === 5;
-
+  let jDay = i + 1, jMonth = MONTH, weekday = WEEKDAYS_FA[wd], isFriday = wd === 5;
   if (typeof jalaali !== "undefined"){
     const j = jalaali.toJalaali(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
     jDay = j.jd;
@@ -279,63 +334,31 @@ function getDayInfo(i){
   }
   return { weekday, isFriday, jDay, jMonth };
 }
-
-/* ============ UI HELPERS ============ */
-function showAlert(m){
-  const b = document.getElementById("alertBox");
-  b.textContent = m; b.style.display = "block";
-  setTimeout(() => b.style.display = "none", 4000);
-}
-function showWarning(m){
-  const b = document.getElementById("warnBox");
-  b.innerHTML = m; b.style.display = "block";
-  setTimeout(() => b.style.display = "none", 8000);
-}
+function showAlert(m){ const b=document.getElementById("alertBox"); b.textContent=m; b.style.display="block"; setTimeout(()=>b.style.display="none", 4000); }
+function showWarning(m){ const b=document.getElementById("warnBox"); b.innerHTML=m; b.style.display="block"; setTimeout(()=>b.style.display="none", 8000); }
 function closeModal(id){ document.getElementById(id).classList.remove("active"); }
-function toggleDarkMode(){
-  document.body.classList.toggle("dark-mode");
-  localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "1" : "0");
-}
-function openHelp(){
-  showAlert("راهنما: برای ثبت شیفت روی خانه‌ها کلیک کنید. هر نفر حداکثر ۲ شیفت در روز و در ۲ جمعه.");
-}
+function toggleDarkMode(){ document.body.classList.toggle("dark-mode"); localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "1" : "0"); }
 
 /* ============ DIALOG ============ */
 function dialog(opts){
   return new Promise(r => {
-    const o = document.getElementById("dialogOverlay");
-    const t = document.getElementById("dialogTitle");
-    const m = document.getElementById("dialogMessage");
-    const i = document.getElementById("dialogInput");
-    const a = document.getElementById("dialogActions");
-    t.textContent = opts.title || "";
-    m.textContent = opts.message || "";
-    i.value = opts.def || "";
-    i.style.display = opts.input ? "block" : "none";
-    a.innerHTML = "";
+    const o = document.getElementById("dialogOverlay"), t = document.getElementById("dialogTitle"),
+          m = document.getElementById("dialogMessage"), i = document.getElementById("dialogInput"),
+          a = document.getElementById("dialogActions");
+    t.textContent = opts.title || ""; m.textContent = opts.message || "";
+    i.value = opts.def || ""; i.style.display = opts.input ? "block" : "none"; a.innerHTML = "";
     const finish = v => { o.classList.remove("active"); r(v); };
     if (opts.input){
-      const ok = document.createElement("button");
-      ok.className = "btn-primary"; ok.textContent = "تأیید";
-      ok.onclick = () => finish(i.value.trim());
-      const c = document.createElement("button");
-      c.className = "btn-cancel"; c.textContent = "انصراف";
-      c.onclick = () => finish(null);
-      a.append(ok, c);
+      a.innerHTML = `<button class="btn-primary" id="dOk">تأیید</button><button class="btn-cancel" id="dCancel">انصراف</button>`;
+      document.getElementById("dOk").onclick = () => finish(i.value.trim());
+      document.getElementById("dCancel").onclick = () => finish(null);
     } else if (opts.confirm){
-      const ok = document.createElement("button");
-      ok.className = opts.danger ? "btn-danger" : "btn-primary";
-      ok.textContent = "تأیید";
-      ok.onclick = () => finish(true);
-      const c = document.createElement("button");
-      c.className = "btn-cancel"; c.textContent = "انصراف";
-      c.onclick = () => finish(false);
-      a.append(ok, c);
+      a.innerHTML = `<button class="${opts.danger ? 'btn-danger' : 'btn-primary'}" id="dOk">تأیید</button><button class="btn-cancel" id="dCancel">انصراف</button>`;
+      document.getElementById("dOk").onclick = () => finish(true);
+      document.getElementById("dCancel").onclick = () => finish(false);
     } else {
-      const ok = document.createElement("button");
-      ok.className = "btn-primary"; ok.textContent = "باشه";
-      ok.onclick = () => finish(true);
-      a.append(ok);
+      a.innerHTML = `<button class="btn-primary" id="dOk">باشه</button>`;
+      document.getElementById("dOk").onclick = () => finish(true);
     }
     o.classList.add("active");
   });
@@ -351,43 +374,22 @@ async function init(){
   const { data: { session } } = await sb.auth.getSession();
   if (session && session.user){
     const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
-    if (p){
-      currentUser = p; isAdmin = !!p.is_admin;
-      await loadAll();
-      showMain();
-      return;
-    }
+    if (p){ currentUser = p; isAdmin = !!p.is_admin; await loadAll(); showMain(); return; }
   }
   await loadLoginList();
   showLogin();
 }
-
 async function loadLoginList(){
   const { data, error } = await sb.from("profiles").select("name,is_admin").order("name");
-  const s = document.getElementById("loginName");
-  s.innerHTML = '<option value="">انتخاب کنید...</option>';
-  if (error){
-    s.innerHTML = '<option value="">خطا در بارگذاری پرسنل</option>';
-  } else {
-    (data || []).forEach(p => {
-      const o = document.createElement("option");
-      o.value = p.name;
-      o.textContent = p.name + (p.is_admin ? " 👑" : "");
-      s.appendChild(o);
-    });
-  }
+  const s = document.getElementById("loginName"); s.innerHTML = '<option value="">انتخاب کنید...</option>';
+  if (error){ s.innerHTML = '<option value="">خطا در بارگذاری</option>'; } 
+  else { (data || []).forEach(p => { const o = document.createElement("option"); o.value = p.name; o.textContent = p.name + (p.is_admin ? " 👑" : ""); s.appendChild(o); }); }
   document.getElementById("loadingScreen").style.display = "none";
   document.getElementById("loginScreen").style.display = "block";
 }
-
-function showLogin(){
-  document.getElementById("mainApp").style.display = "none";
-  document.getElementById("loginScreen").style.display = "block";
-}
-
+function showLogin(){ document.getElementById("mainApp").style.display = "none"; document.getElementById("loginScreen").style.display = "block"; }
 function showMain(){
-  document.getElementById("loginScreen").style.display = "none";
-  document.getElementById("mainApp").style.display = "block";
+  document.getElementById("loginScreen").style.display = "none"; document.getElementById("mainApp").style.display = "block";
   document.body.classList.toggle("is-admin", isAdmin);
   document.getElementById("currentUserName").textContent = currentUser.name;
   renderAll();
@@ -397,374 +399,161 @@ async function doLogin(){
   const name = document.getElementById("loginName").value;
   const pass = document.getElementById("loginPassword").value;
   const err = document.getElementById("loginError");
-  
   if (!name || !pass){ err.textContent = "نام و رمز را وارد کنید"; return; }
   err.textContent = "در حال ورود...";
 
   const email = emailMap[name];
-  if (!email){ err.textContent = "ایمیل این کاربر در سیستم تعریف نشده است."; return; }
+  if (!email){ err.textContent = "❌ نام کاربری یافت نشد."; return; }
 
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error){ err.textContent = "رمز یا نام اشتباه است"; return; }
+  if (error){ err.textContent = "❌ رمز عبور اشتباه است."; return; }
 
-  const { data: p } = await sb.from("profiles").select("*").eq("id", data.user.id).single();
-  if (!p){ err.textContent = "پروفایل کاربر در دیتابیس یافت نشد."; return; }
+  const { data: p, error: pError } = await sb.from("profiles").select("*").eq("id", data.user.id).single();
+  if (pError || !p){ err.textContent = "❌ پروفایل در دیتابیس یافت نشد."; return; }
 
-  currentUser = p; isAdmin = !!p.is_admin;
-  err.textContent = "";
-  await loadAll();
-  showMain();
+  currentUser = p; isAdmin = !!p.is_admin; err.textContent = "";
+  await loadAll(); showMain();
 }
 
-async function doLogout(){
-  await sb.auth.signOut();
-  currentUser = null; isAdmin = false;
-  await loadLoginList();
-  showLogin();
+async function doLogout(){ await sb.auth.signOut(); currentUser = null; isAdmin = false; await loadLoginList(); showLogin(); }
+
+async function openChangePassword(){
+  const oldPw = await promptDlg("رمز فعلی:", ""); if (!oldPw) return;
+  const newPw = await promptDlg("رمز جدید (حداقل ۶ کاراکتر):", ""); if (!newPw || newPw.length < 6) return alertDlg("رمز کوتاه است.");
+  const email = emailMap[currentUser.name]; if (!email) return alertDlg("خطا: ایمیل یافت نشد.");
+  const { error: err1 } = await sb.auth.signInWithPassword({ email, password: oldPw }); if (err1) return alertDlg("رمز فعلی اشتباه است.");
+  const { error: err2 } = await sb.auth.updateUser({ password: newPw }); if (err2) return alertDlg("خطا: " + err2.message);
+  alertDlg("✅ رمز با موفقیت تغییر کرد.");
 }
 
 /* ============ RECOVERY ============ */
-function openRecovery(){
-  document.getElementById("recoveryCode").value = "";
-  document.getElementById("recoveryNewPassword").value = "";
-  document.getElementById("recoveryError").textContent = "";
-  document.getElementById("recoveryModal").classList.add("active");
-}
-
-async function sendRecoveryCode(){
-  const err = document.getElementById("recoveryError");
-  err.style.color = "var(--danger)";
-  err.textContent = "کد بازیابی پیش‌فرض 654321 است. در صورت نیاز با مدیر تماس بگیرید.";
-}
-
+function openRecovery(){ document.getElementById("recoveryCode").value = ""; document.getElementById("recoveryNewPassword").value = ""; document.getElementById("recoveryError").textContent = ""; document.getElementById("recoveryModal").classList.add("active"); }
 async function doRecovery(){
   const name = document.getElementById("loginName").value;
   const code = document.getElementById("recoveryCode").value.trim();
   const newPw = document.getElementById("recoveryNewPassword").value;
   const err = document.getElementById("recoveryError");
-  err.style.color = "var(--danger)";
-
-  if (!name){ err.textContent = "ابتدا نام خود را در صفحه ورود انتخاب کنید."; return; }
-  if (code !== "654321"){ err.textContent = "کد بازیابی اشتباه است."; return; }
-  if (!newPw || newPw.length < 6){ err.textContent = "رمز باید حداقل ۶ کاراکتر باشد."; return; }
-
-  err.textContent = "در حال پردازش...";
+  if (!name) { err.textContent = "ابتدا نام خود را در صفحه ورود انتخاب کنید."; return; }
+  if (code !== "654321") { err.textContent = "کد بازیابی اشتباه است."; return; }
+  if (!newPw || newPw.length < 6) { err.textContent = "رمز جدید کوتاه است."; return; }
+  err.textContent = "در حال ارسال لینک بازیابی...";
   try {
-    const email = emailMap[name];
-    if (!email) throw new Error("نام کاربری یافت نشد.");
-
+    const email = emailMap[name]; if (!email) throw new Error("ایمیل یافت نشد.");
     const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
     if (error) throw error;
-
-    closeModal("recoveryModal");
-    await alertDlg("✅ لینک بازیابی به ایمیل شما ارسال شد. پس از کلیک روی لینک، رمز جدید را تنظیم کنید.");
-  } catch(e){
-    err.textContent = "خطا: " + e.message;
-  }
+    closeModal("recoveryModal"); await alertDlg("✅ لینک بازیابی به ایمیل شما ارسال شد.");
+  } catch(e) { err.textContent = "خطا: " + e.message; }
 }
 
-async function openChangePassword(){
-  const oldPw = await promptDlg("رمز فعلی:", "");
-  if (!oldPw) return;
-  const newPw = await promptDlg("رمز جدید (حداقل ۶ کاراکتر):", "");
-  if (!newPw || newPw.length < 6) return alertDlg("رمز کوتاه است.");
-
-  const email = emailMap[currentUser.name];
-  if (!email) return alertDlg("خطا: ایمیل کاربر یافت نشد.");
-
-  const { error: err1 } = await sb.auth.signInWithPassword({ email, password: oldPw });
-  if (err1) return alertDlg("رمز فعلی اشتباه است.");
-
-  const { error: err2 } = await sb.auth.updateUser({ password: newPw });
-  if (err2) return alertDlg("خطا: " + err2.message);
-  alertDlg("✅ رمز تغییر کرد.");
-}
-
-/* ============ LOAD DATA ============ */
+/* ============ LOAD & RENDER ============ */
 async function loadAll(){
   const { data: p, error: pe } = await sb.from("profiles").select("*").order("name");
-  if (pe){ console.error(pe); }
-  PERSONNEL = (p || []).map(x => ({
-    id: x.id, name: x.name, req: x.required_hours || 0,
-    is_admin: !!x.is_admin
-  }));
-
+  if (pe) console.error(pe);
+  PERSONNEL = (p || []).map(x => ({ id: x.id, name: x.name, req: x.required_hours || 0, is_admin: !!x.is_admin }));
   const { data: s } = await sb.from("shifts").select("*");
   const { data: l } = await sb.from("leaves").select("*");
-
-  state.shifts = {};
-  state.leaves = {};
-
-  (s || []).forEach(x => {
-    const per = PERSONNEL.find(z => z.id === x.user_id);
-    if (per) state.shifts[`${x.day}|${x.zone}|${x.shift_type}`] = per.name;
-  });
-  (l || []).forEach(x => {
-    const per = PERSONNEL.find(z => z.id === x.user_id);
-    if (per){
-      if (!state.leaves[per.name]) state.leaves[per.name] = {};
-      state.leaves[per.name][String(x.day)] = true;
-    }
-  });
+  state.shifts = {}; state.leaves = {};
+  (s || []).forEach(x => { const per = PERSONNEL.find(z => z.id === x.user_id); if (per) state.shifts[`${x.day}|${x.zone}|${x.shift_type}`] = per.name; });
+  (l || []).forEach(x => { const per = PERSONNEL.find(z => z.id === x.user_id); if (per) { if (!state.leaves[per.name]) state.leaves[per.name] = {}; state.leaves[per.name][String(x.day)] = true; } });
 }
+function renderAll(){ renderTable(); renderLeaves(); renderStats(); }
 
-/* ============ RENDER ALL ============ */
-function renderAll(){
-  renderTable();
-  renderLeaves();
-  renderStats();
-}
-
-/* ============ SHIFT TABLE ============ */
+/* ============ TABLES ============ */
 function renderTable(){
   const visiblePersonnel = PERSONNEL.filter(p => !p.is_admin);
-  const zr = document.getElementById("zoneHeaderRow");
-  Array.from(zr.children).forEach((el, i) => { if (i >= 2) el.remove(); });
-  const sh = document.getElementById("subHeader");
-  sh.innerHTML = "";
-
+  const zr = document.getElementById("zoneHeaderRow"); Array.from(zr.children).forEach((el, i) => { if (i >= 2) el.remove(); });
+  const sh = document.getElementById("subHeader"); sh.innerHTML = "";
   ZONES.forEach(z => {
-    const th = document.createElement("th");
-    th.className = z.cls;
-    th.colSpan = z.cols.length;
-    th.textContent = z.name;
-    zr.appendChild(th);
-    z.cols.forEach(c => {
-      const s = document.createElement("th");
-      s.className = z.cls;
-      s.textContent = c;
-      sh.appendChild(s);
-    });
+    const th = document.createElement("th"); th.className = z.cls; th.colSpan = z.cols.length; th.textContent = z.name; zr.appendChild(th);
+    z.cols.forEach(c => { const s = document.createElement("th"); s.className = z.cls; s.textContent = c; sh.appendChild(s); });
   });
-
-  const tb = document.getElementById("tableBody");
-  tb.innerHTML = "";
-
+  const tb = document.getElementById("tableBody"); tb.innerHTML = "";
   for (let d = 0; d < DAYS; d++){
-    const info = getDayInfo(d);
-    const tr = document.createElement("tr");
+    const info = getDayInfo(d); const tr = document.createElement("tr");
     if (info.isFriday) tr.classList.add("is-friday");
     tr.innerHTML = `<td class="day-cell">${info.weekday}</td><td class="date-cell">${info.jDay} ${info.jMonth}</td>`;
-
     ZONES.forEach(z => z.cols.forEach(c => {
-      const td = document.createElement("td");
-      const key = `${d}|${z.name}|${c}`;
-      const sel = document.createElement("select");
-      sel.className = "s-cell";
-      sel.dataset.key = key;
-      sel.dataset.day = d;
-      sel.dataset.zone = z.name;
-      sel.dataset.shift = c;
-
-      const owner = state.shifts[key] || "";
-      const empty = document.createElement("option");
-      empty.value = ""; empty.textContent = "—";
-      sel.appendChild(empty);
-
+      const td = document.createElement("td"); const key = `${d}|${z.name}|${c}`; const sel = document.createElement("select");
+      sel.className = "s-cell"; sel.dataset.key = key; sel.dataset.day = d; sel.dataset.zone = z.name; sel.dataset.shift = c;
+      const owner = state.shifts[key] || ""; const empty = document.createElement("option"); empty.value = ""; empty.textContent = "—"; sel.appendChild(empty);
       if (isAdmin){
-        visiblePersonnel.forEach(p => {
-          const o = document.createElement("option");
-          o.value = p.name; o.textContent = p.name;
-          sel.appendChild(o);
-        });
-        sel.value = owner;
-        sel.addEventListener("change", () => onShiftChange(sel));
+        visiblePersonnel.forEach(p => { const o = document.createElement("option"); o.value = p.name; o.textContent = p.name; sel.appendChild(o); });
+        sel.value = owner; sel.addEventListener("change", () => onShiftChange(sel));
       } else {
         if (owner && owner !== currentUser.name){
-          const taken = document.createElement("option");
-          taken.value = "__taken__";
-          taken.textContent = "🚫 " + owner;
-          sel.appendChild(taken);
-          sel.value = "__taken__";
-          sel.disabled = true;
-          sel.classList.add("locked", "taken");
+          const taken = document.createElement("option"); taken.value = "__taken__"; taken.textContent = "🚫 " + owner;
+          sel.appendChild(taken); sel.value = "__taken__"; sel.disabled = true; sel.classList.add("locked", "taken");
         } else {
-          const me = document.createElement("option");
-          me.value = currentUser.name;
-          me.textContent = currentUser.name;
-          sel.appendChild(me);
-          sel.value = owner;
-          sel.addEventListener("change", () => onShiftChange(sel));
+          const me = document.createElement("option"); me.value = currentUser.name; me.textContent = currentUser.name; sel.appendChild(me);
+          sel.value = owner; sel.addEventListener("change", () => onShiftChange(sel));
           if (owner === currentUser.name) sel.classList.add("mine");
         }
       }
-      td.appendChild(sel);
-      tr.appendChild(td);
+      td.appendChild(sel); tr.appendChild(td);
     }));
     tb.appendChild(tr);
   }
 }
 
-function findPersonShiftOnDay(person, dayIdx){
-  const arr = [];
-  ZONES.forEach(z => z.cols.forEach(s => {
-    if (state.shifts[`${dayIdx}|${z.name}|${s}`] === person) arr.push(s);
-  }));
-  return arr;
-}
+function findPersonShiftOnDay(person, dayIdx){ const arr = []; ZONES.forEach(z => z.cols.forEach(s => { if (state.shifts[`${dayIdx}|${z.name}|${s}`] === person) arr.push(s); })); return arr; }
+function countFridayDays(person){ let c = 0; for (let d = 0; d < DAYS; d++){ if (getDayInfo(d).isFriday && findPersonShiftOnDay(person, d).length > 0) c++; } return c; }
 
-function countFridayDays(person){
-  let c = 0;
-  for (let d = 0; d < DAYS; d++){
-    if (getDayInfo(d).isFriday && findPersonShiftOnDay(person, d).length > 0) c++;
-  }
-  return c;
-}
-
-/* ============ SHIFT CHANGE ============ */
 async function onShiftChange(sel){
-  const key = sel.dataset.key;
-  const val = sel.value;
-  const d = +sel.dataset.day;
-  const zone = sel.dataset.zone;
-  const shiftType = sel.dataset.shift;
+  const key = sel.dataset.key, val = sel.value, d = +sel.dataset.day, zone = sel.dataset.zone, shiftType = sel.dataset.shift;
   const prevOwner = state.shifts[key] || "";
-
-  if (!isAdmin && val && val !== currentUser.name){
-    showWarning("⚠️ شما فقط می‌توانید شیفت خودتان را تغییر دهید.");
-    sel.value = prevOwner;
-    return;
-  }
-
+  if (!isAdmin && val && val !== currentUser.name){ showWarning("⚠️ شما فقط می‌توانید شیفت خودتان را تغییر دهید."); sel.value = prevOwner; return; }
   if (!val){
     if (prevOwner){
       const p = PERSONNEL.find(x => x.name === prevOwner);
-      if (p){
-        const { error } = await sb.from("shifts")
-          .delete()
-          .eq("day", d)
-          .eq("zone", zone)
-          .eq("shift_type", shiftType)
-          .eq("user_id", p.id);
-        if (error){ await alertDlg("⛔ خطا: " + error.message); sel.value = prevOwner; return; }
-      }
-      delete state.shifts[key];
-      renderAll();
-      showAlert("🗑️ شیفت حذف شد.");
+      if (p){ await sb.from("shifts").delete().eq("day", d).eq("zone", zone).eq("shift_type", shiftType).eq("user_id", p.id); }
+      delete state.shifts[key]; renderAll(); showAlert("🗑️ شیفت حذف شد.");
     }
     return;
   }
-
-  const targetPerson = PERSONNEL.find(x => x.name === val);
-  if (!targetPerson){ sel.value = prevOwner; return; }
-
-  const todayShifts = findPersonShiftOnDay(val, d);
-  const simulatedToday = [...todayShifts, shiftType];
-  const uniqToday = [...new Set(simulatedToday)];
-  const prevShifts = d > 0 ? findPersonShiftOnDay(val, d - 1) : [];
-  const nextShifts = d < DAYS - 1 ? findPersonShiftOnDay(val, d + 1) : [];
+  const targetPerson = PERSONNEL.find(x => x.name === val); if (!targetPerson){ sel.value = prevOwner; return; }
+  const todayShifts = findPersonShiftOnDay(val, d), simulatedToday = [...todayShifts, shiftType], uniqToday = [...new Set(simulatedToday)];
+  const prevShifts = d > 0 ? findPersonShiftOnDay(val, d - 1) : [], nextShifts = d < DAYS - 1 ? findPersonShiftOnDay(val, d + 1) : [];
   let issues = [];
-
   if (uniqToday.includes("صبح") && uniqToday.includes("شب")) issues.push("ترکیب صبح و شب مجاز نیست.");
   if (simulatedToday.length > 2) issues.push("بیش از دو شیفت مجاز نیست.");
   if (simulatedToday.length !== uniqToday.length) issues.push("تکرار یک نوع شیفت مجاز نیست.");
-
   if (simulatedToday.length === 2){
-    const ok = (uniqToday.includes("صبح") && uniqToday.includes("عصر") && !uniqToday.includes("شب"))
-            || (uniqToday.includes("عصر") && uniqToday.includes("شب") && !uniqToday.includes("صبح"));
+    const ok = (uniqToday.includes("صبح") && uniqToday.includes("عصر") && !uniqToday.includes("شب")) || (uniqToday.includes("عصر") && uniqToday.includes("شب") && !uniqToday.includes("صبح"));
     if (!ok) issues.push("ترکیب مجاز نیست؛ تنها صبح+عصر یا عصر+شب.");
   }
   if (uniqToday.includes("شب") && prevShifts.includes("شب")) issues.push("دو شیفت شب متوالی مجاز نیست.");
   if (uniqToday.includes("شب") && nextShifts.includes("شب")) issues.push("دو شیفت شب متوالی مجاز نیست.");
   if (uniqToday.includes("شب") && nextShifts.length > 0) issues.push("بعد از شیفت شب، فردا نمی‌توانید شیفت بزنید.");
   if (prevShifts.includes("شب") && simulatedToday.length > 0) issues.push("دیشب شیفت شب داشته‌اید؛ امروز نمی‌توانید شیفت ثبت کنید.");
-
-  if (getDayInfo(d).isFriday){
-    const hadThisFriday = todayShifts.length > 0;
-    if (!hadThisFriday && countFridayDays(val) >= 2) issues.push("شما قبلاً در ۲ جمعه شیفت داشته‌اید.");
-  }
-
-  const personLeaves = state.leaves[val] || {};
-  if (Object.prototype.hasOwnProperty.call(personLeaves, String(d)))
-    issues.push("در این روز مرخصی ثبت شده است.");
-
-  if (issues.length > 0){
-    await alertDlg("⛔ قوانین:\n• " + issues.join("\n• "));
-    sel.value = prevOwner;
-    return;
-  }
-
+  if (getDayInfo(d).isFriday){ const hadThisFriday = todayShifts.length > 0; if (!hadThisFriday && countFridayDays(val) >= 2) issues.push("شما قبلاً در ۲ جمعه شیفت داشته‌اید."); }
+  const personLeaves = state.leaves[val] || {}; if (Object.prototype.hasOwnProperty.call(personLeaves, String(d))) issues.push("در این روز مرخصی ثبت شده است.");
+  if (issues.length > 0){ await alertDlg("⛔ قوانین:\n• " + issues.join("\n• ")); sel.value = prevOwner; return; }
   try {
-    if (prevOwner){
-      const oldP = PERSONNEL.find(x => x.name === prevOwner);
-      if (oldP){
-        await sb.from("shifts")
-          .delete()
-          .eq("day", d)
-          .eq("zone", zone)
-          .eq("shift_type", shiftType)
-          .eq("user_id", oldP.id);
-      }
-    }
-
-    const { error } = await sb.from("shifts").insert({
-      day: d, zone, shift_type: shiftType, user_id: targetPerson.id
-    });
-
+    if (prevOwner){ const oldP = PERSONNEL.find(x => x.name === prevOwner); if (oldP) await sb.from("shifts").delete().eq("day", d).eq("zone", zone).eq("shift_type", shiftType).eq("user_id", oldP.id); }
+    const { error } = await sb.from("shifts").insert({ day: d, zone, shift_type: shiftType, user_id: targetPerson.id });
     if (error){
-      if (error.code === "23505"){
-        await alertDlg("⛔ این شیفت هم‌اکنون توسط همکار دیگری گرفته شد. لیست به‌روزرسانی می‌شود.");
-        await loadAll();
-        renderAll();
-      } else {
-        await alertDlg("⛔ خطا: " + error.message);
-      }
-      sel.value = prevOwner;
-      return;
+      if (error.code === "23505"){ await alertDlg("⛔ این شیفت هم‌اکنون گرفته شد."); await loadAll(); renderAll(); }
+      else await alertDlg("⛔ خطا: " + error.message);
+      sel.value = prevOwner; return;
     }
-
-    state.shifts[key] = val;
-    sel.classList.toggle("mine", !isAdmin && val === currentUser.name);
-    showAlert("✅ شیفت ثبت شد.");
-    renderStats();
-  } catch(e){
-    await alertDlg("⛔ خطا: " + e.message);
-    sel.value = prevOwner;
-  }
+    state.shifts[key] = val; sel.classList.toggle("mine", !isAdmin && val === currentUser.name); showAlert("✅ شیفت ثبت شد."); renderStats();
+  } catch(e){ await alertDlg("⛔ خطا: " + e.message); sel.value = prevOwner; }
 }
 
-/* ============ LEAVES ============ */
 function renderLeaves(){
-  const tb = document.getElementById("leaveTableBody");
-  tb.innerHTML = "";
+  const tb = document.getElementById("leaveTableBody"); tb.innerHTML = "";
   const list = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
-  if (list.length === 0){
-    tb.innerHTML = "<tr><td colspan='6' style='text-align:center;'>ردیفی نیست</td></tr>";
-    return;
-  }
+  if (list.length === 0){ tb.innerHTML = "<tr><td colspan='6' style='text-align:center;'>ردیفی نیست</td></tr>"; return; }
   list.forEach(p => {
-    const tr = document.createElement("tr");
-    const tdN = document.createElement("td");
-    tdN.className = "leave-name-cell";
-    tdN.textContent = p.name;
-    tr.appendChild(tdN);
-
-    const pl = state.leaves[p.name] || {};
-    const days = Object.keys(pl).map(Number).sort((a, b) => a - b);
-    const canEdit = isAdmin || p.name === currentUser.name;
-
+    const tr = document.createElement("tr"); const tdN = document.createElement("td"); tdN.className = "leave-name-cell"; tdN.textContent = p.name; tr.appendChild(tdN);
+    const pl = state.leaves[p.name] || {}, days = Object.keys(pl).map(Number).sort((a, b) => a - b), canEdit = isAdmin || p.name === currentUser.name;
     for (let i = 0; i < 5; i++){
-      const td = document.createElement("td");
-      const sel = document.createElement("select");
-      sel.className = "leave-select";
-      if (!canEdit){ sel.disabled = true; sel.classList.add("locked"); }
-
-      const empty = document.createElement("option");
-      empty.value = ""; empty.textContent = "—";
-      sel.appendChild(empty);
-
-      for (let d = 0; d < DAYS; d++){
-        const info = getDayInfo(d);
-        if (info.isFriday) continue;
-        const o = document.createElement("option");
-        o.value = d;
-        o.textContent = `${info.weekday} ${info.jDay} ${info.jMonth}`;
-        sel.appendChild(o);
-      }
+      const td = document.createElement("td"), sel = document.createElement("select"); sel.className = "leave-select"; if (!canEdit){ sel.disabled = true; sel.classList.add("locked"); }
+      const empty = document.createElement("option"); empty.value = ""; empty.textContent = "—"; sel.appendChild(empty);
+      for (let d = 0; d < DAYS; d++){ const info = getDayInfo(d); if (info.isFriday) continue; const o = document.createElement("option"); o.value = d; o.textContent = `${info.weekday} ${info.jDay} ${info.jMonth}`; sel.appendChild(o); }
       if (days[i] !== undefined) sel.value = days[i];
       sel.addEventListener("change", () => onLeaveChange(p.name, sel, td));
-      td.appendChild(sel);
-      tr.appendChild(td);
+      td.appendChild(sel); tr.appendChild(td);
     }
     tb.appendChild(tr);
   });
@@ -772,204 +561,88 @@ function renderLeaves(){
 
 async function onLeaveChange(person, sel, td){
   if (!isAdmin && person !== currentUser.name){ sel.value = ""; return; }
-
-  const newDayVal = sel.value;
-  const rowSelects = [];
-  for (let k = 1; k <= 5; k++){
-    const s = td.parentElement.children[k]?.querySelector("select");
-    if (s) rowSelects.push(s);
-  }
-  const newLeaves = {};
-  let dup = false;
-  rowSelects.forEach(s => {
-    if (!s.value) return;
-    if (newLeaves[s.value]) dup = true;
-    else newLeaves[s.value] = true;
-  });
+  const newDayVal = sel.value, rowSelects = [];
+  for (let k = 1; k <= 5; k++){ const s = td.parentElement.children[k]?.querySelector("select"); if (s) rowSelects.push(s); }
+  const newLeaves = {}; let dup = false;
+  rowSelects.forEach(s => { if (!s.value) return; if (newLeaves[s.value]) dup = true; else newLeaves[s.value] = true; });
   if (dup){ await alertDlg("⛔ تاریخ تکراری"); sel.value = ""; return; }
-
-  const pObj = PERSONNEL.find(x => x.name === person);
-  if (!pObj) return;
-
+  const pObj = PERSONNEL.find(x => x.name === person); if (!pObj) return;
   if (!newDayVal){
     const old = state.leaves[person] || {};
-    for (const day of Object.keys(old)){
-      if (!newLeaves[day]){
-        await sb.from("leaves").delete().eq("day", parseInt(day)).eq("user_id", pObj.id);
-        delete old[day];
-      }
-    }
-    if (Object.keys(old).length === 0) delete state.leaves[person];
-    else state.leaves[person] = old;
-    renderStats();
-    return;
+    for (const day of Object.keys(old)){ if (!newLeaves[day]){ await sb.from("leaves").delete().eq("day", parseInt(day)).eq("user_id", pObj.id); delete old[day]; } }
+    if (Object.keys(old).length === 0) delete state.leaves[person]; else state.leaves[person] = old;
+    renderStats(); return;
   }
-
   const dayIdx = parseInt(newDayVal);
   if (getDayInfo(dayIdx).isFriday){ await alertDlg("⛔ جمعه مجاز نیست."); sel.value = ""; return; }
-  if (findPersonShiftOnDay(person, dayIdx).length > 0){
-    await alertDlg("⛔ در این روز شیفت دارید."); sel.value = ""; return;
-  }
-
-  // بررسی ظرفیت سمت کلاینت (بدون نیاز به RPC)
-  const { count, error: countErr } = await sb.from("leaves")
-    .select("*", { count: "exact", head: true })
-    .eq("day", dayIdx);
-
-  if (countErr){
-    await alertDlg("⛔ خطا در بررسی ظرفیت: " + countErr.message);
-    sel.value = ""; return;
-  }
-  if (count >= 2){
-    await alertDlg("⛔ ظرفیت مرخصی این روز پر است.");
-    sel.value = ""; return;
-  }
-
+  if (findPersonShiftOnDay(person, dayIdx).length > 0){ await alertDlg("⛔ در این روز شیفت دارید."); sel.value = ""; return; }
+  const { count, error: countErr } = await sb.from("leaves").select("*", { count: "exact", head: true }).eq("day", dayIdx);
+  if (countErr){ await alertDlg("⛔ خطا: " + countErr.message); sel.value = ""; return; }
+  if (count >= 2){ await alertDlg("⛔ ظرفیت مرخصی این روز پر است."); sel.value = ""; return; }
   try {
-    const { error } = await sb.from("leaves").insert({
-      day: dayIdx, user_id: pObj.id
-    });
+    const { error } = await sb.from("leaves").insert({ day: dayIdx, user_id: pObj.id });
     if (error){
-      if (error.message && error.message.includes("LEAVE_CAPACITY_FULL"))
-        await alertDlg("⛔ ظرفیت پر شد (هم‌زمان).");
-      else if (error.code === "23505")
-        await alertDlg("⛔ قبلاً ثبت شده.");
-      else
-        await alertDlg("⛔ خطا: " + error.message);
+      if (error.code === "23505") await alertDlg("⛔ قبلاً ثبت شده.");
+      else await alertDlg("⛔ خطا: " + error.message);
       sel.value = ""; return;
     }
     if (!state.leaves[person]) state.leaves[person] = {};
-    state.leaves[person][String(dayIdx)] = true;
-    renderStats();
-    showAlert("✅ مرخصی ثبت شد.");
-  } catch(e){
-    await alertDlg("⛔ خطا: " + e.message);
-    sel.value = "";
-  }
+    state.leaves[person][String(dayIdx)] = true; renderStats(); showAlert("✅ مرخصی ثبت شد.");
+  } catch(e){ await alertDlg("⛔ خطا: " + e.message); sel.value = ""; }
 }
 
-/* ============ STATS ============ */
 function calcShiftHours(type, dayIdx, req){
-  const base = HOURS[type];
-  const is184 = req === 184;
-  const info = getDayInfo(dayIdx);
-  const nxt = getDayInfo(dayIdx + 1);
-
-  if (type === "صبح" || type === "عصر"){
-    if (info.isFriday) return { total: base * 1.5, holiday: base * 0.5 };
-    return { total: base, holiday: 0 };
-  }
-
-  let h = 0;
-  if (is184){
-    if (nxt.isFriday) h = 7.5;
-    else if (info.isFriday) h = 4.5;
-  } else {
-    if (info.isFriday) h = 12;
-  }
+  const base = HOURS[type], is184 = req === 184, info = getDayInfo(dayIdx), nxt = getDayInfo(dayIdx + 1);
+  if (type === "صبح" || type === "عصر"){ if (info.isFriday) return { total: base * 1.5, holiday: base * 0.5 }; return { total: base, holiday: 0 }; }
+  let h = 0; if (is184){ if (nxt.isFriday) h = 7.5; else if (info.isFriday) h = 4.5; } else { if (info.isFriday) h = 12; }
   return { total: base + h * 0.5, holiday: h * 0.5 };
 }
 
 function renderStats(){
-  const tb = document.getElementById("statsBody");
-  tb.innerHTML = "";
+  const tb = document.getElementById("statsBody"); tb.innerHTML = "";
   const list = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
-  if (list.length === 0){
-    tb.innerHTML = "<tr><td colspan='10' style='text-align:center;'>ردیفی نیست</td></tr>";
-    return;
-  }
-
+  if (list.length === 0){ tb.innerHTML = "<tr><td colspan='10' style='text-align:center;'>ردیفی نیست</td></tr>"; return; }
   const m = {}, e = {}, n = {}, h = {}, lc = {};
   PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; });
-  Object.keys(state.leaves).forEach(per => {
-    if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length;
-  });
-
-  for (let d = 0; d < DAYS; d++){
-    ZONES.forEach(z => z.cols.forEach(t => {
-      const person = state.shifts[`${d}|${z.name}|${t}`];
-      if (!person) return;
-      const p = PERSONNEL.find(x => x.name === person);
-      if (!p) return;
-      const { holiday } = calcShiftHours(t, d, p.req);
-      h[person] += holiday;
-      if (t === "صبح") m[person] += HOURS[t];
-      else if (t === "عصر") e[person] += HOURS[t];
-      else n[person] += HOURS[t];
-    }));
-  }
-
+  Object.keys(state.leaves).forEach(per => { if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length; });
+  for (let d = 0; d < DAYS; d++){ ZONES.forEach(z => z.cols.forEach(t => { const person = state.shifts[`${d}|${z.name}|${t}`]; if (!person) return; const p = PERSONNEL.find(x => x.name === person); if (!p) return; const { holiday } = calcShiftHours(t, d, p.req); h[person] += holiday; if (t === "صبح") m[person] += HOURS[t]; else if (t === "عصر") e[person] += HOURS[t]; else n[person] += HOURS[t]; })); }
   list.forEach(p => {
-    const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name];
-    const lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100;
-    const total = Math.round((ts + lh) * 10) / 10;
-    const diff = Math.round((total - p.req) * 10) / 10;
+    const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name], lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100;
+    const total = Math.round((ts + lh) * 10) / 10, diff = Math.round((total - p.req) * 10) / 10;
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="stat-name">${p.name}</td><td>${p.req}</td><td>${m[p.name]}</td><td>${e[p.name]}</td><td>${n[p.name]}</td><td>${Math.round(h[p.name]*10)/10}</td><td>${lh}</td><td style="font-weight:bold;">${total}</td><td class="${diff>0?'val-plus':''}">${diff>0?diff:0}</td><td class="${diff<0?'val-minus':''}">${diff<0?Math.abs(diff):0}</td>`;
+    tr.innerHTML = `<td class="stat-name">${p.name}</td><td>${p.req}</td><td>${m[p.name]}</td><td>${e[p.name]}</td><td>${n[p.name]}</td><td>${Math.round(h[p.name]*10)/10}</td><td>${lh}</td><td style="font-weight:800;">${total}</td><td class="${diff>0?'val-plus':''}">${diff>0?diff:0}</td><td class="${diff<0?'val-minus':''}">${diff<0?Math.abs(diff):0}</td>`;
     tb.appendChild(tr);
   });
 }
 
-/* ============ STAFF ============ */
-function openStaff(){
-  if (!isAdmin) return alertDlg("⛔ دسترسی ندارید.");
-  renderStaffList();
-  document.getElementById("staffModal").classList.add("active");
-}
-
+/* ============ STAFF & LOGS ============ */
+function openStaff(){ if (!isAdmin) return alertDlg("⛔ دسترسی ندارید."); renderStaffList(); document.getElementById("staffModal").classList.add("active"); }
 function renderStaffList(){
-  const l = document.getElementById("staffList");
-  l.innerHTML = "";
+  const l = document.getElementById("staffList"); l.innerHTML = "";
   const staff = PERSONNEL.filter(p => !p.is_admin);
   staff.forEach(p => {
-    const realIdx = PERSONNEL.indexOf(p);
-    const d = document.createElement("div");
-    d.className = "staff-item";
-    d.innerHTML = `
-      <span class="staff-info">${p.name}</span>
-      <input type="number" class="req-input" value="${p.req}" data-idx="${realIdx}">
-      <button class="btn-del" data-del="${realIdx}">حذف</button>`;
+    const realIdx = PERSONNEL.indexOf(p); const d = document.createElement("div"); d.className = "staff-item";
+    d.innerHTML = `<span style="font-weight:700">${p.name}</span><div style="display:flex;gap:8px;align-items:center"><input type="number" class="req-input" value="${p.req}" data-idx="${realIdx}"><button class="btn-del" data-del="${realIdx}">حذف</button></div>`;
     l.appendChild(d);
   });
-
   l.querySelectorAll("input.req-input").forEach(inp => inp.addEventListener("change", async () => {
-    const idx = +inp.dataset.idx;
-    const v = parseFloat(inp.value);
-    if (isNaN(v) || v < 0){ inp.value = PERSONNEL[idx].req; return; }
-    const { error } = await sb.from("profiles").update({ required_hours: v }).eq("id", PERSONNEL[idx].id);
-    if (error){ await alertDlg("⛔ خطا: " + error.message); inp.value = PERSONNEL[idx].req; return; }
-    PERSONNEL[idx].req = v;
-    renderAll();
+    const idx = +inp.dataset.idx, v = parseFloat(inp.value); if (isNaN(v) || v < 0){ inp.value = PERSONNEL[idx].req; return; }
+    const { error } = await sb.from("profiles").update({ required_hours: v }).eq("id", PERSONNEL[idx].id); if (error){ await alertDlg("⛔ خطا: " + error.message); inp.value = PERSONNEL[idx].req; return; }
+    PERSONNEL[idx].req = v; renderAll();
   }));
-
   l.querySelectorAll("button.btn-del").forEach(b => b.addEventListener("click", async () => {
-    const p = PERSONNEL[+b.dataset.del];
-    if (!await confirmDlg(`حذف ${p.name}؟`, true)) return;
-    const { error } = await sb.from("profiles").delete().eq("id", p.id);
-    if (error){ await alertDlg("⛔ خطا: " + error.message); return; }
-    await loadAll();
-    renderStaffList();
-    renderAll();
+    const p = PERSONNEL[+b.dataset.del]; if (!await confirmDlg(`حذف ${p.name}؟`, true)) return;
+    const { error } = await sb.from("profiles").delete().eq("id", p.id); if (error){ await alertDlg("⛔ خطا: " + error.message); return; }
+    await loadAll(); renderStaffList(); renderAll();
   }));
 }
 
-/* ============ LOGS ============ */
-function openLogs(){
-  if (!isAdmin) return alertDlg("⛔ دسترسی ندارید.");
-  loadLogs();
-  document.getElementById("logsModal").classList.add("active");
-}
-
+function openLogs(){ if (!isAdmin) return alertDlg("⛔ دسترسی ندارید."); loadLogs(); document.getElementById("logsModal").classList.add("active"); }
 async function loadLogs(){
-  const b = document.getElementById("logsBody");
-  b.innerHTML = "<div style='text-align:center;padding:20px;'>⏳ در حال بارگذاری...</div>";
+  const b = document.getElementById("logsBody"); b.innerHTML = "<div style='text-align:center;padding:20px;'>⏳ در حال بارگذاری...</div>";
   try {
     const { data, error } = await sb.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(100);
-    if (error) throw error;
-    if (!data || data.length === 0){
-      b.innerHTML = "<p style='text-align:center;color:#64748b;padding:30px;'>هیچ گزارشی یافت نشد.</p>";
-      return;
-    }
+    if (error) throw error; if (!data || data.length === 0){ b.innerHTML = "<p style='text-align:center;color:#64748b;padding:30px;'>هیچ گزارشی یافت نشد.</p>"; return; }
     b.innerHTML = "<div style='display:flex;flex-direction:column;gap:8px;'>" + data.map(l => {
       const name = PERSONNEL.find(p => p.id === l.user_id)?.name || 'نامشخص';
       const date = new Date(l.created_at).toLocaleString('fa-IR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -978,20 +651,10 @@ async function loadLogs(){
       else if (l.action === 'حذف شیفت'){ icon = "🗑️"; color = "#991b1b"; bg = "#fee2e2"; }
       else if (l.action === 'ثبت مرخصی'){ icon = "🏖️"; color = "#c2410c"; bg = "#ffedd5"; }
       else if (l.action === 'حذف مرخصی'){ icon = "❌"; color = "#991b1b"; bg = "#fee2e2"; }
-
-      let details = "";
-      if (l.details){
-        if (l.details.zone){
-          details = `<span style="font-size:11px;background:rgba(0,0,0,0.05);padding:2px 6px;border-radius:4px;margin-right:4px;">${l.details.zone}</span><span style="font-size:11px;background:rgba(0,0,0,0.05);padding:2px 6px;border-radius:4px;margin-right:4px;">${l.details.type}</span><span style="font-size:11px;background:rgba(0,0,0,0.05);padding:2px 6px;border-radius:4px;">روز ${l.details.day + 1}</span>`;
-        } else if (l.details.day !== undefined){
-          details = `<span style="font-size:11px;background:rgba(0,0,0,0.05);padding:2px 6px;border-radius:4px;">روز ${l.details.day + 1} ماه</span>`;
-        }
-      }
-      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;border-right:4px solid ${color};"><div style="width:36px;height:36px;flex-shrink:0;background:${bg};color:${color};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;">${icon}</div><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;color:var(--text-main);margin-bottom:2px;">${title} <span style="font-weight:400;color:var(--text-muted);font-size:11px;">توسط ${name}</span></div><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${details}</div></div><div style="font-size:10px;color:var(--text-muted);white-space:nowrap;text-align:left;direction:ltr;">${date}</div></div>`;
+      let details = ""; if (l.details){ if (l.details.zone){ details = `<span style="font-size:11px;background:rgba(0,0,0,0.05);padding:2px 6px;border-radius:4px;margin-right:4px;">${l.details.zone}</span><span style="font-size:11px;background:rgba(0,0,0,0.05);padding:2px 6px;border-radius:4px;margin-right:4px;">${l.details.type}</span><span style="font-size:11px;background:rgba(0,0,0,0.05);padding:2px 6px;border-radius:4px;">روز ${l.details.day + 1}</span>`; } else if (l.details.day !== undefined){ details = `<span style="font-size:11px;background:rgba(0,0,0,0.05);padding:2px 6px;border-radius:4px;">روز ${l.details.day + 1} ماه</span>`; } }
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg-body);border:1px solid var(--border-color);border-radius:8px;border-right:4px solid ${color};"><div style="width:36px;height:36px;flex-shrink:0;background:${bg};color:${color};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;">${icon}</div><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;color:var(--text-main);margin-bottom:2px;">${title} <span style="font-weight:400;color:var(--text-muted);font-size:11px;">توسط ${name}</span></div><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${details}</div></div><div style="font-size:10px;color:var(--text-muted);white-space:nowrap;text-align:left;direction:ltr;">${date}</div></div>`;
     }).join('') + "</div>";
-  } catch(e){
-    b.innerHTML = "<p style='color:red;text-align:center;padding:20px;'>خطا: " + e.message + "</p>";
-  }
+  } catch(e){ b.innerHTML = "<p style='color:red;text-align:center;padding:20px;'>خطا: " + e.message + "</p>"; }
 }
 
 /* ============ TABS ============ */
@@ -1008,200 +671,54 @@ function switchTab(n){
 function openExcel(){
   if (typeof XLSX === "undefined"){ alertDlg("کتابخانه اکسل بارگذاری نشد."); return; }
   if (PERSONNEL.length === 0){ alertDlg("پرسنل خالی است."); return; }
-
-  const wb = XLSX.utils.book_new();
-  wb.Workbook = { Views: [{ RTL: true }] };
-
-  const ST = {
-    font: { name: "Vazirmatn", sz: 11, color: { rgb: "1E293B" } },
-    fontBold: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "1E293B" } },
-    fontHeader: { name: "Vazirmatn", sz: 12, bold: true, color: { rgb: "FFFFFF" } },
-    border: {
-      top: { style: "thin", color: { rgb: "CBD5E1" } },
-      bottom: { style: "thin", color: { rgb: "CBD5E1" } },
-      left: { style: "thin", color: { rgb: "CBD5E1" } },
-      right: { style: "thin", color: { rgb: "CBD5E1" } }
-    },
-    alignCenter: { horizontal: "center", vertical: "center", wrapText: true, readingOrder: 2 },
-    alignRight: { horizontal: "right", vertical: "center", wrapText: true, readingOrder: 2 }
-  };
+  const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] };
+  const ST = { font: { name: "Vazirmatn", sz: 11, color: { rgb: "1E293B" } }, fontBold: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "1E293B" } }, fontHeader: { name: "Vazirmatn", sz: 12, bold: true, color: { rgb: "FFFFFF" } }, border: { top: { style: "thin", color: { rgb: "CBD5E1" } }, bottom: { style: "thin", color: { rgb: "CBD5E1" } }, left: { style: "thin", color: { rgb: "CBD5E1" } }, right: { style: "thin", color: { rgb: "CBD5E1" } } }, alignCenter: { horizontal: "center", vertical: "center", wrapText: true, readingOrder: 2 }, alignRight: { horizontal: "right", vertical: "center", wrapText: true, readingOrder: 2 } };
   const ZONE_HEADER_BG = { "بهارستان ۱": "0369A1", "بهارستان ۲": "15803D", "بهارستان ۳": "C2410C", "نجمه خاتون": "A16207", "گلشن": "6B21A8" };
+  function styleCell(ws, r, c, st){ const ref = XLSX.utils.encode_cell({ r, c }); if (!ws[ref]) ws[ref] = { v: "", t: "s" }; ws[ref].s = st; }
+  function applyRange(ws, r1, c1, r2, c2, st){ for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) styleCell(ws, r, c, st); }
 
-  function styleCell(ws, r, c, st){
-    const ref = XLSX.utils.encode_cell({ r, c });
-    if (!ws[ref]) ws[ref] = { v: "", t: "s" };
-    ws[ref].s = st;
-  }
-  function applyRange(ws, r1, c1, r2, c2, st){
-    for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) styleCell(ws, r, c, st);
-  }
-
-  /* --- Sheet 1: برنامه شیفت --- */
   const sheet1 = [["روز", "تاریخ"]];
   ZONES.forEach(z => z.cols.forEach(() => sheet1[0].push(z.name)));
-  const row2 = ["", ""];
-  ZONES.forEach(z => z.cols.forEach(c => row2.push(c)));
-  sheet1.push(row2);
-  for (let d = 0; d < DAYS; d++){
-    const info = getDayInfo(d);
-    const row = [info.weekday, `${info.jDay} ${info.jMonth}`];
-    ZONES.forEach(zone => zone.cols.forEach(shiftType => {
-      const person = state.shifts[`${d}|${zone.name}|${shiftType}`] || "";
-      if (!isAdmin && person && person !== currentUser.name) row.push("🚫");
-      else row.push(person);
-    }));
-    sheet1.push(row);
-  }
-  const ws1 = XLSX.utils.aoa_to_sheet(sheet1);
-  const cols1 = [{ wch: 12 }, { wch: 14 }];
-  for (let i = 0; i < 15; i++) cols1.push({ wch: 16 });
-  ws1["!cols"] = cols1;
-  ws1["!rows"] = [{ hpt: 35 }, { hpt: 25 }];
-  for (let i = 2; i < DAYS + 2; i++) ws1["!rows"].push({ hpt: 22 });
+  const row2 = ["", ""]; ZONES.forEach(z => z.cols.forEach(c => row2.push(c))); sheet1.push(row2);
+  for (let d = 0; d < DAYS; d++){ const info = getDayInfo(d); const row = [info.weekday, `${info.jDay} ${info.jMonth}`]; ZONES.forEach(zone => zone.cols.forEach(shiftType => { const person = state.shifts[`${d}|${zone.name}|${shiftType}`] || ""; if (!isAdmin && person && person !== currentUser.name) row.push("🚫"); else row.push(person); })); sheet1.push(row); }
+  const ws1 = XLSX.utils.aoa_to_sheet(sheet1); const cols1 = [{ wch: 12 }, { wch: 14 }]; for (let i = 0; i < 15; i++) cols1.push({ wch: 16 });
+  ws1["!cols"] = cols1; ws1["!rows"] = [{ hpt: 35 }, { hpt: 25 }]; for (let i = 2; i < DAYS + 2; i++) ws1["!rows"].push({ hpt: 22 });
   applyRange(ws1, 0, 0, DAYS + 1, 1, { font: ST.fontHeader, fill: { fgColor: { rgb: "334155" } }, border: ST.border, alignment: ST.alignCenter });
-  let col = 2;
-  ZONES.forEach(zone => {
-    const bg = ZONE_HEADER_BG[zone.name] || "1E293B";
-    const st = { font: ST.fontHeader, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter };
-    for (let i = 0; i < zone.cols.length; i++){ styleCell(ws1, 0, col + i, st); styleCell(ws1, 1, col + i, st); }
-    col += zone.cols.length;
-  });
-  for (let d = 0; d < DAYS; d++){
-    const info = getDayInfo(d);
-    const rowBg = info.isFriday ? "FEF3C7" : "FFFFFF";
-    const dayFontColor = info.isFriday ? "DC2626" : "1E293B";
-    styleCell(ws1, d + 2, 0, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: dayFontColor } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter });
-    styleCell(ws1, d + 2, 1, { font: { name: "Vazirmatn", sz: 10, color: { rgb: "64748B" } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter });
-    for (let c = 2; c < row2.length; c++){
-      styleCell(ws1, d + 2, c, { font: ST.fontBold, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter });
-    }
-  }
-  ws1["!freeze"] = { xSplit: 2, ySplit: 2 };
-  XLSX.utils.book_append_sheet(wb, ws1, "برنامه شیفت");
+  let col = 2; ZONES.forEach(zone => { const bg = ZONE_HEADER_BG[zone.name] || "1E293B"; const st = { font: ST.fontHeader, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }; for (let i = 0; i < zone.cols.length; i++){ styleCell(ws1, 0, col + i, st); styleCell(ws1, 1, col + i, st); } col += zone.cols.length; });
+  for (let d = 0; d < DAYS; d++){ const info = getDayInfo(d); const rowBg = info.isFriday ? "FEF3C7" : "FFFFFF"; const dayFontColor = info.isFriday ? "DC2626" : "1E293B"; styleCell(ws1, d + 2, 0, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: dayFontColor } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); styleCell(ws1, d + 2, 1, { font: { name: "Vazirmatn", sz: 10, color: { rgb: "64748B" } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); for (let c = 2; c < row2.length; c++){ styleCell(ws1, d + 2, c, { font: ST.fontBold, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); } }
+  ws1["!freeze"] = { xSplit: 2, ySplit: 2 }; XLSX.utils.book_append_sheet(wb, ws1, "برنامه شیفت");
 
-  /* --- محاسبه آمار --- */
   const m = {}, e = {}, n = {}, h = {}, lc = {};
-  PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; });
-  Object.keys(state.leaves).forEach(per => {
-    if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length;
-  });
-  for (let d = 0; d < DAYS; d++){
-    ZONES.forEach(z => z.cols.forEach(t => {
-      const person = state.shifts[`${d}|${z.name}|${t}`];
-      if (!person) return;
-      const p = PERSONNEL.find(x => x.name === person);
-      if (!p) return;
-      const { holiday } = calcShiftHours(t, d, p.req);
-      h[person] += holiday;
-      if (t === "صبح") m[person] += HOURS[t];
-      else if (t === "عصر") e[person] += HOURS[t];
-      else n[person] += HOURS[t];
-    }));
-  }
+  PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; }); Object.keys(state.leaves).forEach(per => { if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length; });
+  for (let d = 0; d < DAYS; d++){ ZONES.forEach(z => z.cols.forEach(t => { const person = state.shifts[`${d}|${z.name}|${t}`]; if (!person) return; const p = PERSONNEL.find(x => x.name === person); if (!p) return; const { holiday } = calcShiftHours(t, d, p.req); h[person] += holiday; if (t === "صبح") m[person] += HOURS[t]; else if (t === "عصر") e[person] += HOURS[t]; else n[person] += HOURS[t]; })); }
 
-  /* --- Sheet 2: آمار کارکرد --- */
   const sheet2 = [["نام", "موظفی", "صبح", "عصر", "شب", "تعطیلات", "مرخصی", "کارکرد کل", "اضافه کار", "کسری کار"]];
   const statList = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
-  statList.forEach(p => {
-    const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name];
-    const lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100;
-    const total = Math.round((ts + lh) * 10) / 10;
-    const diff = Math.round((total - p.req) * 10) / 10;
-    sheet2.push([
-      p.name, p.req, m[p.name], e[p.name], n[p.name],
-      Math.round(h[p.name] * 10) / 10, lh, total,
-      diff > 0 ? diff : 0,
-      diff < 0 ? Math.abs(diff) : 0
-    ]);
-  });
-  const ws2 = XLSX.utils.aoa_to_sheet(sheet2);
-  ws2["!cols"] = [{wch:20},{wch:10},{wch:10},{wch:10},{wch:10},{wch:12},{wch:10},{wch:12},{wch:10},{wch:10}];
-  ws2["!rows"] = [{ hpt: 32 }];
-  for (let i = 1; i <= statList.length; i++) ws2["!rows"].push({ hpt: 24 });
+  statList.forEach(p => { const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name]; const lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100; const total = Math.round((ts + lh) * 10) / 10; const diff = Math.round((total - p.req) * 10) / 10; sheet2.push([p.name, p.req, m[p.name], e[p.name], n[p.name], Math.round(h[p.name] * 10) / 10, lh, total, diff > 0 ? diff : 0, diff < 0 ? Math.abs(diff) : 0]); });
+  const ws2 = XLSX.utils.aoa_to_sheet(sheet2); ws2["!cols"] = [{wch:20},{wch:10},{wch:10},{wch:10},{wch:10},{wch:12},{wch:10},{wch:12},{wch:10},{wch:10}]; ws2["!rows"] = [{ hpt: 32 }]; for (let i = 1; i <= statList.length; i++) ws2["!rows"].push({ hpt: 24 });
   applyRange(ws2, 0, 0, 0, 9, { font: ST.fontHeader, fill: { fgColor: { rgb: "0F172A" } }, border: ST.border, alignment: ST.alignCenter });
-  for (let r = 1; r <= statList.length; r++){
-    const bg = r % 2 === 0 ? "F8FAFC" : "FFFFFF";
-    applyRange(ws2, r, 0, r, 9, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter });
-    styleCell(ws2, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight });
-    if (sheet2[r][8] > 0) styleCell(ws2, r, 8, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "059669" } }, fill: { fgColor: { rgb: "D1FAE5" } }, border: ST.border, alignment: ST.alignCenter });
-    if (sheet2[r][9] > 0) styleCell(ws2, r, 9, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "DC2626" } }, fill: { fgColor: { rgb: "FEE2E2" } }, border: ST.border, alignment: ST.alignCenter });
-  }
-  ws2["!freeze"] = { ySplit: 1 };
-  XLSX.utils.book_append_sheet(wb, ws2, "آمار کارکرد");
+  for (let r = 1; r <= statList.length; r++){ const bg = r % 2 === 0 ? "F8FAFC" : "FFFFFF"; applyRange(ws2, r, 0, r, 9, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }); styleCell(ws2, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight }); if (sheet2[r][8] > 0) styleCell(ws2, r, 8, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "059669" } }, fill: { fgColor: { rgb: "D1FAE5" } }, border: ST.border, alignment: ST.alignCenter }); if (sheet2[r][9] > 0) styleCell(ws2, r, 9, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "DC2626" } }, fill: { fgColor: { rgb: "FEE2E2" } }, border: ST.border, alignment: ST.alignCenter }); }
+  ws2["!freeze"] = { ySplit: 1 }; XLSX.utils.book_append_sheet(wb, ws2, "آمار کارکرد");
 
-  /* --- Sheet 3: مرخصی‌ها --- */
   const sheet3 = [["نام", "مرخصی ۱", "مرخصی ۲", "مرخصی ۳", "مرخصی ۴", "مرخصی ۵", "تعداد کل"]];
   const leaveList = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
-  leaveList.forEach(p => {
-    const leaves = state.leaves[p.name] || {};
-    const days = Object.keys(leaves).map(Number).sort((a, b) => a - b);
-    const row = [p.name];
-    for (let i = 0; i < 5; i++){
-      if (days[i] !== undefined){
-        const info = getDayInfo(days[i]);
-        row.push(`${info.weekday} ${info.jDay} ${info.jMonth}`);
-      } else {
-        row.push("—");
-      }
-    }
-    row.push(days.length);
-    sheet3.push(row);
-  });
-  const ws3 = XLSX.utils.aoa_to_sheet(sheet3);
-  ws3["!cols"] = [{wch:20},{wch:18},{wch:18},{wch:18},{wch:18},{wch:18},{wch:10}];
-  ws3["!rows"] = [{ hpt: 32 }];
-  for (let i = 1; i <= leaveList.length; i++) ws3["!rows"].push({ hpt: 24 });
+  leaveList.forEach(p => { const leaves = state.leaves[p.name] || {}; const days = Object.keys(leaves).map(Number).sort((a, b) => a - b); const row = [p.name]; for (let i = 0; i < 5; i++){ if (days[i] !== undefined){ const info = getDayInfo(days[i]); row.push(`${info.weekday} ${info.jDay} ${info.jMonth}`); } else { row.push("—"); } } row.push(days.length); sheet3.push(row); });
+  const ws3 = XLSX.utils.aoa_to_sheet(sheet3); ws3["!cols"] = [{wch:20},{wch:18},{wch:18},{wch:18},{wch:18},{wch:18},{wch:10}]; ws3["!rows"] = [{ hpt: 32 }]; for (let i = 1; i <= leaveList.length; i++) ws3["!rows"].push({ hpt: 24 });
   applyRange(ws3, 0, 0, 0, 6, { font: ST.fontHeader, fill: { fgColor: { rgb: "7C2D12" } }, border: ST.border, alignment: ST.alignCenter });
-  for (let r = 1; r <= leaveList.length; r++){
-    const bg = r % 2 === 0 ? "FFF7ED" : "FFFFFF";
-    applyRange(ws3, r, 0, r, 6, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter });
-    styleCell(ws3, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight });
-  }
-  ws3["!freeze"] = { ySplit: 1 };
-  XLSX.utils.book_append_sheet(wb, ws3, "مرخصی‌ها");
+  for (let r = 1; r <= leaveList.length; r++){ const bg = r % 2 === 0 ? "FFF7ED" : "FFFFFF"; applyRange(ws3, r, 0, r, 6, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }); styleCell(ws3, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight }); }
+  ws3["!freeze"] = { ySplit: 1 }; XLSX.utils.book_append_sheet(wb, ws3, "مرخصی‌ها");
 
-  /* --- Sheet 4: خلاصه --- */
-  let totalLeave = 0;
-  Object.values(state.leaves).forEach(l => totalLeave += Object.keys(l).length);
-  let totalAllHours = 0;
-  statList.forEach(p => {
-    const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name];
-    const lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100;
-    totalAllHours += Math.round((ts + lh) * 10) / 10;
-  });
-  const sheet4 = [
-    ["عنوان", "مقدار"],
-    ["ماه برنامه‌ریزی", MONTH + " ۱۴۰۵"],
-    ["تعداد روزهای ماه", DAYS],
-    ["تعداد پرسنل", statList.length],
-    ["تعداد کل شیفت‌های ثبت‌شده", Object.keys(state.shifts).filter(k => state.shifts[k]).length],
-    ["تعداد کل مرخصی‌های ثبت‌شده", totalLeave],
-    ["مجموع ساعت کارکرد", Math.round(totalAllHours * 10) / 10],
-    ["تاریخ خروجی", new Date().toLocaleString("fa-IR")]
-  ];
-  const ws4 = XLSX.utils.aoa_to_sheet(sheet4);
-  ws4["!cols"] = [{ wch: 35 }, { wch: 25 }];
-  ws4["!rows"] = [{ hpt: 32 }];
-  for (let i = 1; i < sheet4.length; i++) ws4["!rows"].push({ hpt: 26 });
+  let totalLeave = 0; Object.values(state.leaves).forEach(l => totalLeave += Object.keys(l).length); let totalAllHours = 0;
+  statList.forEach(p => { const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name]; const lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100; totalAllHours += Math.round((ts + lh) * 10) / 10; });
+  const sheet4 = [["عنوان", "مقدار"], ["ماه برنامه‌ریزی", MONTH + " ۱۴۰۵"], ["تعداد روزهای ماه", DAYS], ["تعداد پرسنل", statList.length], ["تعداد کل شیفت‌های ثبت‌شده", Object.keys(state.shifts).filter(k => state.shifts[k]).length], ["تعداد کل مرخصی‌های ثبت‌شده", totalLeave], ["مجموع ساعت کارکرد", Math.round(totalAllHours * 10) / 10], ["تاریخ خروجی", new Date().toLocaleString("fa-IR")]];
+  const ws4 = XLSX.utils.aoa_to_sheet(sheet4); ws4["!cols"] = [{ wch: 35 }, { wch: 25 }]; ws4["!rows"] = [{ hpt: 32 }]; for (let i = 1; i < sheet4.length; i++) ws4["!rows"].push({ hpt: 26 });
   applyRange(ws4, 0, 0, 0, 1, { font: ST.fontHeader, fill: { fgColor: { rgb: "0F172A" } }, border: ST.border, alignment: ST.alignCenter });
-  for (let r = 1; r < sheet4.length; r++){
-    const bg = r % 2 === 0 ? "F8FAFC" : "FFFFFF";
-    applyRange(ws4, r, 0, r, 1, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter });
-    styleCell(ws4, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight });
-  }
+  for (let r = 1; r < sheet4.length; r++){ const bg = r % 2 === 0 ? "F8FAFC" : "FFFFFF"; applyRange(ws4, r, 0, r, 1, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }); styleCell(ws4, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight }); }
   XLSX.utils.book_append_sheet(wb, ws4, "خلاصه");
 
-  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  const blob = new Blob([wbout], { type: "application/octet-stream" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `گزارش-جامع-شیفت-${MONTH}-۱۴۰۵.xlsx`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  showAlert("✅ فایل اکسل با موفقیت دانلود شد.");
+  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" }); const blob = new Blob([wbout], { type: "application/octet-stream" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `گزارش-جامع-شیفت-${MONTH}-۱۴۰۵.xlsx`; a.click(); URL.revokeObjectURL(a.href); showAlert("✅ فایل اکسل با موفقیت دانلود شد.");
 }
 
-/* ============ START ============ */
 window.addEventListener("load", init);
 </script>
 </body>
