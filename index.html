@@ -78,6 +78,11 @@ body.dark-mode .tab-btn:hover{background:#334155}
 .filter-box.active{display:flex}
 .filter-box select{border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:700;color:var(--text-main);outline:none;cursor:pointer;padding:4px}
 
+/* ==== PANELS (تب‌ها) ==== */
+.tab-panel{display:none;animation:fadeIn 0.3s ease}
+.tab-panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
 /* ==== TABLE ==== */
 .table-container{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-sm);border:1px solid var(--border);overflow-x:auto;margin-bottom:24px}
 table{width:100%;border-collapse:separate;border-spacing:0;text-align:center}
@@ -208,7 +213,7 @@ table.stats-table th{background:var(--bg-header);color:#fff;border-color:rgba(25
 <!-- Loading -->
 <div id="loadingScreen">
   <div class="spinner"></div>
-  <div id="loadingText" style="font-weight:600;color:var(--text-muted);font-size:14px;text-align:center;padding:0 20px;">در حال اتصال به سرور...<br><span style="font-size:12px;opacity:0.7">(اگر بیش از ۱۰ ثانیه طول کشید، اینترنت خود را بررسی کنید)</span></div>
+  <div id="loadingText" style="font-weight:600;color:var(--text-muted);font-size:14px;text-align:center;padding:0 20px;">در حال اتصال به سرور...</div>
 </div>
 
 <!-- Login Screen -->
@@ -265,6 +270,7 @@ table.stats-table th{background:var(--bg-header);color:#fff;border-color:rgba(25
     </div>
   </div>
 
+  <!-- Tab 1: Shifts -->
   <div class="tab-panel active" id="panelShifts">
     <div class="table-container">
       <table>
@@ -274,6 +280,7 @@ table.stats-table th{background:var(--bg-header);color:#fff;border-color:rgba(25
     </div>
   </div>
 
+  <!-- Tab 2: Leaves -->
   <div class="tab-panel" id="panelLeaves">
     <div class="section-card">
       <h3>مدیریت مرخصی‌ها</h3>
@@ -284,6 +291,7 @@ table.stats-table th{background:var(--bg-header);color:#fff;border-color:rgba(25
     </div>
   </div>
 
+  <!-- Tab 3: Stats -->
   <div class="tab-panel" id="panelStats">
     <div class="section-card">
       <h3>آمار کارکرد ماهانه</h3>
@@ -313,7 +321,7 @@ table.stats-table th{background:var(--bg-header);color:#fff;border-color:rgba(25
 
 <script>
 /* ============ CONFIG ============ */
-const APP_VERSION = "2.0.1"; // نشانگر نسخه جدید برای جلوگیری از کش
+const APP_VERSION = "2.1.0"; 
 console.log("Running Version: " + APP_VERSION);
 
 const SUPABASE_URL = "https://hghkjhvboyemimpqwkkn.supabase.co";
@@ -375,6 +383,17 @@ function getDayInfo(i){
   }
   return { weekday, isFriday, jDay, jMonth };
 }
+
+// تبدیل تاریخ میلادی به شمسی برای لاگ‌ها
+function formatDateTime(isoString) {
+  if (typeof jalaali === "undefined") return new Date(isoString).toLocaleString('fa-IR');
+  const d = new Date(isoString);
+  const j = jalaali.toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate());
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${j.jd} ${MONTH} ${j.jy} - ساعت ${hh}:${mm}`;
+}
+
 function showAlert(m){ const b=document.getElementById("alertBox"); b.textContent=m; b.style.display="block"; setTimeout(()=>b.style.display="none", 4000); }
 function showWarning(m){ const b=document.getElementById("warnBox"); b.innerHTML=m; b.style.display="block"; setTimeout(()=>b.style.display="none", 8000); }
 function closeModal(id){ document.getElementById(id).classList.remove("active"); }
@@ -419,7 +438,6 @@ async function init(){
       const o = document.createElement("option"); o.value = z.name; o.textContent = z.name; zf.appendChild(o);
     });
 
-    // Timeout برای بررسی اتصال (اگر بعد از 8 ثانیه جواب نداد، خارج شود)
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error("اتصال به دیتابیس طولانی شد. اینترنت خود را بررسی کنید.")), 8000)
     );
@@ -710,7 +728,8 @@ async function loadLogs(){
     if (error) throw error; if (!data || data.length === 0){ b.innerHTML = "<p style='text-align:center;color:#64748b;padding:30px;'>گزارشی یافت نشد.</p>"; return; }
     b.innerHTML = "<div style='display:flex;flex-direction:column;gap:8px;'>" + data.map(l => {
       const name = PERSONNEL.find(p => p.id === l.user_id)?.name || 'نامشخص';
-      const date = new Date(l.created_at).toLocaleString('fa-IR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const exactDate = formatDateTime(l.created_at); // استفاده از فرمت دقیق تاریخ و ساعت
+      
       let color = "#64748b", bg = "rgba(0,0,0,0.05)", title = l.action;
       if (l.action === 'ثبت شیفت'){ color = "#15803d"; bg = "rgba(22,163,74,0.1)"; }
       else if (l.action === 'حذف شیفت'){ color = "#991b1b"; bg = "rgba(220,38,38,0.1)"; }
@@ -724,19 +743,26 @@ async function loadLogs(){
         else if (l.details.day !== undefined){ details = `<span style="font-size:11px;background:${bg};color:${color};padding:2px 8px;border-radius:4px;font-weight:700;">روز ${l.details.day + 1} ماه</span>`; } 
         else if (l.details.message){ details = `<span style="font-size:11px;background:${bg};color:${color};padding:2px 8px;border-radius:4px;font-weight:700;">${l.details.message}</span>`; }
       }
-      return `<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-body);border:1px solid var(--border);border-radius:8px;border-right:4px solid ${color};"><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;color:var(--text-main);margin-bottom:6px;">${title} <span style="font-weight:500;color:var(--text-muted);font-size:11.5px;">توسط ${name}</span></div><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${details}</div></div><div style="font-size:11px;color:var(--text-muted);white-space:nowrap;text-align:left;direction:ltr;font-weight:600;">${date}</div></div>`;
+      return `<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg-body);border:1px solid var(--border);border-radius:8px;border-right:4px solid ${color};"><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;color:var(--text-main);margin-bottom:6px;">${title} <span style="font-weight:500;color:var(--text-muted);font-size:11.5px;">توسط ${name}</span></div><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${details}</div></div><div style="font-size:11.5px;color:var(--text-muted);white-space:nowrap;text-align:left;direction:rtl;font-weight:700;background:var(--bg-card);padding:4px 8px;border-radius:4px;border:1px solid var(--border)">${exactDate}</div></div>`;
     }).join('') + "</div>";
   } catch(e){ b.innerHTML = "<p style='color:red;text-align:center;padding:20px;'>خطا: " + e.message + "</p>"; }
 }
 
 /* ============ TABS ============ */
 function switchTab(n){
-  ["shifts","leaves","stats"].forEach(t => {
-    document.getElementById("tabBtn" + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove("active");
-    document.getElementById("panel" + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove("active");
-  });
-  document.getElementById("tabBtn" + n.charAt(0).toUpperCase() + n.slice(1)).classList.add("active");
-  document.getElementById("panel" + n.charAt(0).toUpperCase() + n.slice(1)).classList.add("active");
+  // ۱. مخفی کردن همه پنل‌ها
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  // ۲. حذف حالت فعال از همه دکمه‌ها
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  
+  // ۳. فعال کردن دکمه و پنل انتخاب شده
+  const targetBtn = document.getElementById("tabBtn" + n.charAt(0).toUpperCase() + n.slice(1));
+  const targetPanel = document.getElementById("panel" + n.charAt(0).toUpperCase() + n.slice(1));
+  
+  if(targetBtn) targetBtn.classList.add("active");
+  if(targetPanel) targetPanel.classList.add("active");
+  
+  // ۴. نمایش یا مخفی کردن فیلتر
   const filterBox = document.getElementById("zoneFilterBox");
   if (n === 'shifts') { filterBox.classList.add("active"); } else { filterBox.classList.remove("active"); }
 }
