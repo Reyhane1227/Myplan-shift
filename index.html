@@ -78,7 +78,7 @@ body.dark-mode .tab-btn:hover{background:#334155}
 .filter-box.active{display:flex}
 .filter-box select{border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:700;color:var(--text-main);outline:none;cursor:pointer;padding:4px}
 
-/* ==== PANELS (تب‌ها) ==== */
+/* ==== PANELS ==== */
 .tab-panel{display:none;animation:fadeIn 0.3s ease}
 .tab-panel.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
@@ -321,7 +321,7 @@ table.stats-table th{background:var(--bg-header);color:#fff;border-color:rgba(25
 
 <script>
 /* ============ CONFIG ============ */
-const APP_VERSION = "2.1.0"; 
+const APP_VERSION = "3.0.0"; 
 console.log("Running Version: " + APP_VERSION);
 
 const SUPABASE_URL = "https://hghkjhvboyemimpqwkkn.supabase.co";
@@ -384,7 +384,6 @@ function getDayInfo(i){
   return { weekday, isFriday, jDay, jMonth };
 }
 
-// تبدیل تاریخ میلادی به شمسی برای لاگ‌ها
 function formatDateTime(isoString) {
   if (typeof jalaali === "undefined") return new Date(isoString).toLocaleString('fa-IR');
   const d = new Date(isoString);
@@ -438,13 +437,22 @@ async function init(){
       const o = document.createElement("option"); o.value = z.name; o.textContent = z.name; zf.appendChild(o);
     });
 
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("اتصال به دیتابیس طولانی شد. اینترنت خود را بررسی کنید.")), 8000)
+    // Timeout برای جلوگیری از گیر کردن در صورت فیلترینگ
+    const timeoutPromise = new Promise((resolve) => 
+      setTimeout(() => resolve({ data: { session: null }, error: null, timeout: true }), 5000)
     );
 
     const sessionPromise = sb.auth.getSession();
-    const { data: { session }, error: sessionError } = await Promise.race([sessionPromise, timeoutPromise]);
+    const result = await Promise.race([sessionPromise, timeoutPromise]);
 
+    if (result.timeout || result.error) {
+      document.getElementById("loadingScreen").style.display = "none";
+      document.getElementById("loginScreen").style.display = "block";
+      document.getElementById("loginError").innerHTML = "<span style='color:var(--danger);font-size:12px;line-height:1.6;display:block;margin-top:10px;'>عدم دسترسی به سرور دیتابیس.<br>لطفاً فیلترشکن خود را روشن کنید و صفحه را رفرش نمایید.</span>";
+      return;
+    }
+
+    const { data: { session }, error: sessionError } = result;
     if (sessionError) throw sessionError;
 
     if (session && session.user){
@@ -456,11 +464,13 @@ async function init(){
         return; 
       }
     }
+    
     await loadLoginList();
     showLogin();
   } catch (err) {
-    const lt = document.getElementById("loadingText");
-    lt.innerHTML = `<div style="color:var(--danger);margin-bottom:10px">خطا در اتصال</div><div style="font-size:12px;color:var(--text-muted)">${err.message}</div><button class="btn-primary" style="margin-top:16px" onclick="location.reload()">تلاش مجدد</button>`;
+    document.getElementById("loadingScreen").style.display = "none";
+    document.getElementById("loginScreen").style.display = "block";
+    document.getElementById("loginError").innerHTML = "<span style='color:var(--danger);font-size:12px;line-height:1.6;display:block;margin-top:10px;'>خطا در اتصال: " + err.message + "</span>";
   }
 }
 async function loadLoginList(){
@@ -728,7 +738,7 @@ async function loadLogs(){
     if (error) throw error; if (!data || data.length === 0){ b.innerHTML = "<p style='text-align:center;color:#64748b;padding:30px;'>گزارشی یافت نشد.</p>"; return; }
     b.innerHTML = "<div style='display:flex;flex-direction:column;gap:8px;'>" + data.map(l => {
       const name = PERSONNEL.find(p => p.id === l.user_id)?.name || 'نامشخص';
-      const exactDate = formatDateTime(l.created_at); // استفاده از فرمت دقیق تاریخ و ساعت
+      const exactDate = formatDateTime(l.created_at);
       
       let color = "#64748b", bg = "rgba(0,0,0,0.05)", title = l.action;
       if (l.action === 'ثبت شیفت'){ color = "#15803d"; bg = "rgba(22,163,74,0.1)"; }
@@ -750,19 +760,15 @@ async function loadLogs(){
 
 /* ============ TABS ============ */
 function switchTab(n){
-  // ۱. مخفی کردن همه پنل‌ها
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  // ۲. حذف حالت فعال از همه دکمه‌ها
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   
-  // ۳. فعال کردن دکمه و پنل انتخاب شده
   const targetBtn = document.getElementById("tabBtn" + n.charAt(0).toUpperCase() + n.slice(1));
   const targetPanel = document.getElementById("panel" + n.charAt(0).toUpperCase() + n.slice(1));
   
   if(targetBtn) targetBtn.classList.add("active");
   if(targetPanel) targetPanel.classList.add("active");
   
-  // ۴. نمایش یا مخفی کردن فیلتر
   const filterBox = document.getElementById("zoneFilterBox");
   if (n === 'shifts') { filterBox.classList.add("active"); } else { filterBox.classList.remove("active"); }
 }
