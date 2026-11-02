@@ -12,7 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.0/dist/jalaali.min.js"></script>
 
 <script>
-  const APP_VERSION = "32.0.0"; 
+  const APP_VERSION = "33.0.0"; 
   if (localStorage.getItem('app_version') !== APP_VERSION) {
     if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
     localStorage.setItem('app_version', APP_VERSION);
@@ -41,7 +41,6 @@
 body { background: var(--bg-body); color: var(--text-main); min-height: 100vh; font-size: 13px; display: flex; flex-direction: column; overflow-x: hidden; }
 .container { max-width: 1400px; margin: 0 auto; padding: 20px; flex: 1; width: 100%; }
 
-/* Header & Navigation */
 .app-header { background: var(--bg-header); color: #fff; padding: 16px 24px; border-radius: var(--radius); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; box-shadow: var(--shadow); border-bottom: 3px solid #0f172a; }
 .app-header h1 { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
 .app-header h1::before { content: ''; display: inline-block; width: 8px; height: 24px; background: var(--accent); border-radius: 2px; }
@@ -54,7 +53,6 @@ body.is-admin .admin-badge { display: inline-block; }
 body.is-admin .admin-only, body.is-guest .admin-only { display: inline-block; }
 .user-info { background: rgba(255,255,255,0.05); padding: 8px 16px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; }
 
-/* Toolbar & Tabs */
 .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; background: var(--bg-card); padding: 10px 20px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); }
 .tabs-nav { display: flex; gap: 4px; overflow-x: auto; }
 .tab-btn { padding: 10px 24px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap; transition: all 0.2s; border-bottom: 2px solid transparent; }
@@ -66,7 +64,6 @@ body.is-admin .admin-only, body.is-guest .admin-only { display: inline-block; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
-/* Tables */
 .table-container { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); overflow-x: auto; margin-bottom: 24px; box-shadow: var(--shadow); }
 table { width: 100%; border-collapse: collapse; text-align: center; }
 th, td { border: 1px solid var(--border); padding: 10px 6px; }
@@ -82,18 +79,15 @@ tr.is-friday .day-cell, tr.is-friday .date-cell { color: var(--danger); font-wei
 .bg-z4 { background: #fefce8; color: #713f12; border-bottom: 2px solid #eab308; }
 .bg-z5 { background: #faf5ff; color: #4c1d95; border-bottom: 2px solid #a855f7; }
 
-/* Select Cells */
 select.s-cell { width: 100%; height: 34px; border: 1px solid transparent; background: transparent; font-size: 12px; font-weight: 600; text-align: center; outline: none; cursor: pointer; border-radius: var(--radius-sm); color: var(--text-main); transition: all 0.2s; }
 select.s-cell:hover { background: #fff; border-color: var(--border); }
 select.s-cell.mine { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
 select.s-cell.locked { opacity: 0.4; cursor: not-allowed; background: #f1f5f9; color: transparent; }
 
-/* Cards */
 .section-card { background: var(--bg-card); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; border: 1px solid var(--border); box-shadow: var(--shadow); }
 .section-card h3 { font-size: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; font-weight: 800; color: var(--text-main); }
 .info-banner { background: #eff6ff; color: #1e40af; padding: 14px; border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 13px; border-right: 4px solid var(--accent); font-weight: 500; line-height: 1.6; }
 
-/* Leave & Stats Tables */
 table.leave-table select { width: 100%; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; text-align: center; background: #fff; outline: none; color: var(--text-main); cursor: pointer; font-family: inherit; }
 table.leave-table select:focus { border-color: var(--accent); }
 table.stats-table th { background: var(--bg-header); color: #fff; border: 1px solid #334155; }
@@ -101,7 +95,6 @@ table.stats-table th { background: var(--bg-header); color: #fff; border: 1px so
 .val-plus { color: #15803d; font-weight: 800; background: #dcfce7; border-radius: 4px; padding: 4px 8px; display: inline-block; min-width: 40px; }
 .val-minus { color: var(--danger); font-weight: 800; background: var(--danger-bg); border-radius: 4px; padding: 4px 8px; display: inline-block; min-width: 40px; }
 
-/* Modals & Dialogs */
 .overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.8); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(2px); }
 .overlay.active { display: flex; }
 .modal { background: var(--bg-card); width: 100%; max-width: 600px; border-radius: var(--radius); overflow: hidden; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
@@ -123,7 +116,6 @@ table.stats-table th { background: var(--bg-header); color: #fff; border: 1px so
 .btn-cancel { background: transparent; border: 1px solid var(--border); padding: 12px 28px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-family: inherit; color: var(--text-main); font-size: 14px; transition: background 0.2s; }
 .btn-cancel:hover { background: #f1f5f9; }
 
-/* Login Screen */
 .login-container { max-width: 420px; margin: 80px auto; background: var(--bg-card); padding: 40px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-top: 4px solid var(--bg-header); }
 .login-container h2 { text-align: center; font-size: 22px; margin-bottom: 8px; font-weight: 900; color: var(--text-main); }
 .login-container p { text-align: center; font-size: 13px; color: var(--text-muted); margin-bottom: 32px; }
@@ -136,19 +128,16 @@ table.stats-table th { background: var(--bg-header); color: #fff; border: 1px so
 .error-msg { color: var(--danger); font-size: 13px; text-align: center; margin-top: 16px; font-weight: 600; min-height: 20px; }
 .support-text { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 24px; padding-top: 20px; border-top: 1px dashed var(--border); }
 
-/* Loader & Spinner */
 #loadingScreen { position: fixed; inset: 0; background: var(--bg-body); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
 .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 20px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Staff List */
 .staff-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f8fafc; border-radius: var(--radius-sm); margin-bottom: 10px; border: 1px solid var(--border); }
 .staff-item input { width: 80px; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: center; font-family: inherit; color: var(--text-main); font-weight: 700; outline: none; }
 .staff-item input:focus { border-color: var(--accent); }
 .btn-del { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 700; font-size: 12px; font-family: inherit; transition: all 0.2s; }
 .btn-del:hover { background: #fee2e2; }
 
-/* Mandatory Password */
 .mandatory-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.95); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
 .mandatory-overlay.active { display: flex; }
 .mandatory-box { background: var(--bg-card); width: 100%; max-width: 480px; border-radius: var(--radius); padding: 40px; text-align: center; border-top: 6px solid var(--accent); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
@@ -497,7 +486,6 @@ function renderTable() {
       sel.className = "s-cell"; sel.dataset.key = key; sel.dataset.day = d; sel.dataset.zone = z.name; sel.dataset.shift = c;
       const owner = state.shifts[key] || "", empty = document.createElement("option"); empty.value = ""; empty.textContent = "—"; sel.appendChild(empty);
       
-      // منطق دسترسی: مدیر و مهمان همه را می‌بینند. کاربر عادی فقط خودش را.
       const canSeeAll = isAdmin || isGuest;
       
       if (canSeeAll) { 
@@ -506,7 +494,6 @@ function renderTable() {
         sel.addEventListener("change", () => onShiftChange(sel)); 
       } else { 
         if (owner && owner !== currentUser.name) { 
-          // برای کاربر عادی، شیفت سایرین کاملاً قفل و مخفی است
           const taken = document.createElement("option"); taken.value = "__taken__"; taken.textContent = "—"; sel.appendChild(taken); sel.value = "__taken__"; sel.disabled = true; sel.classList.add("locked"); 
         } else { 
           const me = document.createElement("option"); me.value = currentUser.name; me.textContent = currentUser.name; sel.appendChild(me); 
@@ -663,7 +650,7 @@ function renderStaffList() {
     d.innerHTML = `<span style="font-weight:700">${p.name}</span><div style="display:flex;gap:8px;align-items:center"><input type="number" class="req-input" value="${p.req}" data-idx="${realIdx}" ${isGuest ? 'disabled' : ''}><button class="btn-del" data-del="${realIdx}" ${isGuest ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>حذف</button></div>`;
     l.appendChild(d);
   });
-  if (isGuest) return; // مهمان فقط مشاهده می‌کند
+  if (isGuest) return; 
   
   l.querySelectorAll("input.req-input").forEach(inp => inp.addEventListener("change", async () => {
     const idx = +inp.dataset.idx, v = parseFloat(inp.value); if (isNaN(v) || v < 0) { inp.value = PERSONNEL[idx].req; return; }
@@ -702,13 +689,19 @@ async function loadLogs() {
 function openExcel() {
   if (typeof XLSX === "undefined") { alertDlg("کتابخانه اکسل بارگذاری نشد."); return; }
   if (PERSONNEL.length === 0) { alertDlg("پرسنل خالی است."); return; }
-  const selectedZone = document.getElementById("zoneFilter").value, zonesToExport = selectedZone === "all" ? ZONES : ZONES.filter(z => z.name === selectedZone);
-  const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] };
+  
+  const selectedZone = document.getElementById("zoneFilter").value;
+  const zonesToExport = selectedZone === "all" ? ZONES : ZONES.filter(z => z.name === selectedZone);
+  const wb = XLSX.utils.book_new(); 
+  wb.Workbook = { Views: [{ RTL: true }] };
+  
   const ST = { font: { name: "Vazirmatn", sz: 11, color: { rgb: "1E293B" } }, fontBold: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "1E293B" } }, fontHeader: { name: "Vazirmatn", sz: 12, bold: true, color: { rgb: "FFFFFF" } }, border: { top: { style: "thin", color: { rgb: "CBD5E1" } }, bottom: { style: "thin", color: { rgb: "CBD5E1" } }, left: { style: "thin", color: { rgb: "CBD5E1" } }, right: { style: "thin", color: { rgb: "CBD5E1" } } }, alignCenter: { horizontal: "center", vertical: "center", wrapText: true, readingOrder: 2 }, alignRight: { horizontal: "right", vertical: "center", wrapText: true, readingOrder: 2 } };
   const ZONE_HEADER_BG = { "بهارستان ۱": "1e3a8a", "بهارستان ۲": "14532d", "بهارستان ۳": "7c2d12", "نجمه خاتون": "713f12", "گلشن": "4c1d95" };
+  
   function styleCell(ws, r, c, st) { const ref = XLSX.utils.encode_cell({ r, c }); if (!ws[ref]) ws[ref] = { v: "", t: "s" }; ws[ref].s = st; }
   function applyRange(ws, r1, c1, r2, c2, st) { for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) styleCell(ws, r, c, st); }
   
+  // Sheet 1: Shifts
   const sheet1 = [["روز", "تاریخ"]]; 
   zonesToExport.forEach(z => z.cols.forEach(() => sheet1[0].push(z.name)));
   const row2 = ["", ""]; 
@@ -728,10 +721,12 @@ function openExcel() {
   const ws1 = XLSX.utils.aoa_to_sheet(sheet1); 
   const cols1 = [{ wch: 12 }, { wch: 14 }]; 
   for (let i = 0; i < (zonesToExport.length * 3); i++) cols1.push({ wch: 16 });
-  ws1["!cols"] = cols1; ws1["!rows"] = [{ hpt: 35 }, { hpt: 25 }]; 
+  ws1["!cols"] = cols1; 
+  ws1["!rows"] = [{ hpt: 35 }, { hpt: 25 }]; 
   for (let i = 2; i < DAYS + 2; i++) ws1["!rows"].push({ hpt: 22 });
   
   applyRange(ws1, 0, 0, DAYS + 1, 1, { font: ST.fontHeader, fill: { fgColor: { rgb: "334155" } }, border: ST.border, alignment: ST.alignCenter });
+  
   let col = 2; 
   zonesToExport.forEach(zone => { 
     const bg = ZONE_HEADER_BG[zone.name] || "1E293B"; 
@@ -752,6 +747,7 @@ function openExcel() {
   ws1["!freeze"] = { xSplit: 2, ySplit: 2 }; 
   XLSX.utils.book_append_sheet(wb, ws1, selectedZone === "all" ? "کل شیفت‌ها" : `شیفت ${selectedZone}`);
   
+  // Sheet 2: Stats
   const m = {}, e = {}, n = {}, h = {}, lc = {}; 
   PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; }); 
   Object.keys(state.leaves).forEach(per => { if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length; });
@@ -793,6 +789,7 @@ function openExcel() {
   ws2["!freeze"] = { ySplit: 1 }; 
   XLSX.utils.book_append_sheet(wb, ws2, "آمار کارکرد");
   
+  // Sheet 3: Leaves
   const sheet3 = [["نام", "مرخصی ۱", "مرخصی ۲", "مرخصی ۳", "مرخصی ۴", "مرخصی ۵", "تعداد کل"]];
   const leaveList = (isAdmin || isGuest) ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
   leaveList.forEach(p => { 
