@@ -208,7 +208,7 @@ table.stats-table th{background:var(--bg-header);color:#fff;border-color:rgba(25
 <!-- Loading -->
 <div id="loadingScreen">
   <div class="spinner"></div>
-  <div style="font-weight:600;color:var(--text-muted);font-size:14px">در حال بارگذاری اطلاعات...</div>
+  <div id="loadingText" style="font-weight:600;color:var(--text-muted);font-size:14px">در حال بارگذاری اطلاعات...</div>
 </div>
 
 <!-- Login Screen -->
@@ -407,21 +407,32 @@ const promptDlg = (m, def) => dialog({ message: m, input: true, def: def });
 
 /* ============ AUTH ============ */
 async function init(){
-  initBaseDate();
-  if (localStorage.getItem("darkMode") === "1") document.body.classList.add("dark-mode");
-  
-  const zf = document.getElementById("zoneFilter");
-  ZONES.forEach(z => {
-    const o = document.createElement("option"); o.value = z.name; o.textContent = z.name; zf.appendChild(o);
-  });
+  try {
+    initBaseDate();
+    if (localStorage.getItem("darkMode") === "1") document.body.classList.add("dark-mode");
+    
+    const zf = document.getElementById("zoneFilter");
+    ZONES.forEach(z => {
+      const o = document.createElement("option"); o.value = z.name; o.textContent = z.name; zf.appendChild(o);
+    });
 
-  const { data: { session } } = await sb.auth.getSession();
-  if (session && session.user){
-    const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
-    if (p){ currentUser = p; isAdmin = !!p.is_admin; await loadAll(); showMain(); return; }
+    const { data: { session }, error: sessionError } = await sb.auth.getSession();
+    if (sessionError) throw sessionError;
+
+    if (session && session.user){
+      const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+      if (p){ 
+        currentUser = p; isAdmin = !!p.is_admin; 
+        await loadAll(); 
+        showMain(); 
+        return; 
+      }
+    }
+    await loadLoginList();
+    showLogin();
+  } catch (err) {
+    document.getElementById("loadingText").innerHTML = `<span style="color:var(--danger)">خطا در اتصال به سرور:<br>${err.message}</span>`;
   }
-  await loadLoginList();
-  showLogin();
 }
 async function loadLoginList(){
   const { data, error } = await sb.from("profiles").select("name,is_admin").order("name");
