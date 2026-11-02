@@ -208,7 +208,7 @@ table.stats-table th{background:var(--bg-header);color:#fff;border-color:rgba(25
 <!-- Loading -->
 <div id="loadingScreen">
   <div class="spinner"></div>
-  <div id="loadingText" style="font-weight:600;color:var(--text-muted);font-size:14px">در حال بارگذاری اطلاعات...</div>
+  <div id="loadingText" style="font-weight:600;color:var(--text-muted);font-size:14px;text-align:center;padding:0 20px;">در حال اتصال به سرور...<br><span style="font-size:12px;opacity:0.7">(اگر بیش از ۱۰ ثانیه طول کشید، اینترنت خود را بررسی کنید)</span></div>
 </div>
 
 <!-- Login Screen -->
@@ -313,6 +313,9 @@ table.stats-table th{background:var(--bg-header);color:#fff;border-color:rgba(25
 
 <script>
 /* ============ CONFIG ============ */
+const APP_VERSION = "2.0.1"; // نشانگر نسخه جدید برای جلوگیری از کش
+console.log("Running Version: " + APP_VERSION);
+
 const SUPABASE_URL = "https://hghkjhvboyemimpqwkkn.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaGtqaHZib3llbWltcHF3a2tuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM1NDM3NzIsImV4cCI6MjEwOTExOTc3Mn0.WuxsGGv3GjuEaX_zsZqTigLKY4j9Tt6-b9b5fMaGZQs";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -416,7 +419,14 @@ async function init(){
       const o = document.createElement("option"); o.value = z.name; o.textContent = z.name; zf.appendChild(o);
     });
 
-    const { data: { session }, error: sessionError } = await sb.auth.getSession();
+    // Timeout برای بررسی اتصال (اگر بعد از 8 ثانیه جواب نداد، خارج شود)
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("اتصال به دیتابیس طولانی شد. اینترنت خود را بررسی کنید.")), 8000)
+    );
+
+    const sessionPromise = sb.auth.getSession();
+    const { data: { session }, error: sessionError } = await Promise.race([sessionPromise, timeoutPromise]);
+
     if (sessionError) throw sessionError;
 
     if (session && session.user){
@@ -431,7 +441,8 @@ async function init(){
     await loadLoginList();
     showLogin();
   } catch (err) {
-    document.getElementById("loadingText").innerHTML = `<span style="color:var(--danger)">خطا در اتصال به سرور:<br>${err.message}</span>`;
+    const lt = document.getElementById("loadingText");
+    lt.innerHTML = `<div style="color:var(--danger);margin-bottom:10px">خطا در اتصال</div><div style="font-size:12px;color:var(--text-muted)">${err.message}</div><button class="btn-primary" style="margin-top:16px" onclick="location.reload()">تلاش مجدد</button>`;
   }
 }
 async function loadLoginList(){
