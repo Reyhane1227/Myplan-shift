@@ -8,13 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-<!-- لود کتابخانه‌ها از سرورهای پایدار جایگزین -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-<script src="https://unpkg.com/jalaali-js@1.2.0/dist/jalaali.min.js"></script>
-
 <script>
-  const APP_VERSION = "37.0.0"; 
+  const APP_VERSION = "38.0.0"; 
   if (localStorage.getItem('app_version') !== APP_VERSION) {
     if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
     localStorage.setItem('app_version', APP_VERSION);
@@ -256,10 +251,142 @@ table.stats-table th { background: var(--bg-header); color: #fff; border: 1px so
 </div>
 
 <script>
+// ==========================================
+// توابع تاریخ شمسی (بدون نیاز به کتابخانه)
+// ==========================================
+function toJalaali(gy, gm, gd) {
+  const g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
+  let jy = (gy <= 1600) ? 0 : 979;
+  gy -= (gy <= 1600) ? 621 : 1600;
+  const gy2 = (gm > 2) ? (gy + 1) : gy;
+  let days = (365 * gy) + parseInt((gy2 + 3) / 4) - parseInt((gy2 + 99) / 100) + parseInt((gy2 + 399) / 400) - 80 + gd + g_d_m[gm - 1];
+  jy += 33 * parseInt(days / 12053);
+  days %= 12053;
+  jy += 4 * parseInt(days / 1461);
+  days %= 1461;
+  if (days > 365) { jy += parseInt((days - 1) / 365); days = (days - 1) % 365; }
+  const jm = (days < 186) ? 1 + parseInt(days / 31) : 7 + parseInt((days - 186) / 30);
+  const jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
+  return { jy: jy, jm: jm, jd: jd };
+}
+function toGregorian(jy, jm, jd) {
+  let gy = (jy <= 979) ? 621 : 1600;
+  jy -= (jy <= 979) ? 0 : 979;
+  let days = (365 * jy) + (parseInt(jy / 33) * 8) + parseInt(((jy % 33) + 3) / 4) + 78 + jd + ((jm < 7) ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+  gy += 400 * parseInt(days / 146097);
+  days %= 146097;
+  if (days > 36524) { gy += 100 * parseInt(--days / 36524); days %= 36524; if (days >= 365) days++; }
+  gy += 4 * parseInt(days / 1461);
+  days %= 1461;
+  if (days > 365) { gy += parseInt((days - 1) / 365); days = (days - 1) % 365; }
+  let gd = days + 1;
+  const sal_a = [0, 31, ((gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  let gm = 0;
+  for (gm = 1; gm <= 12; gm++) { if (gd <= sal_a[gm]) break; gd -= sal_a[gm]; }
+  return { gy: gy, gm: gm, gd: gd };
+}
+
+// ==========================================
+// تنظیمات Supabase (با استفاده از Fetch API بومی)
+// ==========================================
 const SUPABASE_URL = "https://gicnlpxzbchnjmawjtry.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY25scHh6YmNobmptYXdqdHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNTEwNTEsImV4cCI6MjEwODgyNzA1MX0.d6fgrBVmSoZ13KVzQg1m9V4DBwhR4aQNpf-ImfSPmVo";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+let currentSession = null;
+
+const sb = {
+  auth: {
+    signInWithPassword: async ({ email, password }) => {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) return { error: data };
+      currentSession = data;
+      localStorage.setItem('sb_session', JSON.stringify(data));
+      return { data: { user: data.user }, error: null };
+    },
+    getSession: async () => {
+      const saved = localStorage.getItem('sb_session');
+      if (saved) { currentSession = JSON.parse(saved); return { data: { session: currentSession } }; }
+      return { data: { session: null } };
+    },
+    signOut: async () => {
+      if (currentSession) {
+        await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+          method: 'POST',
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentSession.access_token}` }
+        });
+      }
+      currentSession = null;
+      localStorage.removeItem('sb_session');
+    }
+  },
+  from: (table) => {
+    let query = '';
+    const req = {
+      select: (cols = '*', opts = {}) => {
+        query = `${table}?select=${cols}`;
+        if (opts.count) req._count = true;
+        return req;
+      },
+      order: (col, { ascending }) => { query += `&order=${col}.${ascending ? 'asc' : 'desc'}`; return req; },
+      limit: (n) => { query += `&limit=${n}`; return req; },
+      eq: (col, val) => { query += `&${col}=eq.${val}`; return req; },
+      single: () => { req._single = true; return req; },
+      insert: (data) => {
+        const method = 'POST';
+        const body = JSON.stringify(data);
+        req._method = method; req._body = body;
+        return req;
+      },
+      update: (data) => {
+        const method = 'PATCH';
+        const body = JSON.stringify(data);
+        req._method = method; req._body = body;
+        return req;
+      },
+      delete: () => { req._method = 'DELETE'; return req; },
+      then: async (resolve, reject) => {
+        try {
+          let url = `${SUPABASE_URL}/rest/v1/${query || table}`;
+          const headers = {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${currentSession ? currentSession.access_token : SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          };
+          const options = { method: req._method || 'GET', headers };
+          if (req._body) options.body = req._body;
+          
+          const res = await fetch(url, options);
+          const data = await res.json();
+          if (!res.ok) throw { message: data.message || 'خطای دیتابیس' };
+          if (req._single && Array.isArray(data)) resolve({ data: data[0] || null, error: null });
+          else resolve({ data, error: null });
+        } catch (err) { resolve({ data: null, error: err }); }
+      }
+    };
+    return req;
+  },
+  rpc: async (fn, args) => {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${currentSession ? currentSession.access_token : SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(args)
+      });
+      if (!res.ok) return { error: await res.json() };
+      return { data: await res.json(), error: null };
+    } catch (e) { return { error: e }; }
+  }
+};
+
+// ==========================================
+// متغیرها و منطق برنامه
+// ==========================================
 const emailMap = { 
   "مدیر سامانه":"admin@dorm.local", "خانم موسوی":"mousavi@dorm.local", 
   "خانم قابل":"ghabel@dorm.local", "خانم پیغمبری":"peighambari@dorm.local", 
@@ -280,13 +407,13 @@ const ZONES = [{ name: "بهارستان ۱", cols: ["صبح", "عصر", "شب"]
 let BASE_DATE_UTC;
 
 function initBaseDate() { 
-  const g = jalaali.toGregorian(1405, 8, 1); 
+  const g = toGregorian(1405, 8, 1); 
   BASE_DATE_UTC = Date.UTC(g.gy, g.gm - 1, g.gd); 
 }
 
 function getDayInfo(i) { 
   const d = new Date(BASE_DATE_UTC + i * 86400000);
-  const j = jalaali.toJalaali(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+  const j = toJalaali(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
   const utcDay = d.getUTCDay(); 
   const faWd = (utcDay + 1) % 7; 
   const weekdayNames = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
@@ -296,7 +423,7 @@ function getDayInfo(i) {
 function formatDateTime(isoString) { 
   try {
     const d = new Date(isoString);
-    const j = jalaali.toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate()); 
+    const j = toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate()); 
     return `${j.jd} ${MONTH} ${j.jy} - ساعت ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; 
   } catch(e) { return isoString; }
 }
@@ -329,25 +456,13 @@ const alertDlg = m => dialog({ message: m }), confirmDlg = (m, d) => dialog({ me
 
 async function init() {
   try {
-    if (typeof jalaali === "undefined") {
-      document.getElementById("loadingScreen").innerHTML = "<p style='color:red; font-weight:bold;'>خطا: کتابخانه تاریخ لود نشد. لطفاً اینترنت خود را بررسی کنید.</p>";
-      return;
-    }
     initBaseDate();
     const zf = document.getElementById("zoneFilter"); 
     ZONES.forEach(z => { const o = document.createElement("option"); o.value = z.name; o.textContent = z.name; zf.appendChild(o); });
     
-    const timeout = new Promise(resolve => setTimeout(() => resolve({ data: { session: null }, timeout: true }), 8000));
-    const result = await Promise.race([sb.auth.getSession(), timeout]);
+    const sessionRes = await sb.auth.getSession();
+    const session = sessionRes.data.session;
     
-    if (result.timeout) { 
-      document.getElementById("loadingScreen").style.display = "none"; 
-      document.getElementById("loginScreen").style.display = "block"; 
-      document.getElementById("loginError").textContent = "اتصال به سرور برقرار نشد. اینترنت خود را بررسی کنید."; 
-      loadLoginList(); return; 
-    }
-    
-    const { data: { session } } = result;
     if (session && session.user) { 
       const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single(); 
       if (p) { currentUser = p; isAdmin = !!p.is_admin; isGuest = (p.name === "کاربر مهمان"); await loadAll(); showMain(); return; } 
@@ -689,133 +804,30 @@ async function loadLogs() {
 }
 
 function openExcel() {
-  if (!isAdmin && !isGuest) { alertDlg("خروجی اکسل فقط برای مدیر سامانه و کاربر مهمان فعال است."); return; }
-  if (typeof XLSX === "undefined") { alertDlg("کتابخانه اکسل بارگذاری نشد."); return; }
-  if (PERSONNEL.length === 0) { alertDlg("پرسنل خالی است."); return; }
-  const selectedZone = document.getElementById("zoneFilter").value, zonesToExport = selectedZone === "all" ? ZONES : ZONES.filter(z => z.name === selectedZone);
-  const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] };
-  const ST = { font: { name: "Vazirmatn", sz: 11, color: { rgb: "1E293B" } }, fontBold: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "1E293B" } }, fontHeader: { name: "Vazirmatn", sz: 12, bold: true, color: { rgb: "FFFFFF" } }, border: { top: { style: "thin", color: { rgb: "CBD5E1" } }, bottom: { style: "thin", color: { rgb: "CBD5E1" } }, left: { style: "thin", color: { rgb: "CBD5E1" } }, right: { style: "thin", color: { rgb: "CBD5E1" } } }, alignCenter: { horizontal: "center", vertical: "center", wrapText: true, readingOrder: 2 }, alignRight: { horizontal: "right", vertical: "center", wrapText: true, readingOrder: 2 } };
-  const ZONE_HEADER_BG = { "بهارستان ۱": "1e3a8a", "بهارستان ۲": "14532d", "بهارستان ۳": "7c2d12", "نجمه خاتون": "713f12", "گلشن": "4c1d95" };
-  function styleCell(ws, r, c, st) { const ref = XLSX.utils.encode_cell({ r, c }); if (!ws[ref]) ws[ref] = { v: "", t: "s" }; ws[ref].s = st; }
-  function applyRange(ws, r1, c1, r2, c2, st) { for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) styleCell(ws, r, c, st); }
+  if (!isAdmin && !isGuest) { alertDlg("خروجی CSV فقط برای مدیر سامانه و کاربر مهمان فعال است."); return; }
   
-  const sheet1 = [["روز", "تاریخ"]]; 
-  zonesToExport.forEach(z => z.cols.forEach(() => sheet1[0].push(z.name)));
-  const row2 = ["", ""]; 
-  zonesToExport.forEach(z => z.cols.forEach(c => row2.push(c))); 
-  sheet1.push(row2);
+  let csvContent = "\uFEFF"; // برای نمایش صحیح فارسی در اکسل
+  csvContent += "روز,تاریخ";
+  ZONES.forEach(z => z.cols.forEach(c => csvContent += `,${z.name} (${c})`));
+  csvContent += "\n";
   
-  for (let d = 0; d < DAYS; d++) { 
-    const info = getDayInfo(d); 
-    const row = [info.weekday, `${info.jDay} ${info.jMonth}`]; 
-    zonesToExport.forEach(zone => zone.cols.forEach(shiftType => { 
-      const person = state.shifts[`${d}|${zone.name}|${shiftType}`] || ""; 
-      if (!isAdmin && !isGuest && person && person !== currentUser.name) row.push("—"); else row.push(person); 
-    })); 
-    sheet1.push(row); 
+  for (let d = 0; d < DAYS; d++) {
+    const info = getDayInfo(d);
+    csvContent += `${info.weekday},${info.jDay} ${info.jMonth}`;
+    ZONES.forEach(z => z.cols.forEach(c => {
+      const key = `${d}|${z.name}|${c}`;
+      const person = state.shifts[key] || "";
+      csvContent += (person ? `,${person}` : ",-");
+    }));
+    csvContent += "\n";
   }
   
-  const ws1 = XLSX.utils.aoa_to_sheet(sheet1); 
-  const cols1 = [{ wch: 12 }, { wch: 14 }]; 
-  for (let i = 0; i < (zonesToExport.length * 3); i++) cols1.push({ wch: 16 });
-  ws1["!cols"] = cols1; ws1["!rows"] = [{ hpt: 35 }, { hpt: 25 }]; 
-  for (let i = 2; i < DAYS + 2; i++) ws1["!rows"].push({ hpt: 22 });
-  
-  applyRange(ws1, 0, 0, DAYS + 1, 1, { font: ST.fontHeader, fill: { fgColor: { rgb: "334155" } }, border: ST.border, alignment: ST.alignCenter });
-  let col = 2; 
-  zonesToExport.forEach(zone => { 
-    const bg = ZONE_HEADER_BG[zone.name] || "1E293B"; 
-    const st = { font: ST.fontHeader, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }; 
-    for (let i = 0; i < zone.cols.length; i++) { styleCell(ws1, 0, col + i, st); styleCell(ws1, 1, col + i, st); } 
-    col += zone.cols.length; 
-  });
-  
-  for (let d = 0; d < DAYS; d++) { 
-    const info = getDayInfo(d); 
-    const rowBg = info.isFriday ? "FEF3C7" : "FFFFFF"; 
-    const dayFontColor = info.isFriday ? "DC2626" : "1E293B"; 
-    styleCell(ws1, d + 2, 0, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: dayFontColor } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); 
-    styleCell(ws1, d + 2, 1, { font: { name: "Vazirmatn", sz: 10, color: { rgb: "64748B" } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); 
-    for (let c = 2; c < row2.length; c++) { styleCell(ws1, d + 2, c, { font: ST.fontBold, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); } 
-  }
-  
-  ws1["!freeze"] = { xSplit: 2, ySplit: 2 }; 
-  XLSX.utils.book_append_sheet(wb, ws1, selectedZone === "all" ? "کل شیفت‌ها" : `شیفت ${selectedZone}`);
-  
-  const m = {}, e = {}, n = {}, h = {}, lc = {}; 
-  PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; }); 
-  Object.keys(state.leaves).forEach(per => { if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length; });
-  
-  for (let d = 0; d < DAYS; d++) { 
-    ZONES.forEach(z => z.cols.forEach(t => { 
-      const person = state.shifts[`${d}|${z.name}|${t}`]; 
-      if (!person) return; 
-      const p = PERSONNEL.find(x => x.name === person); 
-      if (!p) return; 
-      const { holiday } = calcShiftHours(t, d, p.req); 
-      h[person] += holiday; 
-      if (t === "صبح") m[person] += HOURS[t]; else if (t === "عصر") e[person] += HOURS[t]; else n[person] += HOURS[t]; 
-    })); 
-  }
-  
-  const sheet2 = [["نام", "موظفی", "صبح", "عصر", "شب", "تعطیلات", "مرخصی", "کارکرد کل", "اضافه کار", "کسری کار"]];
-  const statList = (isAdmin || isGuest) ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
-  statList.forEach(p => { 
-    const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name], lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100; 
-    const total = Math.round((ts + lh) * 10) / 10, diff = Math.round((total - p.req) * 10) / 10; 
-    sheet2.push([p.name, p.req, m[p.name], e[p.name], n[p.name], Math.round(h[p.name] * 10) / 10, lh, total, diff > 0 ? diff : 0, diff < 0 ? Math.abs(diff) : 0]); 
-  });
-  
-  const ws2 = XLSX.utils.aoa_to_sheet(sheet2); 
-  ws2["!cols"] = [{ wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 }]; 
-  ws2["!rows"] = [{ hpt: 32 }]; 
-  for (let i = 1; i <= statList.length; i++) ws2["!rows"].push({ hpt: 24 });
-  
-  applyRange(ws2, 0, 0, 0, 9, { font: ST.fontHeader, fill: { fgColor: { rgb: "0F172A" } }, border: ST.border, alignment: ST.alignCenter });
-  for (let r = 1; r <= statList.length; r++) { 
-    const bg = r % 2 === 0 ? "F8FAFC" : "FFFFFF"; 
-    applyRange(ws2, r, 0, r, 9, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }); 
-    styleCell(ws2, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight }); 
-    if (sheet2[r][8] > 0) styleCell(ws2, r, 8, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "059669" } }, fill: { fgColor: { rgb: "D1FAE5" } }, border: ST.border, alignment: ST.alignCenter }); 
-    if (sheet2[r][9] > 0) styleCell(ws2, r, 9, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "DC2626" } }, fill: { fgColor: { rgb: "FEE2E2" } }, border: ST.border, alignment: ST.alignCenter }); 
-  }
-  
-  ws2["!freeze"] = { ySplit: 1 }; 
-  XLSX.utils.book_append_sheet(wb, ws2, "آمار کارکرد");
-  
-  const sheet3 = [["نام", "مرخصی ۱", "مرخصی ۲", "مرخصی ۳", "مرخصی ۴", "مرخصی ۵", "تعداد کل"]];
-  const leaveList = (isAdmin || isGuest) ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
-  leaveList.forEach(p => { 
-    const leaves = state.leaves[p.name] || {}, days = Object.keys(leaves).map(Number).sort((a, b) => a - b); 
-    const row = [p.name]; 
-    for (let i = 0; i < 5; i++) { 
-      if (days[i] !== undefined) { const info = getDayInfo(days[i]); row.push(`${info.weekday} ${info.jDay} ${info.jMonth}`); } else { row.push("—"); } 
-    } 
-    row.push(days.length); sheet3.push(row); 
-  });
-  
-  const ws3 = XLSX.utils.aoa_to_sheet(sheet3); 
-  ws3["!cols"] = [{ wch: 20 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 10 }]; 
-  ws3["!rows"] = [{ hpt: 32 }]; 
-  for (let i = 1; i <= leaveList.length; i++) ws3["!rows"].push({ hpt: 24 });
-  
-  applyRange(ws3, 0, 0, 0, 6, { font: ST.fontHeader, fill: { fgColor: { rgb: "7C2D12" } }, border: ST.border, alignment: ST.alignCenter });
-  for (let r = 1; r <= leaveList.length; r++) { 
-    const bg = r % 2 === 0 ? "FFF7ED" : "FFFFFF"; 
-    applyRange(ws3, r, 0, r, 6, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }); 
-    styleCell(ws3, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight }); 
-  }
-  
-  ws3["!freeze"] = { ySplit: 1 }; 
-  XLSX.utils.book_append_sheet(wb, ws3, "مرخصی‌ها");
-  
-  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" }); 
-  const blob = new Blob([wbout], { type: "application/octet-stream" }); 
-  const a = document.createElement("a"); 
-  a.href = URL.createObjectURL(blob); 
-  a.download = selectedZone === "all" ? `گزارش-شیفت-${MONTH}-۱۴۰۵.xlsx` : `گزارش-شیفت-${selectedZone}-${MONTH}-۱۴۰۵.xlsx`; 
-  a.click(); URL.revokeObjectURL(a.href); 
-  alertDlg("فایل اکسل دانلود شد.");
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `گزارش-شیفت-${MONTH}-۱۴۰۵.csv`;
+  link.click();
+  alertDlg("فایل CSV دانلود شد (با Excel قابل باز شدن است).");
 }
 
 window.addEventListener("load", init);
