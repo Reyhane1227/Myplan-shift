@@ -7,11 +7,11 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<!-- فقط کتابخانه اکسل از اینترنت لود می‌شود (برای خروجی حرفه‌ای) -->
+<!-- فقط کتابخانه اکسل از اینترنت لود می‌شود -->
 <script src="https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
 <script>
-  const APP_VERSION = "46.0.0"; 
+  const APP_VERSION = "47.0.0"; 
   if (localStorage.getItem('app_version') !== APP_VERSION) {
     if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
     localStorage.setItem('app_version', APP_VERSION);
@@ -20,7 +20,7 @@
 </script>
 
 <style>
-/* ... استایل‌ها دقیقاً مشابه قبل ... */
+/* ... استایل‌ها بدون تغییر ... */
 :root { 
   --bg-body: #f1f5f9; --bg-card: #ffffff; --bg-header: #1e293b;
   --text-main: #334155; --text-muted: #64748b; --border: #cbd5e1; 
@@ -278,7 +278,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let currentSession = null;
 
 // ==========================================
-// پیاده‌سازی بومی (بدون کتابخانه) برای Supabase
+// پیاده‌سازی بومی برای Supabase (اصلاح شده)
 // ==========================================
 const sb = {
   auth: {
@@ -341,7 +341,12 @@ const sb = {
         if (opts.count) req._count = true;
         return req;
       },
-      order: (col, { ascending }) => { query += `&order=${col}.${ascending ? 'asc' : 'desc'}`; return req; },
+      order: (col, opts) => { 
+        // اگر opts ارسال نشده بود، پیش‌فرض را در نظر بگیر
+        const ascending = opts && typeof opts.ascending !== 'undefined' ? opts.ascending : true;
+        query += `&order=${col}.${ascending ? 'asc' : 'desc'}`; 
+        return req; 
+      },
       limit: (n) => { query += `&limit=${n}`; return req; },
       eq: (col, val) => { query += `&${col}=eq.${val}`; return req; },
       single: () => { req._single = true; return req; },
@@ -443,7 +448,7 @@ function dialog(opts) {
 const alertDlg = m => dialog({ message: m }), confirmDlg = (m, d) => dialog({ message: m, confirm: true, danger: d }), promptDlg = (m, def) => dialog({ message: m, input: true, def: def });
 
 // ==========================================
-// شروع برنامه (بدون وابستگی به اینترنت برای Supabase)
+// شروع برنامه
 // ==========================================
 async function init() {
   try {
@@ -497,9 +502,6 @@ function showMain() {
   renderAll(); 
 }
 
-// ==========================================
-// ورود/خروج
-// ==========================================
 async function doLogin() {
   const name = document.getElementById("loginName").value;
   const pass = document.getElementById("loginPassword").value;
@@ -591,9 +593,6 @@ async function loadAll() {
   (l || []).forEach(x => { const per = PERSONNEL.find(z => z.id === x.user_id); if (per) { if (!state.leaves[per.name]) state.leaves[per.name] = {}; state.leaves[per.name][String(x.day)] = true; } });
 }
 
-// ==========================================
-// رندر کردن جدول‌ها
-// ==========================================
 function renderAll() { renderTable(); renderLeaves(); renderStats(); }
 
 function renderTable() {
@@ -770,9 +769,6 @@ function switchTab(n, btn) {
   document.getElementById("zoneFilterBox").classList.toggle("active", n === 'shifts');
 }
 
-// ==========================================
-// پنل مدیر و گزارش‌ها
-// ==========================================
 function openStaff() { if (!isAdmin && !isGuest) return alertDlg("دسترسی غیرمجاز."); renderStaffList(); document.getElementById("staffModal").classList.add("active"); }
 function renderStaffList() {
   const l = document.getElementById("staffList"); l.innerHTML = "";
@@ -810,9 +806,6 @@ async function loadLogs() {
   } catch (e) { b.innerHTML = "<p style='color:red;text-align:center;padding:20px;'>خطا: " + e.message + "</p>"; }
 }
 
-// ==========================================
-// خروجی اکسل
-// ==========================================
 function openExcel() {
   if (typeof XLSX === "undefined") { alertDlg("کتابخانه اکسل بارگذاری نشد. لطفاً صفحه را رفرش کنید."); return; }
   if (PERSONNEL.length === 0) { alertDlg("پرسنل خالی است."); return; }
@@ -835,7 +828,6 @@ function openExcel() {
   function styleCell(ws, r, c, st) { const ref = XLSX.utils.encode_cell({ r, c }); if (!ws[ref]) ws[ref] = { v: "", t: "s" }; ws[ref].s = st; }
   function applyRange(ws, r1, c1, r2, c2, st) { for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) styleCell(ws, r, c, st); }
 
-  // شیت ۱
   const sheet1 = [["روز", "تاریخ"]]; 
   zonesToExport.forEach(z => z.cols.forEach(() => sheet1[0].push(z.name)));
   const row2 = ["", ""]; 
@@ -880,7 +872,6 @@ function openExcel() {
   ws1["!freeze"] = { xSplit: 2, ySplit: 2 }; 
   XLSX.utils.book_append_sheet(wb, ws1, selectedZone === "all" ? "کل شیفت‌ها" : `شیفت ${selectedZone}`);
 
-  // شیت ۲
   const m = {}, e = {}, n = {}, h = {}, lc = {}; 
   PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; }); 
   Object.keys(state.leaves).forEach(per => { if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length; });
@@ -923,7 +914,6 @@ function openExcel() {
   ws2["!freeze"] = { ySplit: 1 }; 
   XLSX.utils.book_append_sheet(wb, ws2, "آمار کارکرد");
 
-  // شیت ۳
   const sheet3 = [["نام", "مرخصی ۱", "مرخصی ۲", "مرخصی ۳", "مرخصی ۴", "مرخصی ۵", "تعداد کل"]];
   const leaveList = (isAdmin || isGuest) ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
   
@@ -957,7 +947,7 @@ function openExcel() {
   a.href = URL.createObjectURL(blob); 
   a.download = selectedZone === "all" ? `گزارش-شیفت-${MONTH}-۱۴۰۵.xlsx` : `گزارش-شیفت-${selectedZone}-${MONTH}-۱۴۰۵.xlsx`; 
   a.click(); URL.revokeObjectURL(a.href); 
-  alertDlg("فایل اکسل حرفه‌ای با موفقیت دانلود شد.");
+  alertDlg("فایل اکسل با موفقیت دانلود شد.");
 }
 
 window.addEventListener("load", init);
