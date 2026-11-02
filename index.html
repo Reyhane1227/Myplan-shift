@@ -7,10 +7,13 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- لود کتابخانه‌ها از سرورهای پایدار -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
 <script>
-  const APP_VERSION = "44.0.0"; 
+  const APP_VERSION = "45.0.0"; 
   if (localStorage.getItem('app_version') !== APP_VERSION) {
     if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
     localStorage.setItem('app_version', APP_VERSION);
@@ -168,7 +171,7 @@ table.stats-table th { background: var(--bg-header); color: #fff; border: 1px so
     <h1>سامانه مدیریت شیفت <span class="admin-badge">مدیر سیستم</span></h1>
     <div class="controls">
       <span class="user-info" id="currentUserName"></span>
-      <button class="tool-btn" onclick="openExcel()">خروجی CSV</button>
+      <button class="tool-btn" onclick="openExcel()">خروجی اکسل</button>
       <button class="tool-btn admin-only" onclick="openStaff()">پرسنل</button>
       <button class="tool-btn admin-only" onclick="openLogs()">گزارش‌ها</button>
       <button class="tool-btn" onclick="openChangePassword()">تغییر رمز</button>
@@ -351,7 +354,6 @@ const alertDlg = m => dialog({ message: m }), confirmDlg = (m, d) => dialog({ me
 // شروع برنامه (با مدیریت خطا و تایم‌اوت)
 // ==========================================
 async function init() {
-  // ایجاد یک تایمر برای جلوگیری از گیر کردن در صفحه لودینگ
   const loadingTimeout = setTimeout(() => {
     document.getElementById("loadingScreen").style.display = "none";
     document.getElementById("loginScreen").style.display = "block";
@@ -735,38 +737,153 @@ async function loadLogs() {
 }
 
 // ==========================================
-// خروجی CSV (اصلاح شده برای همه کاربران)
+// خروجی اکسل حرفه‌ای
 // ==========================================
 function openExcel() {
-  // حذف شرط محدودکننده
-  let csvContent = "\uFEFF"; 
-  csvContent += "روز,تاریخ";
-  ZONES.forEach(z => z.cols.forEach(c => csvContent += `,${z.name} (${c})`));
-  csvContent += "\n";
+  if (typeof XLSX === "undefined") { alertDlg("کتابخانه اکسل بارگذاری نشد. لطفاً صفحه را رفرش کنید."); return; }
+  if (PERSONNEL.length === 0) { alertDlg("پرسنل خالی است."); return; }
+
+  const selectedZone = document.getElementById("zoneFilter").value;
+  const zonesToExport = selectedZone === "all" ? ZONES : ZONES.filter(z => z.name === selectedZone);
+  const wb = XLSX.utils.book_new(); 
+  wb.Workbook = { Views: [{ RTL: true }] };
+
+  const ST = { 
+    font: { name: "Vazirmatn", sz: 11, color: { rgb: "1E293B" } }, 
+    fontBold: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "1E293B" } }, 
+    fontHeader: { name: "Vazirmatn", sz: 12, bold: true, color: { rgb: "FFFFFF" } }, 
+    border: { top: { style: "thin", color: { rgb: "CBD5E1" } }, bottom: { style: "thin", color: { rgb: "CBD5E1" } }, left: { style: "thin", color: { rgb: "CBD5E1" } }, right: { style: "thin", color: { rgb: "CBD5E1" } } }, 
+    alignCenter: { horizontal: "center", vertical: "center", wrapText: true, readingOrder: 2 }, 
+    alignRight: { horizontal: "right", vertical: "center", wrapText: true, readingOrder: 2 } 
+  };
+  const ZONE_HEADER_BG = { "بهارستان ۱": "1e3a8a", "بهارستان ۲": "14532d", "بهارستان ۳": "7c2d12", "نجمه خاتون": "713f12", "گلشن": "4c1d95" };
   
-  for (let d = 0; d < DAYS; d++) {
-    const info = getDayInfo(d);
-    csvContent += `${info.weekday},${info.jDay} ${info.jMonth}`;
-    ZONES.forEach(z => z.cols.forEach(c => {
-      const key = `${d}|${z.name}|${c}`;
-      const person = state.shifts[key] || "";
-      
-      // بررسی سطح دسترسی
-      if (isAdmin || isGuest) {
-        csvContent += (person ? `,${person}` : ",-");
-      } else {
-        csvContent += (person === currentUser.name ? `,${person}` : ",-");
-      }
-    }));
-    csvContent += "\n";
+  function styleCell(ws, r, c, st) { const ref = XLSX.utils.encode_cell({ r, c }); if (!ws[ref]) ws[ref] = { v: "", t: "s" }; ws[ref].s = st; }
+  function applyRange(ws, r1, c1, r2, c2, st) { for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) styleCell(ws, r, c, st); }
+
+  // شیت ۱: برنامه شیفت‌ها
+  const sheet1 = [["روز", "تاریخ"]]; 
+  zonesToExport.forEach(z => z.cols.forEach(() => sheet1[0].push(z.name)));
+  const row2 = ["", ""]; 
+  zonesToExport.forEach(z => z.cols.forEach(c => row2.push(c))); 
+  sheet1.push(row2);
+
+  for (let d = 0; d < DAYS; d++) { 
+    const info = getDayInfo(d); 
+    const row = [info.weekday, `${info.jDay} ${info.jMonth}`]; 
+    zonesToExport.forEach(zone => zone.cols.forEach(shiftType => { 
+      const person = state.shifts[`${d}|${zone.name}|${shiftType}`] || ""; 
+      if (!isAdmin && !isGuest && person !== currentUser.name) row.push("—");
+      else row.push(person || "—"); 
+    })); 
+    sheet1.push(row); 
   }
+
+  const ws1 = XLSX.utils.aoa_to_sheet(sheet1); 
+  const cols1 = [{ wch: 12 }, { wch: 14 }]; 
+  for (let i = 0; i < (zonesToExport.length * 3); i++) cols1.push({ wch: 16 });
+  ws1["!cols"] = cols1; ws1["!rows"] = [{ hpt: 35 }, { hpt: 25 }]; 
+  for (let i = 2; i < DAYS + 2; i++) ws1["!rows"].push({ hpt: 22 });
+
+  applyRange(ws1, 0, 0, DAYS + 1, 1, { font: ST.fontHeader, fill: { fgColor: { rgb: "334155" } }, border: ST.border, alignment: ST.alignCenter });
+  let col = 2; 
+  zonesToExport.forEach(zone => { 
+    const bg = ZONE_HEADER_BG[zone.name] || "1E293B"; 
+    const st = { font: ST.fontHeader, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }; 
+    for (let i = 0; i < zone.cols.length; i++) { styleCell(ws1, 0, col + i, st); styleCell(ws1, 1, col + i, st); } 
+    col += zone.cols.length; 
+  });
+
+  for (let d = 0; d < DAYS; d++) { 
+    const info = getDayInfo(d); 
+    const rowBg = info.isFriday ? "FEF3C7" : "FFFFFF"; 
+    const dayFontColor = info.isFriday ? "DC2626" : "1E293B"; 
+    styleCell(ws1, d + 2, 0, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: dayFontColor } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); 
+    styleCell(ws1, d + 2, 1, { font: { name: "Vazirmatn", sz: 10, color: { rgb: "64748B" } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); 
+    for (let c = 2; c < row2.length; c++) { styleCell(ws1, d + 2, c, { font: ST.fontBold, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); } 
+  }
+
+  ws1["!freeze"] = { xSplit: 2, ySplit: 2 }; 
+  XLSX.utils.book_append_sheet(wb, ws1, selectedZone === "all" ? "کل شیفت‌ها" : `شیفت ${selectedZone}`);
+
+  // شیت ۲: آمار کارکرد
+  const m = {}, e = {}, n = {}, h = {}, lc = {}; 
+  PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; }); 
+  Object.keys(state.leaves).forEach(per => { if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length; });
+
+  for (let d = 0; d < DAYS; d++) { 
+    ZONES.forEach(z => z.cols.forEach(t => { 
+      const person = state.shifts[`${d}|${z.name}|${t}`]; 
+      if (!person) return; 
+      const p = PERSONNEL.find(x => x.name === person); 
+      if (!p) return; 
+      const { holiday } = calcShiftHours(t, d, p.req); 
+      h[person] += holiday; 
+      if (t === "صبح") m[person] += HOURS[t]; else if (t === "عصر") e[person] += HOURS[t]; else n[person] += HOURS[t]; 
+    })); 
+  }
+
+  const sheet2 = [["نام", "موظفی", "صبح", "عصر", "شب", "تعطیلات", "مرخصی", "کارکرد کل", "اضافه کار", "کسری کار"]];
+  const statList = (isAdmin || isGuest) ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
   
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `گزارش-شیفت-${MONTH}-۱۴۰۵.csv`;
-  link.click();
-  alertDlg("فایل CSV دانلود شد (با Excel قابل باز شدن است).");
+  statList.forEach(p => { 
+    const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name], lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100; 
+    const total = Math.round((ts + lh) * 10) / 10, diff = Math.round((total - p.req) * 10) / 10; 
+    sheet2.push([p.name, p.req, m[p.name], e[p.name], n[p.name], Math.round(h[p.name] * 10) / 10, lh, total, diff > 0 ? diff : 0, diff < 0 ? Math.abs(diff) : 0]); 
+  });
+
+  const ws2 = XLSX.utils.aoa_to_sheet(sheet2); 
+  ws2["!cols"] = [{ wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 }]; 
+  ws2["!rows"] = [{ hpt: 32 }]; 
+  for (let i = 1; i <= statList.length; i++) ws2["!rows"].push({ hpt: 24 });
+
+  applyRange(ws2, 0, 0, 0, 9, { font: ST.fontHeader, fill: { fgColor: { rgb: "0F172A" } }, border: ST.border, alignment: ST.alignCenter });
+  for (let r = 1; r <= statList.length; r++) { 
+    const bg = r % 2 === 0 ? "F8FAFC" : "FFFFFF"; 
+    applyRange(ws2, r, 0, r, 9, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }); 
+    styleCell(ws2, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight }); 
+    if (sheet2[r][8] > 0) styleCell(ws2, r, 8, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "059669" } }, fill: { fgColor: { rgb: "D1FAE5" } }, border: ST.border, alignment: ST.alignCenter }); 
+    if (sheet2[r][9] > 0) styleCell(ws2, r, 9, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "DC2626" } }, fill: { fgColor: { rgb: "FEE2E2" } }, border: ST.border, alignment: ST.alignCenter }); 
+  }
+
+  ws2["!freeze"] = { ySplit: 1 }; 
+  XLSX.utils.book_append_sheet(wb, ws2, "آمار کارکرد");
+
+  // شیت ۳: مرخصی‌ها
+  const sheet3 = [["نام", "مرخصی ۱", "مرخصی ۲", "مرخصی ۳", "مرخصی ۴", "مرخصی ۵", "تعداد کل"]];
+  const leaveList = (isAdmin || isGuest) ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
+  
+  leaveList.forEach(p => { 
+    const leaves = state.leaves[p.name] || {}, days = Object.keys(leaves).map(Number).sort((a, b) => a - b); 
+    const row = [p.name]; 
+    for (let i = 0; i < 5; i++) { 
+      if (days[i] !== undefined) { const info = getDayInfo(days[i]); row.push(`${info.weekday} ${info.jDay} ${info.jMonth}`); } else { row.push("—"); } 
+    } 
+    row.push(days.length); sheet3.push(row); 
+  });
+
+  const ws3 = XLSX.utils.aoa_to_sheet(sheet3); 
+  ws3["!cols"] = [{ wch: 20 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 10 }]; 
+  ws3["!rows"] = [{ hpt: 32 }]; 
+  for (let i = 1; i <= leaveList.length; i++) ws3["!rows"].push({ hpt: 24 });
+
+  applyRange(ws3, 0, 0, 0, 6, { font: ST.fontHeader, fill: { fgColor: { rgb: "7C2D12" } }, border: ST.border, alignment: ST.alignCenter });
+  for (let r = 1; r <= leaveList.length; r++) { 
+    const bg = r % 2 === 0 ? "FFF7ED" : "FFFFFF"; 
+    applyRange(ws3, r, 0, r, 6, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }); 
+    styleCell(ws3, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight }); 
+  }
+
+  ws3["!freeze"] = { ySplit: 1 }; 
+  XLSX.utils.book_append_sheet(wb, ws3, "مرخصی‌ها");
+
+  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" }); 
+  const blob = new Blob([wbout], { type: "application/octet-stream" }); 
+  const a = document.createElement("a"); 
+  a.href = URL.createObjectURL(blob); 
+  a.download = selectedZone === "all" ? `گزارش-شیفت-${MONTH}-۱۴۰۵.xlsx` : `گزارش-شیفت-${selectedZone}-${MONTH}-۱۴۰۵.xlsx`; 
+  a.click(); URL.revokeObjectURL(a.href); 
+  alertDlg("فایل اکسل حرفه‌ای با موفقیت دانلود شد.");
 }
 
 window.addEventListener("load", init);
