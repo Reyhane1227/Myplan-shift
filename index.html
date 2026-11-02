@@ -7,12 +7,19 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
-<!-- کتابخانه تاریخ به صورت آفلاین (بدون نیاز به اینترنت) -->
+<!-- لود کتابخانه‌ها از سرورهای پایدار جایگزین -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://unpkg.com/jalaali-js@1.2.0/dist/jalaali.min.js"></script>
+
 <script>
-!function(){var a={toJalaali:function(a,b,c){return this.d2j(this.g2d(a,b,c))},toGregorian:function(a,b,c){return this.d2g(this.j2d(a,b,c))},isLeapJalaaliYear:function(a){return this.jalCal(a).leap===0},jalCal:function(a){var b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,$,_,aa,ba,ca,da,ea,fa,ga,ha,ia;return c=a+1595,d=c/33|0,e=c%33,f=Math.floor(33*e+3)/4|0,g=e%4,h=Math.floor(e+3)/4|0,i=Math.floor(3*(g+1)/4)|0,j=h+i,k=Math.floor(33*d+Math.floor(f+j)/4),l=g+1,m=h+1,n=i+1,o=k%33,p=Math.floor(o+3)/4),q=o%4,r=Math.floor(o+3)/4)|0,s=Math.floor((o+2)%4/2)|0,t=r+s,u=Math.floor((p+1)%4/2)|0,v=p+u,w=Math.floor((q+1)%4/2)|0,x=q+w,y=n+z+... (کتابخانه تاریخ)
+  const APP_VERSION = "37.0.0"; 
+  if (localStorage.getItem('app_version') !== APP_VERSION) {
+    if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
+    localStorage.setItem('app_version', APP_VERSION);
+    if (localStorage.getItem('app_version') !== null) window.location.reload(true);
+  }
 </script>
 
 <style>
@@ -323,7 +330,7 @@ const alertDlg = m => dialog({ message: m }), confirmDlg = (m, d) => dialog({ me
 async function init() {
   try {
     if (typeof jalaali === "undefined") {
-      document.getElementById("loadingScreen").innerHTML = "<p style='color:red; font-weight:bold;'>خطا: کتابخانه تاریخ لود نشد. لطفاً فیلترشکن را روشن کنید.</p>";
+      document.getElementById("loadingScreen").innerHTML = "<p style='color:red; font-weight:bold;'>خطا: کتابخانه تاریخ لود نشد. لطفاً اینترنت خود را بررسی کنید.</p>";
       return;
     }
     initBaseDate();
@@ -336,7 +343,7 @@ async function init() {
     if (result.timeout) { 
       document.getElementById("loadingScreen").style.display = "none"; 
       document.getElementById("loginScreen").style.display = "block"; 
-      document.getElementById("loginError").textContent = "اتصال به سرور برقرار نشد. فیلترشکن خود را روشن کنید."; 
+      document.getElementById("loginError").textContent = "اتصال به سرور برقرار نشد. اینترنت خود را بررسی کنید."; 
       loadLoginList(); return; 
     }
     
