@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.0/dist/jalaali.min.js"></script>
 <style>
 :root{--bg-body:#f1f5f9;--bg-card:#fff;--bg-header-grad:linear-gradient(135deg,#1e293b,#0f172a);--text-main:#0f172a;--text-muted:#64748b;--border-color:#e2e8f0;--th-bg:#f8fafc;--input-bg:#fff;--primary:#3b82f6;--danger:#ef4444;--warn:#f59e0b;--ok:#10b981;--shadow-md:0 4px 12px rgba(15,23,42,.08);--shadow-lg:0 10px 30px rgba(15,23,42,.12);--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--transition:all .2s}
 body.dark-mode{--bg-body:#0f172a;--bg-card:#1e293b;--bg-header-grad:linear-gradient(135deg,#1e293b,#020617);--text-main:#f1f5f9;--text-muted:#94a3b8;--border-color:#334155;--th-bg:#0f172a;--input-bg:#0f172a;--primary:#60a5fa}
@@ -85,8 +86,6 @@ body.dark-mode .val-minus{background:#7f1d1d;color:#fecaca}
 .btn-del{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;font-size:12px}
 body.dark-mode .btn-del{background:#7f1d1d;color:#fecaca;border-color:#dc2626}
 .btn-secondary{background:var(--th-bg);color:var(--text-main);border:1px solid var(--border-color);padding:10px 16px;border-radius:var(--radius-sm);cursor:pointer;font-family:inherit;font-weight:700;font-size:12px}
-.info-banner{background:linear-gradient(135deg,#eff6ff,#dbeafe);color:#1e40af;padding:12px 14px;border-radius:var(--radius-sm);margin-bottom:14px;font-size:12px;border-right:4px solid var(--primary);line-height:1.7;font-weight:600}
-body.dark-mode .info-banner{background:linear-gradient(135deg,#1e3a8a,#1e40af);color:#bfdbfe}
 .dialog-box{background:var(--bg-card);color:var(--text-main);border-radius:var(--radius-md);max-width:420px;width:100%;padding:24px;box-shadow:var(--shadow-lg)}
 .dialog-box h3{font-size:16px;margin-bottom:10px;font-weight:900}
 .dialog-box p{font-size:13px;margin-bottom:16px;color:var(--text-muted);white-space:pre-line;line-height:1.8}
@@ -103,12 +102,17 @@ body.dark-mode .info-banner{background:linear-gradient(135deg,#1e3a8a,#1e40af);c
 .login-box button{width:100%;padding:12px;margin-top:20px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;font-weight:700;font-size:14px;cursor:pointer}
 .login-box .forgot-link{display:block;text-align:center;margin-top:14px;font-size:12px;color:var(--primary);cursor:pointer;text-decoration:underline}
 .login-box .error-msg{color:var(--danger);font-size:12px;font-weight:700;margin-top:10px;text-align:center;min-height:18px}
+.info-banner{background:linear-gradient(135deg,#eff6ff,#dbeafe);color:#1e40af;padding:12px 14px;border-radius:var(--radius-sm);margin-bottom:14px;font-size:12px;border-right:4px solid var(--primary);line-height:1.7;font-weight:600}
+body.dark-mode .info-banner{background:linear-gradient(135deg,#1e3a8a,#1e40af);color:#bfdbfe}
+.recovery-input{width:100%;padding:11px;border:1px solid var(--border-color);border-radius:var(--radius-sm);font-family:inherit;font-size:13px;background:var(--input-bg);color:var(--text-main);outline:none;margin-bottom:12px}
+.otp-input{direction:ltr;text-align:center;letter-spacing:6px;font-size:18px;font-weight:700}
 @media(min-width:768px){body{padding:20px;font-size:14px}.app-header h1{font-size:19px}.tool-btn{width:42px;height:42px}}
 @media print{.app-header,.tool-btn,.modal-overlay,.dialog-overlay,.tabs-nav,.controls{display:none!important}.tab-panel{display:block!important}body{background:#fff;color:#000}}
 </style>
 </head>
 <body>
 
+<!-- Loading -->
 <div id="loadingScreen" style="display:flex;justify-content:center;align-items:center;min-height:100vh;">
   <div style="text-align:center;">
     <div style="font-size:48px;margin-bottom:16px;">⏳</div>
@@ -116,6 +120,7 @@ body.dark-mode .info-banner{background:linear-gradient(135deg,#1e3a8a,#1e40af);c
   </div>
 </div>
 
+<!-- Login -->
 <div id="loginScreen" style="display:none;">
   <div class="login-box">
     <h2>🔐 ورود به سامانه شیفت</h2>
@@ -129,6 +134,7 @@ body.dark-mode .info-banner{background:linear-gradient(135deg,#1e3a8a,#1e40af);c
   </div>
 </div>
 
+<!-- Main App -->
 <div class="container" id="mainApp" style="display:none;">
   <div class="app-header">
     <h1>📅 برنامه شیفت خوابگاه‌ها <span class="admin-badge">👑 ادمین</span></h1>
@@ -161,6 +167,7 @@ body.dark-mode .info-banner{background:linear-gradient(135deg,#1e3a8a,#1e40af);c
   <div class="tab-panel" id="panelLeaves">
     <div class="section-box">
       <h3>🏖️ ثبت مرخصی</h3>
+      <div class="info-banner">⚠️ حداکثر ۲ نفر در هر روز می‌توانند مرخصی بگیرند. روزهای جمعه مجاز نیست.</div>
       <div class="leave-table-wrapper">
         <table class="leave-table"><thead><tr><th>نام</th><th>مرخصی ۱</th><th>مرخصی ۲</th><th>مرخصی ۳</th><th>مرخصی ۴</th><th>مرخصی ۵</th></tr></thead><tbody id="leaveTableBody"></tbody></table>
       </div>
@@ -176,338 +183,1038 @@ body.dark-mode .info-banner{background:linear-gradient(135deg,#1e3a8a,#1e40af);c
   </div>
 </div>
 
-<div class="modal-overlay" id="staffModal"><div class="modal-content"><div class="modal-header"><h2>👥 پرسنل</h2><button class="modal-close" onclick="closeModal('staffModal')">×</button></div><div class="modal-body"><div class="btn-add-staff" id="staffAddBox"><input type="text" id="newStaffName" placeholder="نام"><input type="number" id="newStaffReq" value="175" style="width:80px;flex:0;"><button onclick="addStaff()">➕</button></div><div class="staff-list" id="staffList"></div></div></div></div>
+<!-- Modals -->
+<div class="modal-overlay" id="staffModal"><div class="modal-content"><div class="modal-header"><h2>👥 پرسنل</h2><button class="modal-close" onclick="closeModal('staffModal')">×</button></div><div class="modal-body"><div class="staff-list" id="staffList"></div></div></div></div>
 <div class="modal-overlay" id="logsModal"><div class="modal-content"><div class="modal-header"><h2>📝 گزارش تغییرات</h2><button class="modal-close" onclick="closeModal('logsModal')">×</button></div><div class="modal-body" id="logsBody"></div></div></div>
-<div class="modal-overlay" id="recoveryModal"><div class="modal-content"><div class="modal-header"><h2>🔁 بازیابی رمز</h2><button class="modal-close" onclick="closeModal('recoveryModal')">×</button></div><div class="modal-body"><input type="password" id="recoveryCode" placeholder="کد بازیابی" style="width:100%;margin-bottom:12px;padding:11px;"><input type="password" id="recoveryNewPassword" placeholder="رمز جدید" style="width:100%;margin-bottom:12px;padding:11px;"><button class="btn-primary" style="width:100%;padding:11px;" onclick="doRecovery()">تغییر رمز</button><div class="error-msg" id="recoveryError" style="color:red;text-align:center;margin-top:10px;"></div></div></div></div>
-<div class="dialog-overlay" id="dialogOverlay"><div class="dialog-box"><h3 id="dialogTitle"></h3><p id="dialogMessage"></p><input type="text" id="dialogInput" style="display:none;"><div class="dialog-actions" id="dialogActions"></div></div></div>
+
+<!-- Recovery Modal (OTP-based) -->
+<div class="modal-overlay" id="recoveryModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>🔁 بازیابی رمز</h2>
+      <button class="modal-close" onclick="closeModal('recoveryModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.8;">
+        ابتدا نام خود را در صفحه ورود انتخاب کنید، سپس کد را دریافت کنید.
+      </p>
+      <button class="btn-primary" style="width:100%;padding:11px;margin-bottom:12px;" onclick="sendRecoveryCode()">📧 ارسال کد به ایمیل</button>
+      <input type="text" id="recoveryCode" placeholder="کد ۶ رقمی" class="recovery-input otp-input" maxlength="8" inputmode="numeric">
+      <input type="password" id="recoveryNewPassword" placeholder="رمز جدید (حداقل ۶ کاراکتر)" class="recovery-input">
+      <button class="btn-primary" style="width:100%;padding:11px;" onclick="doRecovery()">تغییر رمز</button>
+      <div class="error-msg" id="recoveryError" style="color:var(--danger);text-align:center;margin-top:10px;font-weight:700;font-size:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Dialog -->
+<div class="dialog-overlay" id="dialogOverlay">
+  <div class="dialog-box">
+    <h3 id="dialogTitle"></h3>
+    <p id="dialogMessage"></p>
+    <input type="text" id="dialogInput" style="display:none;">
+    <div class="dialog-actions" id="dialogActions"></div>
+  </div>
+</div>
+
 <script>
-const SUPABASE_URL="https://hghkjhvboyemimpqwkkn.supabase.co";
-const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaGtqaHZib3llbWltcHF3a2tuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM1NDM3NzIsImV4cCI6MjEwOTExOTc3Mn0.WuxsGGv3GjuEaX_zsZqTigLKY4j9Tt6-b9b5fMaGZQs";
+/* ============ CONFIG ============ */
+const SUPABASE_URL = "https://hghkjhvboyemimpqwkkn.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhnaGtqaHZib3llbWltcHF3a2tuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM1NDM3NzIsImV4cCI6MjEwOTExOTc3Mn0.WuxsGGv3GjuEaX_zsZqTigLKY4j9Tt6-b9b5fMaGZQs";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let PERSONNEL = [], state = { shifts: {}, leaves: {} }, currentUser = null, isAdmin = false;
-const MONTH="آبان",DAYS=30,BASE_DATE=new Date(2026,9,23);
-const HOURS={"صبح":6.5,"عصر":5.5,"شب":12},LEAVE_HOURS=7.55;
-const WEEKDAYS=["یکشنبه","دوشنبه","سه‌شنبه","چهارشنبه","پنجشنبه","جمعه","شنبه"];
-const ZONES=[
-  {name:"بهارستان ۱",cols:["صبح","عصر","شب"],cls:"bg-z1"},
-  {name:"بهارستان ۲",cols:["صبح","عصر","شب"],cls:"bg-z2"},
-  {name:"بهارستان ۳",cols:["صبح","عصر","شب"],cls:"bg-z3"},
-  {name:"نجمه خاتون",cols:["صبح","عصر","شب"],cls:"bg-z4"},
-  {name:"گلشن",cols:["صبح","عصر"],cls:"bg-z5"}
+
+/* ============ STATE ============ */
+let PERSONNEL = [];
+let state = { shifts: {}, leaves: {} };
+let currentUser = null;
+let isAdmin = false;
+
+const MONTH = "آبان";
+const DAYS = 30;
+const HOURS = { "صبح": 6.5, "عصر": 5.5, "شب": 12 };
+const LEAVE_HOURS = 7.55;
+const WEEKDAYS_FA = ["یکشنبه","دوشنبه","سه‌شنبه","چهارشنبه","پنجشنبه","جمعه","شنبه"];
+const ZONES = [
+  { name: "بهارستان ۱", cols: ["صبح","عصر","شب"], cls: "bg-z1" },
+  { name: "بهارستان ۲", cols: ["صبح","عصر","شب"], cls: "bg-z2" },
+  { name: "بهارستان ۳", cols: ["صبح","عصر","شب"], cls: "bg-z3" },
+  { name: "نجمه خاتون", cols: ["صبح","عصر","شب"], cls: "bg-z4" },
+  { name: "گلشن", cols: ["صبح","عصر"], cls: "bg-z5" }
 ];
-function getDayInfo(i){const d=new Date(BASE_DATE);d.setDate(BASE_DATE.getDate()+i);return{weekday:WEEKDAYS[d.getDay()],isFriday:d.getDay()===5};}
-function showAlert(m){const b=document.getElementById("alertBox");b.textContent=m;b.style.display="block";setTimeout(()=>b.style.display="none",4000);}
-function showWarning(m){const b=document.getElementById("warnBox");b.innerHTML=m;b.style.display="block";setTimeout(()=>b.style.display="none",8000);}
-function closeModal(id){document.getElementById(id).classList.remove("active");}
-function toggleDarkMode(){document.body.classList.toggle("dark-mode");}
-function openHelp(){showAlert("راهنما: برای ثبت شیفت، روی خانه‌ها کلیک کنید.");}
-function openExcel(){showAlert("در حال آماده‌سازی...");}
-function openStaff(){renderStaffList();document.getElementById("staffModal").classList.add("active");}
-function openLogs(){loadLogs();document.getElementById("logsModal").classList.add("active");}
-function openRecovery(){document.getElementById("recoveryModal").classList.add("active");}
-function dialog(opts){return new Promise(r=>{const o=document.getElementById("dialogOverlay"),t=document.getElementById("dialogTitle"),m=document.getElementById("dialogMessage"),i=document.getElementById("dialogInput"),a=document.getElementById("dialogActions");t.textContent=opts.title||"";m.textContent=opts.message||"";i.value=opts.def||"";i.style.display=opts.input?"block":"none";a.innerHTML="";const f=v=>{o.classList.remove("active");r(v);};if(opts.input){const ok=document.createElement("button");ok.className="btn-primary";ok.textContent="تأیید";ok.onclick=()=>f(i.value.trim());const c=document.createElement("button");c.className="btn-cancel";c.textContent="انصراف";c.onclick=()=>f(null);a.append(ok,c);}else if(opts.confirm){const ok=document.createElement("button");ok.className=opts.danger?"btn-danger":"btn-primary";ok.textContent="تأیید";ok.onclick=()=>f(true);const c=document.createElement("button");c.className="btn-cancel";c.textContent="انصراف";c.onclick=()=>f(false);a.append(ok,c);}else{const ok=document.createElement("button");ok.className="btn-primary";ok.textContent="باشه";ok.onclick=()=>f(true);a.append(ok);}o.classList.add("active");});}
-const alertDlg=m=>dialog({message:m}),confirmDlg=(m,d)=>dialog({message:m,confirm:true,danger:d}),promptDlg=(m,def)=>dialog({message:m,input:true,def:def});
 
+/* ============ JALALI BASE ============ */
+// مبدأ: ۱ آبان ۱۴۰۵
+let BASE_DATE_UTC;
+function initBaseDate(){
+  // اگر jalaali بارگذاری شده، از آن استفاده می‌کنیم
+  if (typeof jalaali !== "undefined"){
+    const g = jalaali.toGregorian(1405, 8, 1); // 1 آبان 1405
+    BASE_DATE_UTC = Date.UTC(g.gy, g.gm - 1, g.gd);
+  } else {
+    // fallback: 23 اکتبر 2026
+    BASE_DATE_UTC = Date.UTC(2026, 9, 23);
+  }
+}
+
+function getDayInfo(i){
+  const d = new Date(BASE_DATE_UTC + i * 86400000);
+  const wd = d.getUTCDay(); // 0=یکشنبه ... 6=شنبه
+  let jDay = i + 1, jMonth = MONTH;
+  let weekday = WEEKDAYS_FA[wd];
+  let isFriday = wd === 5;
+
+  if (typeof jalaali !== "undefined"){
+    const j = jalaali.toJalaali(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+    jDay = j.jd;
+    // روز هفته شمسی: شنبه=0 ... جمعه=6
+    const faWd = (wd + 1) % 7;
+    weekday = ["شنبه","یکشنبه","دوشنبه","سه‌شنبه","چهارشنبه","پنجشنبه","جمعه"][faWd];
+    isFriday = faWd === 6;
+  }
+  return { weekday, isFriday, jDay, jMonth };
+}
+
+/* ============ UI HELPERS ============ */
+function showAlert(m){
+  const b = document.getElementById("alertBox");
+  b.textContent = m; b.style.display = "block";
+  setTimeout(() => b.style.display = "none", 4000);
+}
+function showWarning(m){
+  const b = document.getElementById("warnBox");
+  b.innerHTML = m; b.style.display = "block";
+  setTimeout(() => b.style.display = "none", 8000);
+}
+function closeModal(id){ document.getElementById(id).classList.remove("active"); }
+function toggleDarkMode(){
+  document.body.classList.toggle("dark-mode");
+  localStorage.setItem("darkMode", document.body.classList.contains("dark-mode") ? "1" : "0");
+}
+function openHelp(){
+  showAlert("راهنما: برای ثبت شیفت روی خانه‌ها کلیک کنید. هر نفر حداکثر ۲ شیفت در روز و در ۲ جمعه.");
+}
+
+/* ============ DIALOG ============ */
+function dialog(opts){
+  return new Promise(r => {
+    const o = document.getElementById("dialogOverlay");
+    const t = document.getElementById("dialogTitle");
+    const m = document.getElementById("dialogMessage");
+    const i = document.getElementById("dialogInput");
+    const a = document.getElementById("dialogActions");
+    t.textContent = opts.title || "";
+    m.textContent = opts.message || "";
+    i.value = opts.def || "";
+    i.style.display = opts.input ? "block" : "none";
+    a.innerHTML = "";
+    const finish = v => { o.classList.remove("active"); r(v); };
+    if (opts.input){
+      const ok = document.createElement("button");
+      ok.className = "btn-primary"; ok.textContent = "تأیید";
+      ok.onclick = () => finish(i.value.trim());
+      const c = document.createElement("button");
+      c.className = "btn-cancel"; c.textContent = "انصراف";
+      c.onclick = () => finish(null);
+      a.append(ok, c);
+    } else if (opts.confirm){
+      const ok = document.createElement("button");
+      ok.className = opts.danger ? "btn-danger" : "btn-primary";
+      ok.textContent = "تأیید";
+      ok.onclick = () => finish(true);
+      const c = document.createElement("button");
+      c.className = "btn-cancel"; c.textContent = "انصراف";
+      c.onclick = () => finish(false);
+      a.append(ok, c);
+    } else {
+      const ok = document.createElement("button");
+      ok.className = "btn-primary"; ok.textContent = "باشه";
+      ok.onclick = () => finish(true);
+      a.append(ok);
+    }
+    o.classList.add("active");
+  });
+}
+const alertDlg = m => dialog({ message: m });
+const confirmDlg = (m, d) => dialog({ message: m, confirm: true, danger: d });
+const promptDlg = (m, def) => dialog({ message: m, input: true, def: def });
+
+/* ============ AUTH ============ */
 async function init(){
-  if(localStorage.getItem("darkMode")==="1")document.body.classList.add("dark-mode");
-  const{data:{session}}=await sb.auth.getSession();
-  if(session&&session.user){
-    const{data:p}=await sb.from("profiles").select("*").eq("id",session.user.id).single();
-    if(p){currentUser=p;isAdmin=p.is_admin;await loadAll();showMain();return;}
+  initBaseDate();
+  if (localStorage.getItem("darkMode") === "1") document.body.classList.add("dark-mode");
+  const { data: { session } } = await sb.auth.getSession();
+  if (session && session.user){
+    const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+    if (p){
+      currentUser = p; isAdmin = !!p.is_admin;
+      await loadAll();
+      showMain();
+      return;
+    }
   }
-  await loadLoginList();showLogin();
+  await loadLoginList();
+  showLogin();
 }
+
 async function loadLoginList(){
-  const{data}=await sb.from("profiles").select("name,is_admin").order("name");
-  const s=document.getElementById("loginName");s.innerHTML='<option value="">انتخاب کنید...</option>';
-  (data||[]).forEach(p=>{const o=document.createElement("option");o.value=p.name;o.textContent=p.name+(p.is_admin?" 👑":"");s.appendChild(o);});
-  document.getElementById("loadingScreen").style.display="none";document.getElementById("loginScreen").style.display="block";
+  const { data, error } = await sb.from("profiles").select("name,is_admin").order("name");
+  const s = document.getElementById("loginName");
+  s.innerHTML = '<option value="">انتخاب کنید...</option>';
+  if (error){
+    s.innerHTML = '<option value="">خطا در بارگذاری پرسنل</option>';
+  } else {
+    (data || []).forEach(p => {
+      const o = document.createElement("option");
+      o.value = p.name;
+      o.textContent = p.name + (p.is_admin ? " 👑" : "");
+      s.appendChild(o);
+    });
+  }
+  document.getElementById("loadingScreen").style.display = "none";
+  document.getElementById("loginScreen").style.display = "block";
 }
-function showLogin(){document.getElementById("mainApp").style.display="none";document.getElementById("loginScreen").style.display="block";}
-function showMain(){document.getElementById("loginScreen").style.display="none";document.getElementById("mainApp").style.display="block";document.body.classList.toggle("is-admin",isAdmin);document.getElementById("currentUserName").textContent=currentUser.name;renderAll();}
+
+async function getEmailByName(name){
+  if (!name) return null;
+  const { data, error } = await sb.from("profiles").select("email").eq("name", name).maybeSingle();
+  if (error || !data?.email) return null;
+  return data.email;
+}
+
+function showLogin(){
+  document.getElementById("mainApp").style.display = "none";
+  document.getElementById("loginScreen").style.display = "block";
+}
+
+function showMain(){
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("mainApp").style.display = "block";
+  document.body.classList.toggle("is-admin", isAdmin);
+  document.getElementById("currentUserName").textContent = currentUser.name;
+  renderAll();
+}
+
 async function doLogin(){
-  const name=document.getElementById("loginName").value,pass=document.getElementById("loginPassword").value,err=document.getElementById("loginError");
-  if(!name||!pass){err.textContent="نام و رمز را وارد کنید";return;}
-  err.textContent="";
-  let email=name==="مدیر سامانه"?"admin@dorm.local":`${encodeURIComponent(name).replace(/%/g,'').toLowerCase()}@dorm.local`;
-  const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
-  if(error){err.textContent="رمز یا نام اشتباه است";return;}
-  const{data:p}=await sb.from("profiles").select("*").eq("id",data.user.id).single();
-  currentUser=p;isAdmin=p.is_admin;await loadAll();showMain();
-}
-async function doLogout(){await sb.auth.signOut();currentUser=null;isAdmin=false;await loadLoginList();showLogin();}
-async function loadAll(){
-  const{data:p}=await sb.from("profiles").select("*").order("name");
-  PERSONNEL=(p||[]).map(x=>({id:x.id,name:x.name,req:x.required_hours,is_admin:x.is_admin}));
-  const{data:s}=await sb.from("shifts").select("*");
-  const{data:l}=await sb.from("leaves").select("*");
-  state.shifts={};state.leaves={};
-  (s||[]).forEach(x=>{const per=PERSONNEL.find(z=>z.id===x.user_id);if(per)state.shifts[`${x.day}|${x.zone}|${x.shift_type}`]=per.name;});
-  (l||[]).forEach(x=>{const per=PERSONNEL.find(z=>z.id===x.user_id);if(per){if(!state.leaves[per.name])state.leaves[per.name]={};state.leaves[per.name][String(x.day)]=true;}});
-}
-function renderAll(){renderTable();renderLeaves();renderStats();}
-  function renderTable(){
-  const zr=document.getElementById("zoneHeaderRow");Array.from(zr.children).forEach((el,i)=>{if(i>=2)el.remove();});
-  const sh=document.getElementById("subHeader");sh.innerHTML="";
-  ZONES.forEach(z=>{
-    const th=document.createElement("th");th.className=z.cls;th.colSpan=z.cols.length;th.textContent=z.name;zr.appendChild(th);
-    z.cols.forEach(c=>{const s=document.createElement("th");s.className=z.cls;s.textContent=c;sh.appendChild(s);});
-  });
-  const tb=document.getElementById("tableBody");tb.innerHTML="";
-  for(let d=0;d<DAYS;d++){
-    const info=getDayInfo(d),tr=document.createElement("tr");if(info.isFriday)tr.classList.add("is-friday");
-    tr.innerHTML=`<td class="day-cell">${info.weekday}</td><td class="date-cell">${d+1} ${MONTH}</td>`;
-    ZONES.forEach(z=>z.cols.forEach(c=>{
-      const td=document.createElement("td"),key=`${d}|${z.name}|${c}`,sel=document.createElement("select");
-      sel.className="s-cell";sel.dataset.key=key;sel.dataset.day=d;sel.dataset.zone=z.name;sel.dataset.shift=c;
-      const owner=state.shifts[key]||"";
-      const empty=document.createElement("option");empty.value="";empty.textContent="—";sel.appendChild(empty);
-      
-      if(isAdmin){
-        PERSONNEL.forEach(p=>{const o=document.createElement("option");o.value=p.name;o.textContent=p.name;sel.appendChild(o);});
-        sel.value=owner;sel.addEventListener("change",()=>onShiftChange(sel));
-      }else{
-        if(owner&&owner!==currentUser.name){
-          const taken=document.createElement("option");taken.value="__taken__";taken.textContent="🚫 گرفته‌شده";taken.disabled=true;sel.appendChild(taken);
-          sel.value="__taken__";sel.disabled=true;sel.classList.add("locked","taken");
-        }else{
-          const me=document.createElement("option");me.value=currentUser.name;me.textContent=currentUser.name;sel.appendChild(me);
-          sel.value=owner;sel.addEventListener("change",()=>onShiftChange(sel));
-          if(owner===currentUser.name)sel.classList.add("mine");
-        }
-      }
-      td.appendChild(sel);tr.appendChild(td);
-    }));
-    tb.appendChild(tr);
-  }
+  const name = document.getElementById("loginName").value;
+  const pass = document.getElementById("loginPassword").value;
+  const err = document.getElementById("loginError");
+  if (!name || !pass){ err.textContent = "نام و رمز را وارد کنید"; return; }
+  err.textContent = "در حالasync function doLogin(){
+  const name = document.getElementById("loginName").value;
+  const pass = document.getElementById("loginPassword").value;
+  const err = document.getElementById("loginError");
+  if (!name || !pass){ err.textContent = "نام و رمز را وارد کنید"; return; }
+  err.textContent = "در حال ورود...";
+
+  const email = await getEmailByName(name);
+  if (!email){ err.textContent = "کاربر در سیستم یافت نشد."; return; }
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error){ err.textContent = "رمز یا نام اشتباه است"; return; }
+
+  const { data: p } = await sb.from("profiles").select("*").eq("id", data.user.id).single();
+  if (!p){ err.textContent = "پروفایل کاربر یافت نشد."; return; }
+
+  currentUser = p; isAdmin = !!p.is_admin;
+  err.textContent = "";
+  await loadAll();
+  showMain();
 }
 
-function findPersonShiftOnDay(person,dayIdx){
-  const arr=[];ZONES.forEach(z=>z.cols.forEach(s=>{if(state.shifts[`${dayIdx}|${z.name}|${s}`]===person)arr.push(s);}));return arr;
-}
-function countFridayDays(person){let c=0;for(let d=0;d<DAYS;d++){if(getDayInfo(d).isFriday&&findPersonShiftOnDay(person,d).length>0)c++;}return c;}
-
-async function onShiftChange(sel){
-  const key=sel.dataset.key,val=sel.value,d=+sel.dataset.day,zone=sel.dataset.zone,shiftType=sel.dataset.shift;
-  const prevOwner=state.shifts[key]||"";
-  
-  if(!isAdmin&&val&&val!==currentUser.name){sel.value=prevOwner;return;}
-  
-  if(!val){
-    if(prevOwner){const p=PERSONNEL.find(x=>x.name===prevOwner);if(p)await sb.from("shifts").delete().eq("day",d).eq("zone",zone).eq("shift_type",shiftType).eq("user_id",p.id);delete state.shifts[key];renderAll();}
-    return;
-  }
-
-  const targetPerson=PERSONNEL.find(x=>x.name===val);
-  if(!targetPerson){sel.value=prevOwner;return;}
-
-  const todayShifts=findPersonShiftOnDay(val,d);
-  const simulatedToday=[...todayShifts,shiftType];
-  const uniqToday=[...new Set(simulatedToday)];
-  const prevShifts=d>0?findPersonShiftOnDay(val,d-1):[];
-  const nextShifts=d<DAYS-1?findPersonShiftOnDay(val,d+1):[];
-  let issues=[];
-
-  if(uniqToday.includes("صبح")&&uniqToday.includes("شب"))issues.push("ترکیب صبح و شب مجاز نیست.");
-  if(simulatedToday.length>2)issues.push("بیش از دو شیفت مجاز نیست.");
-  if(simulatedToday.length!==uniqToday.length)issues.push("تکرار یک نوع شیفت مجاز نیست.");
-  if(simulatedToday.length===2){
-    const ok=(uniqToday.includes("صبح")&&uniqToday.includes("عصر")&&!uniqToday.includes("شب"))||(uniqToday.includes("عصر")&&uniqToday.includes("شب")&&!uniqToday.includes("صبح"));
-    if(!ok)issues.push("ترکیب مجاز نیست؛ تنها صبح+عصر یا عصر+شب.");
-  }
-  if(uniqToday.includes("شب")&&prevShifts.includes("شب"))issues.push("دو شیفت شب متوالی مجاز نیست.");
-  if(uniqToday.includes("شب")&&nextShifts.includes("شب"))issues.push("دو شیفت شب متوالی مجاز نیست.");
-  if(uniqToday.includes("شب")&&nextShifts.length>0)issues.push("بعد از شیفت شب، فردا نمی‌توانید شیفت بزنید.");
-  if(prevShifts.includes("شب")&&simulatedToday.length>0)issues.push("دیشب شیفت شب داشته‌اید؛ امروز نمی‌توانید شیفت ثبت کنید.");
-
-  if(getDayInfo(d).isFriday){
-    const hadThisFriday=todayShifts.length>0;
-    if(!hadThisFriday&&countFridayDays(val)>=2)issues.push("شما قبلاً در ۲ جمعه شیفت داشته‌اید.");
-  }
-
-  const personLeaves=state.leaves[val]||{};
-  if(Object.prototype.hasOwnProperty.call(personLeaves,String(d)))issues.push("در این روز مرخصی ثبت شده است.");
-
-  if(issues.length>0){
-    await alertDlg("⛔ قوانین:\n• "+issues.join("\n• "));
-    sel.value=prevOwner;return;
-  }
-
-  try{
-    if(prevOwner){
-      const oldP=PERSONNEL.find(x=>x.name===prevOwner);
-      if(oldP)await sb.from("shifts").delete().eq("day",d).eq("zone",zone).eq("shift_type",shiftType);
-    }
-    const{error}=await sb.from("shifts").insert({day:d,zone:zone,shift_type:shiftType,user_id:targetPerson.id});
-    if(error){
-      if(error.code==="23505")await alertDlg("⛔ این شیفت هم‌اکنون توسط همکار دیگری گرفته شد.");
-      else await alertDlg("⛔ خطا: "+error.message);
-      sel.value=prevOwner;return;
-    }
-    state.shifts[key]=val;renderAll();showAlert("✅ شیفت ثبت شد.");
-  }catch(e){await alertDlg("⛔ خطا: "+e.message);sel.value=prevOwner;}
+async function doLogout(){
+  await sb.auth.signOut();
+  currentUser = null; isAdmin = false;
+  await loadLoginList();
+  showLogin();
 }
 
-function renderLeaves(){
-  const tb=document.getElementById("leaveTableBody");tb.innerHTML="";
-  const list=isAdmin?PERSONNEL:PERSONNEL.filter(p=>p.name===currentUser.name);
-  if(list.length===0){tb.innerHTML="<tr><td colspan='6' style='text-align:center;'>ردیفی نیست</td></tr>";return;}
-
-  list.forEach(p=>{
-    const tr=document.createElement("tr"),tdN=document.createElement("td");
-    tdN.className="leave-name-cell";tdN.textContent=p.name;tr.appendChild(tdN);
-    const pl=state.leaves[p.name]||{},days=Object.keys(pl).map(Number).sort((a,b)=>a-b);
-    const canEdit=isAdmin||p.name===currentUser.name;
-    for(let i=0;i<5;i++){
-      const td=document.createElement("td"),sel=document.createElement("select");
-      sel.className="leave-select";if(!canEdit){sel.disabled=true;sel.classList.add("locked");}
-      const empty=document.createElement("option");empty.value="";empty.textContent="—";sel.appendChild(empty);
-      for(let d=1;d<=DAYS;d++){if(getDayInfo(d-1).isFriday)continue;const o=document.createElement("option");o.value=d-1;o.textContent=d+" "+MONTH;sel.appendChild(o);}
-      if(days[i]!==undefined)sel.value=days[i];
-      sel.addEventListener("change",()=>onLeaveChange(p.name,sel,td));
-      td.appendChild(sel);tr.appendChild(td);
-    }
-    tb.appendChild(tr);
-  });
+/* ============ RECOVERY (OTP) ============ */
+function openRecovery(){
+  document.getElementById("recoveryCode").value = "";
+  document.getElementById("recoveryNewPassword").value = "";
+  document.getElementById("recoveryError").textContent = "";
+  document.getElementById("recoveryModal").classList.add("active");
 }
 
-async function onLeaveChange(person,sel,td){
-  if(!isAdmin&&person!==currentUser.name){sel.value="";return;}
-  const newDayVal=sel.value,rowSelects=[];
-  for(let k=1;k<=5;k++){const s=td.parentElement.children[k]?.querySelector("select");if(s)rowSelects.push(s);}
-  const newLeaves={};let dup=false;
-  rowSelects.forEach(s=>{if(!s.value)return;if(newLeaves[s.value])dup=true;else newLeaves[s.value]=true;});
-  if(dup){await alertDlg("⛔ تاریخ تکراری");sel.value="";return;}
-  
-  const pObj=PERSONNEL.find(x=>x.name===person);if(!pObj)return;
+async function sendRecoveryCode(){
+  const name = document.getElementById("loginName").value;
+  const err = document.getElementById("recoveryError");
+  err.style.color = "var(--danger)";
+  if (!name){ err.textContent = "ابتدا نام خود را در صفحه ورود انتخاب کنید."; return; }
 
-  if(!newDayVal){
-    const old=state.leaves[person]||{};
-    for(const day of Object.keys(old)){
-      if(!newLeaves[day]){await sb.from("leaves").delete().eq("day",parseInt(day)).eq("user_id",pObj.id);delete old[day];}
-    }
-    if(Object.keys(old).length===0)delete state.leaves[person];else state.leaves[person]=old;
-    renderStats();return;
-  }
+  const email = await getEmailByName(name);
+  if (!email){ err.textContent = "ایمیل کاربر یافت نشد."; return; }
 
-  const dayIdx=parseInt(newDayVal);
-  if(getDayInfo(dayIdx).isFriday){await alertDlg("⛔ جمعه مجاز نیست.");sel.value="";return;}
-  if(findPersonShiftOnDay(person,dayIdx).length>0){await alertDlg("⛔ در این روز شیفت دارید.");sel.value="";return;}
+  err.textContent = "در حال ارسال...";
+  const { error } = await sb.auth.resetPasswordForEmail(email);
+  if (error){ err.textContent = "خطا: " + error.message; return; }
 
-  let capacity=0;Object.keys(state.leaves).forEach(o=>{if(o===person)return;if(Object.prototype.hasOwnProperty.call(state.leaves[o],String(dayIdx)))capacity++;});
-  if(capacity>=2){await alertDlg("⛔ ظرفیت این روز پر است.");sel.value="";return;}
-
-  try{
-    const{error}=await sb.from("leaves").insert({day:dayIdx,user_id:pObj.id});
-    if(error){
-      if(error.message.includes("LEAVE_CAPACITY_FULL"))await alertDlg("⛔ ظرفیت پر شد (همزمان).");
-      else if(error.code==="23505")await alertDlg("⛔ قبلاً ثبت شده.");
-      else await alertDlg("⛔ خطا: "+error.message);
-      sel.value="";return;
-    }
-    if(!state.leaves[person])state.leaves[person]={};
-    state.leaves[person][String(dayIdx)]=true;
-    renderStats();showAlert("✅ مرخصی ثبت شد.");
-  }catch(e){await alertDlg("⛔ خطا: "+e.message);sel.value="";}
-}
-
-function calcShiftHours(type,dayIdx,req){
-  const base=HOURS[type],is184=req===184,info=getDayInfo(dayIdx),nxt=getDayInfo(dayIdx+1);
-  if(type==="صبح"||type==="عصر"){if(info.isFriday)return{total:base*1.5,holiday:base*0.5};return{total:base,holiday:0};}
-  let h=0;if(is184){if(nxt.isFriday)h=7.5;else if(info.isFriday)h=4.5;}else{if(info.isFriday)h=12;}
-  return{total:base+h*0.5,holiday:h*0.5};
-}
-
-function renderStats(){
-  const tb=document.getElementById("statsBody");tb.innerHTML="";
-  const list=isAdmin?PERSONNEL:PERSONNEL.filter(p=>p.name===currentUser.name);
-  if(list.length===0){tb.innerHTML="<tr><td colspan='10' style='text-align:center;'>ردیفی نیست</td></tr>";return;}
-  const m={},e={},n={},h={},lc={};
-  PERSONNEL.forEach(p=>{m[p.name]=0;e[p.name]=0;n[p.name]=0;h[p.name]=0;lc[p.name]=0;});
-  Object.keys(state.leaves).forEach(per=>{if(lc[per]!==undefined)lc[per]=Object.keys(state.leaves[per]).length;});
-  for(let d=0;d<DAYS;d++){
-    ZONES.forEach(z=>z.cols.forEach(t=>{
-      const person=state.shifts[`${d}|${z.name}|${t}`];if(!person)return;
-      const p=PERSONNEL.find(x=>x.name===person);if(!p)return;
-      const{holiday}=calcShiftHours(t,d,p.req);h[person]+=holiday;
-      if(t==="صبح")m[person]+=HOURS[t];else if(t==="عصر")e[person]+=HOURS[t];else n[person]+=HOURS[t];
-    }));
-  }
-  list.forEach(p=>{
-    const ts=m[p.name]+e[p.name]+n[p.name]+h[p.name],lh=Math.round(lc[p.name]*LEAVE_HOURS*100)/100,total=Math.round((ts+lh)*10)/10,diff=Math.round((total-p.req)*10)/10;
-    const tr=document.createElement("tr");
-    tr.innerHTML=`<td class="stat-name">${p.name}</td><td>${p.req}</td><td>${m[p.name]}</td><td>${e[p.name]}</td><td>${n[p.name]}</td><td>${Math.round(h[p.name]*10)/10}</td><td>${lh}</td><td style="font-weight:bold;">${total}</td><td class="${diff>0?'val-plus':''}">${diff>0?diff:0}</td><td class="${diff<0?'val-minus':''}">${diff<0?Math.abs(diff):0}</td>`;
-    tb.appendChild(tr);
-  });
-}
-
-function renderStaffList(){
-  const l=document.getElementById("staffList");l.innerHTML="";
-  PERSONNEL.forEach((p,i)=>{
-    const d=document.createElement("div");d.className="staff-item";
-    d.innerHTML=`<span class="staff-info">${p.name}${p.is_admin?' 👑':''}</span>
-    <input type="number" class="req-input" value="${p.req}" data-idx="${i}" ${p.is_admin?'disabled':''}>
-    ${!p.is_admin?`<button class="btn-del" data-del="${i}">حذف</button>`:''}`;
-    l.appendChild(d);
-  });
-  l.querySelectorAll("input.req-input").forEach(inp=>inp.addEventListener("change",async()=>{
-    const idx=+inp.dataset.idx,v=parseFloat(inp.value);if(isNaN(v)||v<0){inp.value=PERSONNEL[idx].req;return;}
-    await sb.from("profiles").update({required_hours:v}).eq("id",PERSONNEL[idx].id);PERSONNEL[idx].req=v;renderAll();
-  }));
-  l.querySelectorAll("button.btn-del").forEach(b=>b.addEventListener("click",async()=>{
-    const p=PERSONNEL[+b.dataset.del];
-    if(!await confirmDlg(`حذف ${p.name}؟`,"حذف",true))return;
-    await sb.from("profiles").delete().eq("id",p.id);await loadAll();renderStaffList();renderAll();
-  }));
-}
-
-async function addStaff(){
-  const name=document.getElementById("newStaffName").value.trim(),req=parseFloat(document.getElementById("newStaffReq").value);
-  if(!name||isNaN(req))return alertDlg("نام و موظفی معتبر نیست.");
-  await alertDlg("⚠️ برای افزودن پرسنل جدید، با ادمین اصلی (شما) از طریق پنل سوپابیس تماس بگیرید.\nدلیل: افزودن کاربر جدید نیاز به دسترسی ادمین دارد.\n\nلطفاً کاربر جدید را در بخش Authentication > Users بسازید و سپس پروفایل او را در جدول profiles وارد کنید.");
-}
-
-async function loadLogs(){
-  const{data}=await sb.from("audit_logs").select("*,profiles(name)").order("created_at",{ascending:false}).limit(50);
-  const b=document.getElementById("logsBody");
-  if(!data||data.length===0){b.innerHTML="<p style='text-align:center;color:#64748b;'>گزارشی ثبت نشده است.</p>";return;}
-  b.innerHTML=data.map(l=>`<div style="padding:8px;border-bottom:1px solid #e2e8f0;font-size:12px;">👤 <b>${l.profiles?.name||'ناشناس'}</b> - ${l.action} (${new Date(l.created_at).toLocaleString('fa-IR')})</div>`).join('');
+  err.style.color = "var(--ok)";
+  err.textContent = "✅ کد بازیابی به ایمیل شما ارسال شد.";
 }
 
 async function doRecovery(){
-  const name=document.getElementById("loginName").value,code=document.getElementById("recoveryCode").value,newPw=document.getElementById("recoveryNewPassword").value,err=document.getElementById("recoveryError");
-  if(!name){err.textContent="ابتدا نام خود را انتخاب کنید.";return;}
-  if(code!=="654321"){err.textContent="کد بازیابی اشتباه است.";return;}
-  if(!newPw||newPw.length<6){err.textContent="رمز باید حداقل ۶ کاراکتر باشد.";return;}
-  err.textContent="در حال پردازش...";
-  try{
-    const email=name==="مدیر سامانه"?"admin@dorm.local":`${encodeURIComponent(name).replace(/%/g,'').toLowerCase()}@dorm.local`;
-    const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.href});
-    if(error)throw error;
-    closeModal("recoveryModal");await alertDlg("✅ لینک بازیابی به ایمیل شما ارسال شد.");
-  }catch(e){err.textContent="خطا: "+e.message;}
+  const name = document.getElementById("loginName").value;
+  const code = document.getElementById("recoveryCode").value.trim();
+  const newPw = document.getElementById("recoveryNewPassword").value;
+  const err = document.getElementById("recoveryError");
+  err.style.color = "var(--danger)";
+
+  if (!name){ err.textContent = "ابتدا نام خود را انتخاب کنید."; return; }
+  if (!code){ err.textContent = "کد بازیابی را وارد کنید."; return; }
+  if (!newPw || newPw.length < 6){ err.textContent = "رمز باید حداقل ۶ کاراکتر باشد."; return; }
+
+  err.textContent = "در حال پردازش...";
+  try {
+    const email = await getEmailByName(name);
+    if (!email) throw new Error("ایمیل کاربر یافت نشد.");
+
+    // verifyOtp با type=recovery کاربر را لاگین موقت می‌کند
+    const { error: verifyErr } = await sb.auth.verifyOtp({
+      email, token: code, type: "recovery"
+    });
+    if (verifyErr) throw new Error("کد نامعتبر یا منقضی است.");
+
+    const { error: updErr } = await sb.auth.updateUser({ password: newPw });
+    if (updErr) throw new Error(updErr.message);
+
+    await sb.auth.signOut();
+    closeModal("recoveryModal");
+    await alertDlg("✅ رمز شما تغییر کرد. اکنون می‌توانید وارد شوید.");
+  } catch(e){
+    err.textContent = "خطا: " + e.message;
+  }
 }
 
 async function openChangePassword(){
-  const oldPw=await promptDlg("رمز فعلی:","");
-  if(!oldPw)return;
-  const newPw=await promptDlg("رمز جدید (حداقل ۶ کاراکتر):","");
-  if(!newPw||newPw.length<6)return alertDlg("رمز کوتاه است.");
-  const email=currentUser.name==="مدیر سامانه"?"admin@dorm.local":`${encodeURIComponent(currentUser.name).replace(/%/g,'').toLowerCase()}@dorm.local`;
-  const{error:err1}=await sb.auth.signInWithPassword({email,password:oldPw});
-  if(err1)return alertDlg("رمز فعلی اشتباه است.");
-  const{error:err2}=await sb.auth.updateUser({password:newPw});
-  if(err2)return alertDlg("خطا: "+err2.message);
+  const oldPw = await promptDlg("رمز فعلی:", "");
+  if (!oldPw) return;
+  const newPw = await promptDlg("رمز جدید (حداقل ۶ کاراکتر):", "");
+  if (!newPw || newPw.length < 6) return alertDlg("رمز کوتاه است.");
+
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user?.email) return alertDlg("خطا: ایمیل کاربر یافت نشد.");
+
+  const { error: err1 } = await sb.auth.signInWithPassword({ email: user.email, password: oldPw });
+  if (err1) return alertDlg("رمز فعلی اشتباه است.");
+
+  const { error: err2 } = await sb.auth.updateUser({ password: newPw });
+  if (err2) return alertDlg("خطا: " + err2.message);
   alertDlg("✅ رمز تغییر کرد.");
 }
 
-function switchTab(n){
-  ["shifts","leaves","stats"].forEach(t=>{document.getElementById("tabBtn"+t.charAt(0).toUpperCase()+t.slice(1))?.classList.remove("active");document.getElementById("panel"+t.charAt(0).toUpperCase()+t.slice(1))?.classList.remove("active");});
-  document.getElementById("tabBtn"+n.charAt(0).toUpperCase()+n.slice(1))?.classList.add("active");
-  document.getElementById("panel"+n.charAt(0).toUpperCase()+n.slice(1))?.classList.add("active");
+/* ============ LOAD DATA ============ */
+async function loadAll(){
+  const { data: p, error: pe } = await sb.from("profiles").select("*").order("name");
+  if (pe){ console.error(pe); }
+  PERSONNEL = (p || []).map(x => ({
+    id: x.id, name: x.name, req: x.required_hours || 0,
+    is_admin: !!x.is_admin, email: x.email
+  }));
+
+  const { data: s } = await sb.from("shifts").select("*");
+  const { data: l } = await sb.from("leaves").select("*");
+
+  state.shifts = {};
+  state.leaves = {};
+
+  (s || []).forEach(x => {
+    const per = PERSONNEL.find(z => z.id === x.user_id);
+    if (per) state.shifts[`${x.day}|${x.zone}|${x.shift_type}`] = per.name;
+  });
+  (l || []).forEach(x => {
+    const per = PERSONNEL.find(z => z.id === x.user_id);
+    if (per){
+      if (!state.leaves[per.name]) state.leaves[per.name] = {};
+      state.leaves[per.name][String(x.day)] = true;
+    }
+  });
 }
 
-window.addEventListener("load",init);
+/* ============ RENDER ALL ============ */
+function renderAll(){
+  renderTable();
+  renderLeaves();
+  renderStats();
+}
+
+/* ============ SHIFT TABLE ============ */
+function renderTable(){
+  const visiblePersonnel = PERSONNEL.filter(p => !p.is_admin);
+  const zr = document.getElementById("zoneHeaderRow");
+  Array.from(zr.children).forEach((el, i) => { if (i >= 2) el.remove(); });
+  const sh = document.getElementById("subHeader");
+  sh.innerHTML = "";
+
+  ZONES.forEach(z => {
+    const th = document.createElement("th");
+    th.className = z.cls;
+    th.colSpan = z.cols.length;
+    th.textContent = z.name;
+    zr.appendChild(th);
+    z.cols.forEach(c => {
+      const s = document.createElement("th");
+      s.className = z.cls;
+      s.textContent = c;
+      sh.appendChild(s);
+    });
+  });
+
+  const tb = document.getElementById("tableBody");
+  tb.innerHTML = "";
+
+  for (let d = 0; d < DAYS; d++){
+    const info = getDayInfo(d);
+    const tr = document.createElement("tr");
+    if (info.isFriday) tr.classList.add("is-friday");
+    tr.innerHTML = `<td class="day-cell">${info.weekday}</td><td class="date-cell">${info.jDay} ${info.jMonth}</td>`;
+
+    ZONES.forEach(z => z.cols.forEach(c => {
+      const td = document.createElement("td");
+      const key = `${d}|${z.name}|${c}`;
+      const sel = document.createElement("select");
+      sel.className = "s-cell";
+      sel.dataset.key = key;
+      sel.dataset.day = d;
+      sel.dataset.zone = z.name;
+      sel.dataset.shift = c;
+
+      const owner = state.shifts[key] || "";
+      const empty = document.createElement("option");
+      empty.value = ""; empty.textContent = "—";
+      sel.appendChild(empty);
+
+      if (isAdmin){
+        visiblePersonnel.forEach(p => {
+          const o = document.createElement("option");
+          o.value = p.name; o.textContent = p.name;
+          sel.appendChild(o);
+        });
+        sel.value = owner;
+        sel.addEventListener("change", () => onShiftChange(sel));
+      } else {
+        if (owner && owner !== currentUser.name){
+          const taken = document.createElement("option");
+          taken.value = "__taken__";
+          taken.textContent = "🚫 " + owner;
+          sel.appendChild(taken);
+          sel.value = "__taken__";
+          sel.disabled = true;
+          sel.classList.add("locked", "taken");
+        } else {
+          const me = document.createElement("option");
+          me.value = currentUser.name;
+          me.textContent = currentUser.name;
+          sel.appendChild(me);
+          sel.value = owner;
+          sel.addEventListener("change", () => onShiftChange(sel));
+          if (owner === currentUser.name) sel.classList.add("mine");
+        }
+      }
+      td.appendChild(sel);
+      tr.appendChild(td);
+    }));
+    tb.appendChild(tr);
+  }
+}
+
+function findPersonShiftOnDay(person, dayIdx){
+  const arr = [];
+  ZONES.forEach(z => z.cols.forEach(s => {
+    if (state.shifts[`${dayIdx}|${z.name}|${s}`] === person) arr.push(s);
+  }));
+  return arr;
+}
+
+function countFridayDays(person){
+  let c = 0;
+  for (let d = 0; d < DAYS; d++){
+    if (getDayInfo(d).isFriday && findPersonShiftOnDay(person, d).length > 0) c++;
+  }
+  return c;
+}
+
+/* ============ SHIFT CHANGE ============ */
+async function onShiftChange(sel){
+  const key = sel.dataset.key;
+  const val = sel.value;
+  const d = +sel.dataset.day;
+  const zone = sel.dataset.zone;
+  const shiftType = sel.dataset.shift;
+  const prevOwner = state.shifts[key] || "";
+
+  if (!isAdmin && val && val !== currentUser.name){
+    showWarning("⚠️ شما فقط می‌توانید شیفت خودتان را تغییر دهید.");
+    sel.value = prevOwner;
+    return;
+  }
+
+  // حذف شیفت
+  if (!val){
+    if (prevOwner){
+      const p = PERSONNEL.find(x => x.name === prevOwner);
+      if (p){
+        const { error } = await sb.from("shifts")
+          .delete()
+          .eq("day", d)
+          .eq("zone", zone)
+          .eq("shift_type", shiftType)
+          .eq("user_id", p.id);
+        if (error){ await alertDlg("⛔ خطا: " + error.message); sel.value = prevOwner; return; }
+      }
+      delete state.shifts[key];
+      renderAll();
+      showAlert("🗑️ شیفت حذف شد.");
+    }
+    return;
+  }
+
+  // ثبت شیفت
+  const targetPerson = PERSONNEL.find(x => x.name === val);
+  if (!targetPerson){ sel.value = prevOwner; return; }
+
+  // قوانین
+  const todayShifts = findPersonShiftOnDay(val, d);
+  const simulatedToday = [...todayShifts, shiftType];
+  const uniqToday = [...new Set(simulatedToday)];
+  const prevShifts = d > 0 ? findPersonShiftOnDay(val, d - 1) : [];
+  const nextShifts = d < DAYS - 1 ? findPersonShiftOnDay(val, d + 1) : [];
+  let issues = [];
+
+  if (uniqToday.includes("صبح") && uniqToday.includes("شب")) issues.push("ترکیب صبح و شب مجاز نیست.");
+  if (simulatedToday.length > 2) issues.push("بیش از دو شیفت مجاز نیست.");
+  if (simulatedToday.length !== uniqToday.length) issues.push("تکرار یک نوع شیفت مجاز نیست.");
+
+  if (simulatedToday.length === 2){
+    const ok = (uniqToday.includes("صبح") && uniqToday.includes("عصر") && !uniqToday.includes("شب"))
+            || (uniqToday.includes("عصر") && uniqToday.includes("شب") && !uniqToday.includes("صبح"));
+    if (!ok) issues.push("ترکیب مجاز نیست؛ تنها صبح+عصر یا عصر+شب.");
+  }
+  if (uniqToday.includes("شب") && prevShifts.includes("شب")) issues.push("دو شیفت شب متوالی مجاز نیست.");
+  if (uniqToday.includes("شب") && nextShifts.includes("شب")) issues.push("دو شیفت شب متوالی مجاز نیست.");
+  if (uniqToday.includes("شب") && nextShifts.length > 0) issues.push("بعد از شیفت شب، فردا نمی‌توانید شیفت بزنید.");
+  if (prevShifts.includes("شب") && simulatedToday.length > 0) issues.push("دیشب شیفت شب داشته‌اید؛ امروز نمی‌توانید شیفت ثبت کنید.");
+
+  if (getDayInfo(d).isFriday){
+    const hadThisFriday = todayShifts.length > 0;
+    if (!hadThisFriday && countFridayDays(val) >= 2) issues.push("شما قبلاً در ۲ جمعه شیفت داشته‌اید.");
+  }
+
+  const personLeaves = state.leaves[val] || {};
+  if (Object.prototype.hasOwnProperty.call(personLeaves, String(d)))
+    issues.push("در این روز مرخصی ثبت شده است.");
+
+  if (issues.length > 0){
+    await alertDlg("⛔ قوانین:\n• " + issues.join("\n• "));
+    sel.value = prevOwner;
+    return;
+  }
+
+  try {
+    if (prevOwner){
+      const oldP = PERSONNEL.find(x => x.name === prevOwner);
+      if (oldP){
+        await sb.from("shifts")
+          .delete()
+          .eq("day", d)
+          .eq("zone", zone)
+          .eq("shift_type", shiftType)
+          .eq("user_id", oldP.id);
+      }
+    }
+
+    const { error } = await sb.from("shifts").insert({
+      day: d, zone, shift_type: shiftType, user_id: targetPerson.id
+    });
+
+    if (error){
+      if (error.code === "23505"){
+        await alertDlg("⛔ این شیفت هم‌اکنون توسط همکار دیگری گرفته شد. لیست به‌روزرسانی می‌شود.");
+        await loadAll();
+        renderAll();
+      } else {
+        await alertDlg("⛔ خطا: " + error.message);
+      }
+      sel.value = prevOwner;
+      return;
+    }
+
+    state.shifts[key] = val;
+    sel.classList.toggle("mine", !isAdmin && val === currentUser.name);
+    showAlert("✅ شیفت ثبت شد.");
+    renderStats();
+  } catch(e){
+    await alertDlg("⛔ خطا: " + e.message);
+    sel.value = prevOwner;
+  }
+}
+
+/* ============ LEAVES ============ */
+function renderLeaves(){
+  const tb = document.getElementById("leaveTableBody");
+  tb.innerHTML = "";
+  const list = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
+  if (list.length === 0){
+    tb.innerHTML = "<tr><td colspan='6' style='text-align:center;'>ردیفی نیست</td></tr>";
+    return;
+  }
+  list.forEach(p => {
+    const tr = document.createElement("tr");
+    const tdN = document.createElement("td");
+    tdN.className = "leave-name-cell";
+    tdN.textContent = p.name;
+    tr.appendChild(tdN);
+
+    const pl = state.leaves[p.name] || {};
+    const days = Object.keys(pl).map(Number).sort((a, b) => a - b);
+    const canEdit = isAdmin || p.name === currentUser.name;
+
+    for (let i = 0; i < 5; i++){
+      const td = document.createElement("td");
+      const sel = document.createElement("select");
+      sel.className = "leave-select";
+      if (!canEdit){ sel.disabled = true; sel.classList.add("locked"); }
+
+      const empty = document.createElement("option");
+      empty.value = ""; empty.textContent = "—";
+      sel.appendChild(empty);
+
+      for (let d = 0; d < DAYS; d++){
+        const info = getDayInfo(d);
+        if (info.isFriday) continue;
+        const o = document.createElement("option");
+        o.value = d;
+        o.textContent = `${info.weekday} ${info.jDay} ${info.jMonth}`;
+        sel.appendChild(o);
+      }
+      if (days[i] !== undefined) sel.value = days[i];
+      sel.addEventListener("change", () => onLeaveChange(p.name, sel, td));
+      td.appendChild(sel);
+      tr.appendChild(td);
+    }
+    tb.appendChild(tr);
+  });
+}
+
+async function onLeaveChange(person, sel, td){
+  if (!isAdmin && person !== currentUser.name){ sel.value = ""; return; }
+
+  const newDayVal = sel.value;
+  const rowSelects = [];
+  for (let k = 1; k <= 5; k++){
+    const s = td.parentElement.children[k]?.querySelector("select");
+    if (s) rowSelects.push(s);
+  }
+  const newLeaves = {};
+  let dup = false;
+  rowSelects.forEach(s => {
+    if (!s.value) return;
+    if (newLeaves[s.value]) dup = true;
+    else newLeaves[s.value] = true;
+  });
+  if (dup){ await alertDlg("⛔ تاریخ تکراری"); sel.value = ""; return; }
+
+  const pObj = PERSONNEL.find(x => x.name === person);
+  if (!pObj) return;
+
+  // حذف (تغییر به خالی)
+  if (!newDayVal){
+    const old = state.leaves[person] || {};
+    for (const day of Object.keys(old)){
+      if (!newLeaves[day]){
+        await sb.from("leaves").delete().eq("day", parseInt(day)).eq("user_id", pObj.id);
+        delete old[day];
+      }
+    }
+    if (Object.keys(old).length === 0) delete state.leaves[person];
+    else state.leaves[person] = old;
+    renderStats();
+    return;
+  }
+
+  const dayIdx = parseInt(newDayVal);
+  if (getDayInfo(dayIdx).isFriday){ await alertDlg("⛔ جمعه مجاز نیست."); sel.value = ""; return; }
+  if (findPersonShiftOnDay(person, dayIdx).length > 0){
+    await alertDlg("⛔ در این روز شیفت دارید."); sel.value = ""; return;
+  }
+
+  // فراخوانی RPC اتمیک (بررسی ظرفیت + درج در یک تراکنش)
+  try {
+    const { error } = await sb.rpc("insert_leave_with_capacity", {
+      p_day: dayIdx, p_user_id: pObj.id
+    });
+    if (error){
+      if (error.message.includes("LEAVE_CAPACITY_FULL")) await alertDlg("⛔ ظرفیت مرخصی این روز پر است.");
+      else if (error.code === "23505") await alertDlg("⛔ قبلاً ثبت شده.");
+      else await alertDlg("⛔ خطا: " + error.message);
+      sel.value = "";
+      return;
+    }
+    if (!state.leaves[person]) state.leaves[person] = {};
+    state.leaves[person][String(dayIdx)] = true;
+    renderStats();
+    showAlert("✅ مرخصی ثبت شد.");
+  } catch(e){
+    await alertDlg("⛔ خطا: " + e.message);
+    sel.value = "";
+  }
+}
+
+/* ============ STATS ============ */
+function calcShiftHours(type, dayIdx, req){
+  const base = HOURS[type];
+  const is184 = req === 184;
+  const info = getDayInfo(dayIdx);
+  const nxt = getDayInfo(dayIdx + 1);
+
+  if (type === "صبح" || type === "عصر"){
+    if (info.isFriday) return { total: base * 1.5, holiday: base * 0.5 };
+    return { total: base, holiday: 0 };
+  }
+
+  let h = 0;
+  if (is184){
+    if (nxt.isFriday) h = 7.5;
+    else if (info.isFriday) h = 4.5;
+  } else {
+    if (info.isFriday) h = 12;
+  }
+  return { total: base + h * 0.5, holiday: h * 0.5 };
+}
+
+function renderStats(){
+  const tb = document.getElementById("statsBody");
+  tb.innerHTML = "";
+  const list = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
+  if (list.length === 0){
+    tb.innerHTML = "<tr><td colspan='10' style='text-align:center;'>ردیفی نیست</td></tr>";
+    return;
+  }
+
+  const m = {}, e = {}, n = {}, h = {}, lc = {};
+  PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; });
+  Object.keys(state.leaves).forEach(per => {
+    if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length;
+  });
+
+  for (let d = 0; d < DAYS; d++){
+    ZONES.forEach(z => z.cols.forEach(t => {
+      const person = state.shifts[`${d}|${z.name}|${t}`];
+      if (!person) return;
+      const p = PERSONNEL.find(x => x.name === person);
+      if (!p) return;
+      const { holiday } = calcShiftHours(t, d, p.req);
+      h[person] += holiday;
+      if (t === "صبح") m[person] += HOURS[t];
+      else if (t === "عصر") e[person] += HOURS[t];
+      else n[person] += HOURS[t];
+    }));
+  }
+
+  list.forEach(p => {
+    const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name];
+    const lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100;
+    const total = Math.round((ts + lh) * 10) / 10;
+    const diff = Math.round((total - p.req) * 10) / 10;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="stat-name">${p.name}</td><td>${p.req}</td><td>${m[p.name]}</td><td>${e[p.name]}</td><td>${n[p.name]}</td><td>${Math.round(h[p.name]*10)/10}</td><td>${lh}</td><td style="font-weight:bold;">${total}</td><td class="${diff>0?'val-plus':''}">${diff>0?diff:0}</td><td class="${diff<0?'val-minus':''}">${diff<0?Math.abs(diff):0}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+/* ============ STAFF ============ */
+function openStaff(){
+  if (!isAdmin) return alertDlg("⛔ دسترسی ندارید.");
+  renderStaffList();
+  document.getElementById("staffModal").classList.add("active");
+}
+
+function renderStaffList(){
+  const l = document.getElementById("staffList");
+  l.innerHTML = "";
+  const staff = PERSONNEL.filter(p => !p.is_admin);
+  staff.forEach(p => {
+    const realIdx = PERSONNEL.indexOf(p);
+    const d = document.createElement("div");
+    d.className = "staff-item";
+    d.innerHTML = `
+      <span class="staff-info">${p.name}</span>
+      <input type="number" class="req-input" value="${p.req}" data-idx="${realIdx}">
+      <button class="btn-del" data-del="${realIdx}">حذف</button>`;
+    l.appendChild(d);
+  });
+
+  l.querySelectorAll("input.req-input").forEach(inp => inp.addEventListener("change", async () => {
+    const idx = +inp.dataset.idx;
+    const v = parseFloat(inp.value);
+    if (isNaN(v) || v < 0){ inp.value = PERSONNEL[idx].req; return; }
+    const { error } = await sb.from("profiles").update({ required_hours: v }).eq("id", PERSONNEL[idx].id);
+    if (error){ await alertDlg("⛔ خطا: " + error.message); inp.value = PERSONNEL[idx].req; return; }
+    PERSONNEL[idx].req = v;
+    renderAll();
+  }));
+
+  l.querySelectorAll("button.btn-del").forEach(b => b.addEventListener("click", async () => {
+    const p = PERSONNEL[+b.dataset.del];
+    if (!await confirmDlg(`حذف ${p.name}؟`, true)) return;
+    const { error } = await sb.from("profiles").delete().eq("id", p.id);
+    if (error){ await alertDlg("⛔ خطا: " + error.message); return; }
+    await loadAll();
+    renderStaffList();
+    renderAll();
+  }));
+}
+
+/* ============ LOGS ============ */
+function openLogs(){
+  if (!isAdmin) return alertDlg("⛔ دسترسی ندارید.");
+  loadLogs();
+  document.getElementById("logsModal").classList.add("active");
+}
+
+async function loadLogs(){
+  const b = document.getElementById("logsBody");
+  b.innerHTML = "<div style='text-align:center;padding:20px;'>⏳ در حال بارگذاری...</div>";
+  try {
+    const { data, error } = await sb.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(100);
+    if (error) throw error;
+    if (!data || data.length === 0){
+      b.innerHTML = "<p style='text-align:center;color:#64748b;padding:30px;'>هیچ گزارشی یافت نشد.</p>";
+      return;
+    }
+    b.innerHTML = "<div style='display:flex;flex-direction:column;gap:8px;'>" + data.map(l => {
+      const name = PERSONNEL.find(p => p.id === l.user_id)?.name || 'نامشخص';
+      const date = new Date(l.created_at).toLocaleString('fa-IR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      let icon = "⚙️", color = "#64748b", bg = "#f1f5f9", title = l.action;
+      if (l.action === 'ثبت شیفت'){ icon = "✅"; color = "#15803d"; bg = "#dcfce7"; }
+      else if (l.action === 'حذف شیفت'){ icon = "🗑️"; color = "#991b1b"; bg = "#fee2e2"; }
+      else if (l.action === 'ثبت مرخصی'){ icon = "🏖️"; color = "#c2410c"; bg = "#ffedd5"; }
+      else if (l.action === 'حذف مرخصی'){ icon = "❌"; color = "#991b1b"; bg = "#fee2e2"; }
+
+      let details = "";
+      if (l.details){
+        if (l.details.zone){
+          details = `<span style="font-size:11px;background:rgba(0,0,0,0.05);padding:2px 6px;border-radius:4px;margin-right:4px;">${l.details.zone}</span><span style="font-size:11px;background:rgba(0,0,0,0.05);padding:2px 6px;border-radius:4px;margin-right:4px;">${l.details.type}</span><span style="font-size:11px;background:rgba(0,0,0,0.05);padding:2px 6px;border-radius:4px;">روز ${l.details.day + 1}</span>`;
+        } else if (l.details.day !== undefined){
+          details = `<span style="font-size:11px;background:rgba(0,0,0,0.05);padding:2px 6px;border-radius:4px;">روز ${l.details.day + 1} ماه</span>`;
+        }
+      }
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;border-right:4px solid ${color};"><div style="width:36px;height:36px;flex-shrink:0;background:${bg};color:${color};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;">${icon}</div><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;color:var(--text-main);margin-bottom:2px;">${title} <span style="font-weight:400;color:var(--text-muted);font-size:11px;">توسط ${name}</span></div><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;">${details}</div></div><div style="font-size:10px;color:var(--text-muted);white-space:nowrap;text-align:left;direction:ltr;">${date}</div></div>`;
+    }).join('') + "</div>";
+  } catch(e){
+    b.innerHTML = "<p style='color:red;text-align:center;padding:20px;'>خطا: " + e.message + "</p>";
+  }
+}
+
+/* ============ TABS ============ */
+function switchTab(n){
+  ["shifts","leaves","stats"].forEach(t => {
+    document.getElementById("tabBtn" + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove("active");
+    document.getElementById("panel" + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove("active");
+  });
+  document.getElementById("tabBtn" + n.charAt(0).toUpperCase() + n.slice(1)).classList.add("active");
+  document.getElementById("panel" + n.charAt(0).toUpperCase() + n.slice(1)).classList.add("active");
+}
+
+/* ============ EXCEL EXPORT ============ */
+function openExcel(){
+  if (typeof XLSX === "undefined"){ alertDlg("کتابخانه اکسل بارگذاری نشد."); return; }
+  if (PERSONNEL.length === 0){ alertDlg("پرسنل خالی است."); return; }
+
+  const wb = XLSX.utils.book_new();
+  wb.Workbook = { Views: [{ RTL: true }] };
+
+  const ST = {
+    font: { name: "Vazirmatn", sz: 11, color: { rgb: "1E293B" } },
+    fontBold: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "1E293B" } },
+    fontHeader: { name: "Vazirmatn", sz: 12, bold: true, color: { rgb: "FFFFFF" } },
+    border: {
+      top: { style: "thin", color: { rgb: "CBD5E1" } },
+      bottom: { style: "thin", color: { rgb: "CBD5E1" } },
+      left: { style: "thin", color: { rgb: "CBD5E1" } },
+      right: { style: "thin", color: { rgb: "CBD5E1" } }
+    },
+    alignCenter: { horizontal: "center", vertical: "center", wrapText: true, readingOrder: 2 },
+    alignRight: { horizontal: "right", vertical: "center", wrapText: true, readingOrder: 2 }
+  };
+  const ZONE_HEADER_BG = { "بهارستان ۱": "0369A1", "بهارستان ۲": "15803D", "بهارستان ۳": "C2410C", "نجمه خاتون": "A16207", "گلشن": "6B21A8" };
+
+  function styleCell(ws, r, c, st){
+    const ref = XLSX.utils.encode_cell({ r, c });
+    if (!ws[ref]) ws[ref] = { v: "", t: "s" };
+    ws[ref].s = st;
+  }
+  function applyRange(ws, r1, c1, r2, c2, st){
+    for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) styleCell(ws, r, c, st);
+  }
+
+  /* --- Sheet 1: برنامه شیفت --- */
+  const sheet1 = [["روز", "تاریخ"]];
+  ZONES.forEach(z => z.cols.forEach(() => sheet1[0].push(z.name)));
+  const row2 = ["", ""];
+  ZONES.forEach(z => z.cols.forEach(c => row2.push(c)));
+  sheet1.push(row2);
+  for (let d = 0; d < DAYS; d++){
+    const info = getDayInfo(d);
+    const row = [info.weekday, `${info.jDay} ${info.jMonth}`];
+    ZONES.forEach(zone => zone.cols.forEach(shiftType => {
+      const person = state.shifts[`${d}|${zone.name}|${shiftType}`] || "";
+      if (!isAdmin && person && person !== currentUser.name) row.push("🚫");
+      else row.push(person);
+    }));
+    sheet1.push(row);
+  }
+  const ws1 = XLSX.utils.aoa_to_sheet(sheet1);
+  const cols1 = [{ wch: 12 }, { wch: 14 }];
+  for (let i = 0; i < 15; i++) cols1.push({ wch: 16 });
+  ws1["!cols"] = cols1;
+  ws1["!rows"] = [{ hpt: 35 }, { hpt: 25 }];
+  for (let i = 2; i < DAYS + 2; i++) ws1["!rows"].push({ hpt: 22 });
+  applyRange(ws1, 0, 0, DAYS + 1, 1, { font: ST.fontHeader, fill: { fgColor: { rgb: "334155" } }, border: ST.border, alignment: ST.alignCenter });
+  let col = 2;
+  ZONES.forEach(zone => {
+    const bg = ZONE_HEADER_BG[zone.name] || "1E293B";
+    const st = { font: ST.fontHeader, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter };
+    for (let i = 0; i < zone.cols.length; i++){ styleCell(ws1, 0, col + i, st); styleCell(ws1, 1, col + i, st); }
+    col += zone.cols.length;
+  });
+  for (let d = 0; d < DAYS; d++){
+    const info = getDayInfo(d);
+    const rowBg = info.isFriday ? "FEF3C7    const dayFontColor = info.isFriday ? "DC2626" : "1E293B";
+    styleCell(ws1, d + 2, 0, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: dayFontColor } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter });
+    styleCell(ws1, d + 2, 1, { font: { name: "Vazirmatn", sz: 10, color: { rgb: "64748B" } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter });
+    for (let c = 2; c < row2.length; c++){
+      styleCell(ws1, d + 2, c, { font: ST.fontBold, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter });
+    }
+  }
+  ws1["!freeze"] = { xSplit: 2, ySplit: 2 };
+  XLSX.utils.book_append_sheet(wb, ws1, "برنامه شیفت");
+
+  /* --- محاسبه آمار برای شیت‌های بعدی --- */
+  const m = {}, e = {}, n = {}, h = {}, lc = {};
+  PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; });
+  Object.keys(state.leaves).forEach(per => {
+    if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length;
+  });
+  for (let d = 0; d < DAYS; d++){
+    ZONES.forEach(z => z.cols.forEach(t => {
+      const person = state.shifts[`${d}|${z.name}|${t}`];
+      if (!person) return;
+      const p = PERSONNEL.find(x => x.name === person);
+      if (!p) return;
+      const { holiday } = calcShiftHours(t, d, p.req);
+      h[person] += holiday;
+      if (t === "صبح") m[person] += HOURS[t];
+      else if (t === "عصر") e[person] += HOURS[t];
+      else n[person] += HOURS[t];
+    }));
+  }
+
+  /* --- Sheet 2: آمار کارکرد --- */
+  const sheet2 = [["نام", "موظفی", "صبح", "عصر", "شب", "تعطیلات", "مرخصی", "کارکرد کل", "اضافه کار", "کسری کار"]];
+  const statList = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
+  statList.forEach(p => {
+    const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name];
+    const lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100;
+    const total = Math.round((ts + lh) * 10) / 10;
+    const diff = Math.round((total - p.req) * 10) / 10;
+    sheet2.push([
+      p.name, p.req, m[p.name], e[p.name], n[p.name],
+      Math.round(h[p.name] * 10) / 10, lh, total,
+      diff > 0 ? diff : 0,
+      diff < 0 ? Math.abs(diff) : 0
+    ]);
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(sheet2);
+  ws2["!cols"] = [{wch:20},{wch:10},{wch:10},{wch:10},{wch:10},{wch:12},{wch:10},{wch:12},{wch:10},{wch:10}];
+  ws2["!rows"] = [{ hpt: 32 }];
+  for (let i = 1; i <= statList.length; i++) ws2["!rows"].push({ hpt: 24 });
+  applyRange(ws2, 0, 0, 0, 9, { font: ST.fontHeader, fill: { fgColor: { rgb: "0F172A" } }, border: ST.border, alignment: ST.alignCenter });
+  for (let r = 1; r <= statList.length; r++){
+    const bg = r % 2 === 0 ? "F8FAFC" : "FFFFFF";
+    applyRange(ws2, r, 0, r, 9, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter });
+    styleCell(ws2, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight });
+    if (sheet2[r][8] > 0) styleCell(ws2, r, 8, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "059669" } }, fill: { fgColor: { rgb: "D1FAE5" } }, border: ST.border, alignment: ST.alignCenter });
+    if (sheet2[r][9] > 0) styleCell(ws2, r, 9, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "DC2626" } }, fill: { fgColor: { rgb: "FEE2E2" } }, border: ST.border, alignment: ST.alignCenter });
+  }
+  ws2["!freeze"] = { ySplit: 1 };
+  XLSX.utils.book_append_sheet(wb, ws2, "آمار کارکرد");
+
+  /* --- Sheet 3: مرخصی‌ها --- */
+  const sheet3 = [["نام", "مرخصی ۱", "مرخصی ۲", "مرخصی ۳", "مرخصی ۴", "مرخصی ۵", "تعداد کل"]];
+  const leaveList = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
+  leaveList.forEach(p => {
+    const leaves = state.leaves[p.name] || {};
+    const days = Object.keys(leaves).map(Number).sort((a, b) => a - b);
+    const row = [p.name];
+    for (let i = 0; i < 5; i++){
+      if (days[i] !== undefined){
+        const info = getDayInfo(days[i]);
+        row.push(`${info.weekday} ${info.jDay} ${info.jMonth}`);
+      } else {
+        row.push("—");
+      }
+    }
+    row.push(days.length);
+    sheet3.push(row);
+  });
+  const ws3 = XLSX.utils.aoa_to_sheet(sheet3);
+  ws3["!cols"] = [{wch:20},{wch:18},{wch:18},{wch:18},{wch:18},{wch:18},{wch:10}];
+  ws3["!rows"] = [{ hpt: 32 }];
+  for (let i = 1; i <= leaveList.length; i++) ws3["!rows"].push({ hpt: 24 });
+  applyRange(ws3, 0, 0, 0, 6, { font: ST.fontHeader, fill: { fgColor: { rgb: "7C2D12" } }, border: ST.border, alignment: ST.alignCenter });
+  for (let r = 1; r <= leaveList.length; r++){
+    const bg = r % 2 === 0 ? "FFF7ED" : "FFFFFF";
+    applyRange(ws3, r, 0, r, 6, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter });
+    styleCell(ws3, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight });
+  }
+  ws3["!freeze"] = { ySplit: 1 };
+  XLSX.utils.book_append_sheet(wb, ws3, "مرخصی‌ها");
+
+  /* --- Sheet 4: خلاصه --- */
+  let totalLeave = 0;
+  Object.values(state.leaves).forEach(l => totalLeave += Object.keys(l).length);
+  let totalAllHours = 0;
+  statList.forEach(p => {
+    const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name];
+    const lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100;
+    totalAllHours += Math.round((ts + lh) * 10) / 10;
+  });
+  const sheet4 = [
+    ["عنوان", "مقدار"],
+    ["ماه برنامه‌ریزی", MONTH + " ۱۴۰۵"],
+    ["تعداد روزهای ماه", DAYS],
+    ["تعداد پرسنل", statList.length],
+    ["تعداد کل شیفت‌های ثبت‌شده", Object.keys(state.shifts).filter(k => state.shifts[k]).length],
+    ["تعداد کل مرخصی‌های ثبت‌شده", totalLeave],
+    ["مجموع ساعت کارکرد", Math.round(totalAllHours * 10) / 10],
+    ["تاریخ خروجی", new Date().toLocaleString("fa-IR")]
+  ];
+  const ws4 = XLSX.utils.aoa_to_sheet(sheet4);
+  ws4["!cols"] = [{ wch: 35 }, { wch: 25 }];
+  ws4["!rows"] = [{ hpt: 32 }];
+  for (let i = 1; i < sheet4.length; i++) ws4["!rows"].push({ hpt: 26 });
+  applyRange(ws4, 0, 0, 0, 1, { font: ST.fontHeader, fill: { fgColor: { rgb: "0F172A" } }, border: ST.border, alignment: ST.alignCenter });
+  for (let r = 1; r < sheet4.length; r++){
+    const bg = r % 2 === 0 ? "F8FAFC" : "FFFFFF";
+    applyRange(ws4, r, 0, r, 1, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter });
+    styleCell(ws4, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight });
+  }
+  XLSX.utils.book_append_sheet(wb, ws4, "خلاصه");
+
+  /* --- دانلود --- */
+  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([wbout], { type: "application/octet-stream" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `گزارش-جامع-شیفت-${MONTH}-۱۴۰۵.xlsx`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showAlert("✅ فایل اکسل با موفقیت دانلود شد.");
+}
+
+/* ============ START ============ */
+window.addEventListener("load", init);
 </script>
 </body>
 </html>
