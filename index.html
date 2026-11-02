@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>سیستم مدیریت شیفت خوابگاه</title>
+<title>سامانه مدیریت شیفت خوابگاه</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.0/dist/jalaali.min.js"></script>
 
 <script>
-  const APP_VERSION = "29.0.0"; 
+  const APP_VERSION = "32.0.0"; 
   if (localStorage.getItem('app_version') !== APP_VERSION) {
     if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
     localStorage.setItem('app_version', APP_VERSION);
@@ -22,132 +22,183 @@
 
 <style>
 :root { 
-  --bg-body: #f4f7f9; --bg-card: #ffffff; --bg-header: #0f172a;
-  --text-main: #1e293b; --text-muted: #64748b;
-  --border: #e2e8f0; --primary: #2563eb; --primary-hover: #1d4ed8;
-  --danger: #dc2626; --danger-bg: #fef2f2;
-  --radius: 8px; --radius-sm: 6px;
+  --bg-body: #f1f5f9; 
+  --bg-card: #ffffff; 
+  --bg-header: #1e293b;
+  --text-main: #334155; 
+  --text-muted: #64748b;
+  --border: #cbd5e1; 
+  --primary: #0f172a; 
+  --primary-hover: #1e293b;
+  --accent: #2563eb;
+  --danger: #b91c1c; 
+  --danger-bg: #fef2f2;
+  --radius: 6px; 
+  --radius-sm: 4px;
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', sans-serif; }
 body { background: var(--bg-body); color: var(--text-main); min-height: 100vh; font-size: 13px; display: flex; flex-direction: column; overflow-x: hidden; }
-.container { max-width: 1400px; margin: 0 auto; padding: 16px; flex: 1; width: 100%; }
-.app-header { background: var(--bg-header); color: #fff; padding: 14px 20px; border-radius: var(--radius); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
-.app-header h1 { font-size: 16px; font-weight: 800; }
-.admin-badge { display: none; font-size: 11px; background: rgba(255,255,255,0.15); padding: 2px 10px; border-radius: 20px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 20px; flex: 1; width: 100%; }
+
+/* Header & Navigation */
+.app-header { background: var(--bg-header); color: #fff; padding: 16px 24px; border-radius: var(--radius); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; box-shadow: var(--shadow); border-bottom: 3px solid #0f172a; }
+.app-header h1 { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+.app-header h1::before { content: ''; display: inline-block; width: 8px; height: 24px; background: var(--accent); border-radius: 2px; }
+.admin-badge { display: none; font-size: 11px; background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); font-weight: 700; color: #e2e8f0; }
 body.is-admin .admin-badge { display: inline-block; }
-.controls { display: flex; gap: 6px; flex-wrap: wrap; }
-.tool-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: #e2e8f0; padding: 6px 14px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px; font-weight: 600; }
-.tool-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tool-btn { background: #334155; border: 1px solid #475569; color: #f8fafc; padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+.tool-btn:hover { background: #475569; }
 .admin-only { display: none; }
-body.is-admin .admin-only { display: inline-block; }
-.user-info { background: rgba(255,255,255,0.1); padding: 6px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; }
-.toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; background: var(--bg-card); padding: 8px 16px; border-radius: var(--radius); border: 1px solid var(--border); }
+body.is-admin .admin-only, body.is-guest .admin-only { display: inline-block; }
+.user-info { background: rgba(255,255,255,0.05); padding: 8px 16px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; }
+
+/* Toolbar & Tabs */
+.toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; background: var(--bg-card); padding: 10px 20px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); }
 .tabs-nav { display: flex; gap: 4px; overflow-x: auto; }
-.tab-btn { padding: 8px 20px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap; }
-.tab-btn.active { background: var(--primary); color: #fff; }
-.filter-box { display: none; align-items: center; gap: 8px; background: var(--bg-body); padding: 4px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+.tab-btn { padding: 10px 24px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap; transition: all 0.2s; border-bottom: 2px solid transparent; }
+.tab-btn:hover { color: var(--text-main); }
+.tab-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: #eff6ff; }
+.filter-box { display: none; align-items: center; gap: 10px; background: var(--bg-body); padding: 6px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 .filter-box.active { display: flex; }
-.filter-box select { border: none; background: transparent; font-size: 13px; font-weight: 700; outline: none; cursor: pointer; color: var(--text-main); }
+.filter-box select { border: 1px solid var(--border); background: #fff; padding: 6px 10px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; outline: none; cursor: pointer; color: var(--text-main); }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
-.table-container { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); overflow-x: auto; margin-bottom: 20px; }
+
+/* Tables */
+.table-container { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); overflow-x: auto; margin-bottom: 24px; box-shadow: var(--shadow); }
 table { width: 100%; border-collapse: collapse; text-align: center; }
-th, td { border: 1px solid var(--border); padding: 10px 4px; }
-th { background: #f8fafc; color: var(--text-muted); font-weight: 800; font-size: 12px; position: sticky; top: 0; z-index: 10; }
+th, td { border: 1px solid var(--border); padding: 10px 6px; }
+th { background: #f8fafc; color: var(--text-muted); font-weight: 700; font-size: 12px; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid var(--border); }
 td { font-size: 12px; background: #fff; color: var(--text-main); }
-.day-cell { font-weight: 800; width: 70px; white-space: nowrap; background: #f8fafc; }
-.date-cell { width: 70px; color: var(--text-muted); font-size: 11px; background: #f8fafc; }
-tr.is-friday td { background: #fffbeb; }
+.day-cell { font-weight: 800; width: 80px; white-space: nowrap; background: #f8fafc; color: var(--text-main); }
+.date-cell { width: 80px; color: var(--text-muted); font-size: 11px; background: #f8fafc; }
+tr.is-friday td { background: #fef2f2; }
 tr.is-friday .day-cell, tr.is-friday .date-cell { color: var(--danger); font-weight: 800; }
-.bg-z1 { background: #eff6ff; color: #1d4ed8; border-bottom: 2px solid #3b82f6; }
-.bg-z2 { background: #f0fdf4; color: #15803d; border-bottom: 2px solid #22c55e; }
-.bg-z3 { background: #fff7ed; color: #c2410c; border-bottom: 2px solid #f97316; }
-.bg-z4 { background: #fefce8; color: #a16207; border-bottom: 2px solid #eab308; }
-.bg-z5 { background: #faf5ff; color: #7e22ce; border-bottom: 2px solid #a855f7; }
-select.s-cell { width: 100%; height: 32px; border: 1px solid transparent; background: transparent; font-size: 11px; font-weight: 700; text-align: center; outline: none; cursor: pointer; border-radius: 4px; color: var(--text-main); }
-select.s-cell:hover { background: #fff; border-color: #cbd5e1; }
-select.s-cell.mine { background: #dcfce7; color: #166534; border-color: #86efac; }
-select.s-cell.locked { opacity: 0.6; cursor: not-allowed; background: #f1f5f9; }
-select.s-cell.taken { color: var(--danger); font-weight: 800; background: var(--danger-bg); }
-.section-card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
-.section-card h3 { font-size: 15px; margin-bottom: 16px; border-bottom: 2px solid var(--border); padding-bottom: 12px; font-weight: 800; }
-.info-banner { background: rgba(37,99,235,0.05); color: var(--primary); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 12px; border-right: 4px solid var(--primary); font-weight: 600; line-height: 1.7; }
-table.leave-table select { width: 100%; height: 32px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; text-align: center; background: #fff; outline: none; color: var(--text-main); cursor: pointer; }
-table.stats-table th { background: var(--bg-header); color: #fff; }
-.leave-name-cell, .stat-name { font-weight: 800; text-align: right; padding-right: 12px !important; background: #f8fafc; color: var(--text-main); white-space: nowrap; }
-.val-plus { color: #059669; font-weight: 800; background: #d1fae5; border-radius: 4px; padding: 2px 6px; display: inline-block; }
-.val-minus { color: var(--danger); font-weight: 800; background: var(--danger-bg); border-radius: 4px; padding: 2px 6px; display: inline-block; }
-.overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.7); z-index: 1000; justify-content: center; align-items: center; padding: 16px; }
+.bg-z1 { background: #eff6ff; color: #1e3a8a; border-bottom: 2px solid #3b82f6; }
+.bg-z2 { background: #f0fdf4; color: #14532d; border-bottom: 2px solid #22c55e; }
+.bg-z3 { background: #fff7ed; color: #7c2d12; border-bottom: 2px solid #f97316; }
+.bg-z4 { background: #fefce8; color: #713f12; border-bottom: 2px solid #eab308; }
+.bg-z5 { background: #faf5ff; color: #4c1d95; border-bottom: 2px solid #a855f7; }
+
+/* Select Cells */
+select.s-cell { width: 100%; height: 34px; border: 1px solid transparent; background: transparent; font-size: 12px; font-weight: 600; text-align: center; outline: none; cursor: pointer; border-radius: var(--radius-sm); color: var(--text-main); transition: all 0.2s; }
+select.s-cell:hover { background: #fff; border-color: var(--border); }
+select.s-cell.mine { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+select.s-cell.locked { opacity: 0.4; cursor: not-allowed; background: #f1f5f9; color: transparent; }
+
+/* Cards */
+.section-card { background: var(--bg-card); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+.section-card h3 { font-size: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; font-weight: 800; color: var(--text-main); }
+.info-banner { background: #eff6ff; color: #1e40af; padding: 14px; border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 13px; border-right: 4px solid var(--accent); font-weight: 500; line-height: 1.6; }
+
+/* Leave & Stats Tables */
+table.leave-table select { width: 100%; height: 36px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; text-align: center; background: #fff; outline: none; color: var(--text-main); cursor: pointer; font-family: inherit; }
+table.leave-table select:focus { border-color: var(--accent); }
+table.stats-table th { background: var(--bg-header); color: #fff; border: 1px solid #334155; }
+.leave-name-cell, .stat-name { font-weight: 800; text-align: right; padding-right: 16px !important; background: #f8fafc; color: var(--text-main); white-space: nowrap; }
+.val-plus { color: #15803d; font-weight: 800; background: #dcfce7; border-radius: 4px; padding: 4px 8px; display: inline-block; min-width: 40px; }
+.val-minus { color: var(--danger); font-weight: 800; background: var(--danger-bg); border-radius: 4px; padding: 4px 8px; display: inline-block; min-width: 40px; }
+
+/* Modals & Dialogs */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.8); z-index: 1000; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(2px); }
 .overlay.active { display: flex; }
-.modal { background: var(--bg-card); width: 100%; max-width: 600px; border-radius: var(--radius); overflow: hidden; max-height: 90vh; display: flex; flex-direction: column; }
-.modal-header { background: #f8fafc; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-.modal-close { background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
-.modal-body { padding: 20px; overflow-y: auto; }
-.dialog { background: var(--bg-card); width: 100%; max-width: 400px; border-radius: var(--radius); padding: 24px; text-align: center; }
-.dialog h3 { margin-bottom: 10px; font-size: 17px; }
-.dialog p { color: var(--text-muted); margin-bottom: 20px; font-size: 13px; line-height: 1.7; white-space: pre-line; }
-.dialog input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 20px; outline: none; font-family: inherit; color: var(--text-main); }
-.dialog-actions { display: flex; gap: 8px; justify-content: center; }
-.btn-primary { background: var(--primary); color: #fff; border: none; padding: 10px 24px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-family: inherit; }
-.btn-primary:hover { background: var(--primary-hover); }
-.btn-danger { background: var(--danger); color: #fff; border: none; padding: 10px 24px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-family: inherit; }
-.btn-cancel { background: transparent; border: 1px solid var(--border); padding: 10px 24px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-family: inherit; color: var(--text-main); }
-.login-container { max-width: 400px; margin: 60px auto; background: var(--bg-card); padding: 32px; border-radius: var(--radius); border: 1px solid var(--border); }
-.login-container h2 { text-align: center; font-size: 20px; margin-bottom: 8px; font-weight: 900; }
-.login-container p { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 24px; }
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 12.5px; font-weight: 700; margin-bottom: 6px; color: var(--text-muted); }
-.form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #f8fafc; outline: none; font-family: inherit; color: var(--text-main); font-size: 14px; }
-.form-group input:focus, .form-group select:focus { border-color: var(--primary); background: #fff; }
-.btn-full { width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-sm); font-weight: 800; font-size: 15px; cursor: pointer; margin-top: 10px; font-family: inherit; }
-.btn-full:hover { background: var(--primary-hover); }
-.error-msg { color: var(--danger); font-size: 12.5px; text-align: center; margin-top: 12px; font-weight: 600; min-height: 18px; }
-.support-text { text-align: center; font-size: 11.5px; color: var(--text-muted); margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--border); }
+.modal { background: var(--bg-card); width: 100%; max-width: 600px; border-radius: var(--radius); overflow: hidden; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+.modal-header { background: #f8fafc; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+.modal-header h2 { font-size: 16px; font-weight: 800; color: var(--text-main); }
+.modal-close { background: transparent; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); transition: color 0.2s; }
+.modal-close:hover { color: var(--danger); }
+.modal-body { padding: 24px; overflow-y: auto; }
+.dialog { background: var(--bg-card); width: 100%; max-width: 420px; border-radius: var(--radius); padding: 28px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+.dialog h3 { margin-bottom: 12px; font-size: 18px; font-weight: 800; color: var(--text-main); }
+.dialog p { color: var(--text-muted); margin-bottom: 24px; font-size: 14px; line-height: 1.8; white-space: pre-line; }
+.dialog input { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 24px; outline: none; font-family: inherit; color: var(--text-main); font-size: 15px; text-align: center; letter-spacing: 2px; }
+.dialog input:focus { border-color: var(--accent); }
+.dialog-actions { display: flex; gap: 12px; justify-content: center; }
+.btn-primary { background: var(--accent); color: #fff; border: none; padding: 12px 28px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-family: inherit; font-size: 14px; transition: background 0.2s; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-danger { background: var(--danger); color: #fff; border: none; padding: 12px 28px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-family: inherit; font-size: 14px; }
+.btn-danger:hover { background: #991b1b; }
+.btn-cancel { background: transparent; border: 1px solid var(--border); padding: 12px 28px; border-radius: var(--radius-sm); font-weight: 700; cursor: pointer; font-family: inherit; color: var(--text-main); font-size: 14px; transition: background 0.2s; }
+.btn-cancel:hover { background: #f1f5f9; }
+
+/* Login Screen */
+.login-container { max-width: 420px; margin: 80px auto; background: var(--bg-card); padding: 40px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-top: 4px solid var(--bg-header); }
+.login-container h2 { text-align: center; font-size: 22px; margin-bottom: 8px; font-weight: 900; color: var(--text-main); }
+.login-container p { text-align: center; font-size: 13px; color: var(--text-muted); margin-bottom: 32px; }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text-main); }
+.form-group input, .form-group select { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: #f8fafc; outline: none; font-family: inherit; color: var(--text-main); font-size: 14px; transition: all 0.2s; }
+.form-group input:focus, .form-group select:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+.btn-full { width: 100%; padding: 16px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-weight: 800; font-size: 15px; cursor: pointer; margin-top: 10px; font-family: inherit; transition: background 0.2s; }
+.btn-full:hover { background: #1d4ed8; }
+.error-msg { color: var(--danger); font-size: 13px; text-align: center; margin-top: 16px; font-weight: 600; min-height: 20px; }
+.support-text { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 24px; padding-top: 20px; border-top: 1px dashed var(--border); }
+
+/* Loader & Spinner */
 #loadingScreen { position: fixed; inset: 0; background: var(--bg-body); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-.spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 16px; }
+.spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 20px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.staff-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #f8fafc; border-radius: var(--radius-sm); margin-bottom: 8px; border: 1px solid var(--border); }
-.staff-item input { width: 70px; padding: 6px; border: 1px solid var(--border); border-radius: 4px; text-align: center; font-family: inherit; color: var(--text-main); }
-.btn-del { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: 700; font-size: 12px; font-family: inherit; }
-.mandatory-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.95); z-index: 2000; justify-content: center; align-items: center; padding: 16px; }
+
+/* Staff List */
+.staff-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f8fafc; border-radius: var(--radius-sm); margin-bottom: 10px; border: 1px solid var(--border); }
+.staff-item input { width: 80px; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: center; font-family: inherit; color: var(--text-main); font-weight: 700; outline: none; }
+.staff-item input:focus { border-color: var(--accent); }
+.btn-del { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 700; font-size: 12px; font-family: inherit; transition: all 0.2s; }
+.btn-del:hover { background: #fee2e2; }
+
+/* Mandatory Password */
+.mandatory-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.95); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
 .mandatory-overlay.active { display: flex; }
-.mandatory-box { background: var(--bg-card); width: 100%; max-width: 450px; border-radius: var(--radius); padding: 32px; text-align: center; border: 3px solid var(--primary); }
-.mandatory-box h2 { color: var(--primary); font-size: 20px; margin-bottom: 12px; }
-.mandatory-box p { color: var(--text-muted); font-size: 13px; margin-bottom: 20px; line-height: 1.7; }
-.mandatory-box input { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 16px; outline: none; font-family: inherit; font-size: 15px; text-align: center; letter-spacing: 2px; color: var(--text-main); }
-.mandatory-box input:focus { border-color: var(--primary); }
-.mandatory-box button { width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-sm); font-weight: 800; font-size: 15px; cursor: pointer; font-family: inherit; }
-@media (max-width: 768px) { .app-header { flex-direction: column; text-align: center; } .toolbar { flex-direction: column; align-items: stretch; } .tabs-nav { overflow-x: auto; } th, td { padding: 6px 2px; font-size: 11px; } select.s-cell { font-size: 10px; height: 28px; } }
+.mandatory-box { background: var(--bg-card); width: 100%; max-width: 480px; border-radius: var(--radius); padding: 40px; text-align: center; border-top: 6px solid var(--accent); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+.mandatory-box h2 { color: var(--text-main); font-size: 22px; margin-bottom: 16px; font-weight: 900; }
+.mandatory-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; line-height: 1.8; }
+.mandatory-box input { width: 100%; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 16px; outline: none; font-family: inherit; font-size: 16px; text-align: center; letter-spacing: 4px; color: var(--text-main); background: #f8fafc; transition: all 0.2s; }
+.mandatory-box input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+.mandatory-box button { width: 100%; padding: 16px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); font-weight: 800; font-size: 16px; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+.mandatory-box button:hover { background: #1d4ed8; }
+
+@media (max-width: 768px) { 
+  .app-header { flex-direction: column; text-align: center; padding: 16px; } 
+  .toolbar { flex-direction: column; align-items: stretch; padding: 12px; } 
+  .tabs-nav { overflow-x: auto; padding-bottom: 4px; } 
+  .tab-btn { padding: 8px 16px; font-size: 12px; }
+  th, td { padding: 6px 2px; font-size: 11px; } 
+  select.s-cell { font-size: 10px; height: 30px; } 
+  .login-container { margin: 40px 16px; padding: 24px; }
+  .controls { justify-content: center; }
+}
 </style>
 </head>
 <body>
 
 <div id="loadingScreen">
   <div class="spinner"></div>
-  <div style="font-weight:600; color:var(--text-muted);">در حال اتصال...</div>
+  <div style="font-weight:600; color:var(--text-muted); font-size:14px;">در حال اتصال به سامانه...</div>
 </div>
 
 <div id="loginScreen" style="display:none;">
   <div class="login-container">
-    <h2>ورود به سیستم</h2>
-    <p>لطفاً نام خود را انتخاب کنید</p>
+    <h2>ورود به سامانه</h2>
+    <p>جهت ورود، اطلاعات کاربری خود را انتخاب کنید</p>
     <div class="form-group">
       <label>نام کاربری</label>
       <select id="loginName"><option value="">در حال دریافت...</option></select>
     </div>
     <div class="form-group">
       <label>رمز عبور</label>
-      <input type="password" id="loginPassword" onkeydown="if(event.key==='Enter')doLogin()" placeholder="رمز عبور را وارد کنید">
+      <input type="password" id="loginPassword" onkeydown="if(event.key==='Enter')doLogin()" placeholder="رمز عبور را وارد نمایید">
     </div>
     <button onclick="doLogin()" class="btn-full" id="loginBtn">ورود به سیستم</button>
     <div class="error-msg" id="loginError"></div>
-    <div class="support-text">در صورت بروز مشکل با پشتیبان سامانه تماس بگیرید.</div>
+    <div class="support-text">در صورت بروز مشکل با مدیر سامانه تماس بگیرید.</div>
   </div>
 </div>
 
 <div class="container" id="mainApp" style="display:none;">
   <div class="app-header">
-    <h1>سیستم مدیریت شیفت <span class="admin-badge">مدیر سیستم</span></h1>
+    <h1>سامانه مدیریت شیفت <span class="admin-badge">مدیر سیستم</span></h1>
     <div class="controls">
       <span class="user-info" id="currentUserName"></span>
       <button class="tool-btn" onclick="openExcel()">خروجی اکسل</button>
@@ -168,23 +219,26 @@ table.stats-table th { background: var(--bg-header); color: #fff; }
       <select id="zoneFilter" onchange="renderTable()"><option value="all">همه خوابگاه‌ها</option></select>
     </div>
   </div>
+  
   <div id="panel-shifts" class="tab-panel active">
     <div class="table-container">
       <table>
-        <thead><tr id="zoneHeaderRow"><th rowspan="2" class="day-cell">روز</th><th rowspan="2" class="date-cell">تاریخ</th></tr><tr id="subHeader"></tr></thead>
+        <thead id="tableHead"></thead>
         <tbody id="tableBody"></tbody>
       </table>
     </div>
   </div>
+  
   <div id="panel-leaves" class="tab-panel">
     <div class="section-card">
       <h3>مدیریت مرخصی‌ها</h3>
-      <div class="info-banner">حداکثر ۲ نفر در هر روز. جمعه‌ها مجاز نیست.</div>
+      <div class="info-banner">حداکثر ۲ نفر در هر روز مجاز است. ثبت مرخصی برای روزهای جمعه امکان‌پذیر نیست.</div>
       <div style="overflow-x:auto">
         <table class="leave-table"><thead><tr><th>نام</th><th>مرخصی ۱</th><th>مرخصی ۲</th><th>مرخصی ۳</th><th>مرخصی ۴</th><th>مرخصی ۵</th></tr></thead><tbody id="leaveTableBody"></tbody></table>
       </div>
     </div>
   </div>
+  
   <div id="panel-stats" class="tab-panel">
     <div class="section-card">
       <h3>آمار کارکرد</h3>
@@ -201,11 +255,11 @@ table.stats-table th { background: var(--bg-header); color: #fff; }
 
 <div class="mandatory-overlay" id="mandatoryPasswordModal">
   <div class="mandatory-box">
-    <h2>🔐 تنظیم رمز عبور شخصی</h2>
-    <p>برای امنیت حساب، لطفاً یک رمز عبور ۸ رقمی (فقط عدد) برای خود تعریف کنید.</p>
+    <h2>🔐 تنظیم رمز عبور</h2>
+    <p>برای حفظ امنیت حساب کاربری، لطفاً یک رمز عبور ۸ رقمی (فقط عدد) برای خود تعریف کنید.</p>
     <input type="password" id="newPersonalPassword" placeholder="رمز ۸ رقمی جدید..." maxlength="8" inputmode="numeric" onkeydown="if(event.key==='Enter')setMandatoryPassword()">
     <input type="password" id="confirmPersonalPassword" placeholder="تکرار رمز ۸ رقمی..." maxlength="8" inputmode="numeric" onkeydown="if(event.key==='Enter')setMandatoryPassword()">
-    <div class="error-msg" id="mandatoryError" style="margin-bottom:16px;"></div>
+    <div class="error-msg" id="mandatoryError" style="margin-bottom:20px;"></div>
     <button onclick="setMandatoryPassword()">ثبت رمز و ورود</button>
   </div>
 </div>
@@ -228,34 +282,116 @@ const emailMap = {
   "خانم حشمتی":"heshmati@dorm.local", "کاربر مهمان":"guest@dorm.local", "کاربر شیفت":"shift@dorm.local"
 };
 
-let PERSONNEL = [], state = { shifts: {}, leaves: {} }, currentUser = null, isAdmin = false;
+let PERSONNEL = [], state = { shifts: {}, leaves: {} }, currentUser = null, isAdmin = false, isGuest = false;
 let pendingUserData = null;
 const MONTH = "آبان", DAYS = 30, HOURS = { "صبح": 6.5, "عصر": 5.5, "شب": 12 }, LEAVE_HOURS = 7.55;
 const ZONES = [{ name: "بهارستان ۱", cols: ["صبح", "عصر", "شب"], cls: "bg-z1" }, { name: "بهارستان ۲", cols: ["صبح", "عصر", "شب"], cls: "bg-z2" }, { name: "بهارستان ۳", cols: ["صبح", "عصر", "شب"], cls: "bg-z3" }, { name: "نجمه خاتون", cols: ["صبح", "عصر", "شب"], cls: "bg-z4" }, { name: "گلشن", cols: ["صبح", "عصر"], cls: "bg-z5" }];
-const WEEKDAYS_FA = ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه", "شنبه"];
 let BASE_DATE_UTC;
 
-function initBaseDate() { const g = jalaali.toGregorian(1405, 8, 1); BASE_DATE_UTC = Date.UTC(g.gy, g.gm - 1, g.gd); }
-function getDayInfo(i) { const d = new Date(BASE_DATE_UTC + i * 86400000), wd = d.getUTCDay(), j = jalaali.toJalaali(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()); const faWd = (wd + 1) % 7; return { weekday: ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"][faWd], isFriday: faWd === 6, jDay: j.jd, jMonth: MONTH }; }
-function formatDateTime(isoString) { const d = new Date(isoString), j = jalaali.toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate()); return `${j.jd} ${MONTH} ${j.jy} - ساعت ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
+function initBaseDate() { 
+  const g = jalaali.toGregorian(1405, 8, 1); 
+  BASE_DATE_UTC = Date.UTC(g.gy, g.gm - 1, g.gd); 
+}
+
+function getDayInfo(i) { 
+  const d = new Date(BASE_DATE_UTC + i * 86400000);
+  const j = jalaali.toJalaali(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+  const utcDay = d.getUTCDay(); 
+  const faWd = (utcDay + 1) % 7; 
+  const weekdayNames = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
+  return { weekday: weekdayNames[faWd], isFriday: faWd === 6, jDay: j.jd, jMonth: MONTH }; 
+}
+
+function formatDateTime(isoString) { 
+  try {
+    const d = new Date(isoString);
+    const j = jalaali.toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate()); 
+    return `${j.jd} ${MONTH} ${j.jy} - ساعت ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; 
+  } catch(e) { return isoString; }
+}
+
 function closeModal(id) { document.getElementById(id).classList.remove("active"); }
-function dialog(opts) { return new Promise(r => { const o = document.getElementById("dialogOverlay"), t = document.getElementById("dialogTitle"), m = document.getElementById("dialogMessage"), i = document.getElementById("dialogInput"), a = document.getElementById("dialogActions"); t.textContent = opts.title || ""; m.textContent = opts.message || ""; i.value = opts.def || ""; i.style.display = opts.input ? "block" : "none"; a.innerHTML = ""; const finish = v => { o.classList.remove("active"); r(v); }; if (opts.input) { a.innerHTML = `<button class="btn-primary" id="dOk">تأیید</button><button class="btn-cancel" id="dCancel">انصراف</button>`; document.getElementById("dOk").onclick = () => finish(i.value.trim()); document.getElementById("dCancel").onclick = () => finish(null); } else if (opts.confirm) { a.innerHTML = `<button class="${opts.danger ? 'btn-danger' : 'btn-primary'}" id="dOk">تأیید</button><button class="btn-cancel" id="dCancel">انصراف</button>`; document.getElementById("dOk").onclick = () => finish(true); document.getElementById("dCancel").onclick = () => finish(false); } else { a.innerHTML = `<button class="btn-primary" id="dOk">متوجه شدم</button>`; document.getElementById("dOk").onclick = () => finish(true); } o.classList.add("active"); }); }
+
+function dialog(opts) { 
+  return new Promise(r => { 
+    const o = document.getElementById("dialogOverlay"), t = document.getElementById("dialogTitle"), m = document.getElementById("dialogMessage"), i = document.getElementById("dialogInput"), a = document.getElementById("dialogActions"); 
+    t.textContent = opts.title || ""; m.textContent = opts.message || ""; i.value = opts.def || ""; 
+    i.style.display = opts.input ? "block" : "none"; a.innerHTML = ""; 
+    const finish = v => { o.classList.remove("active"); r(v); }; 
+    if (opts.input) { 
+      a.innerHTML = `<button class="btn-primary" id="dOk">تأیید</button><button class="btn-cancel" id="dCancel">انصراف</button>`; 
+      document.getElementById("dOk").onclick = () => finish(i.value.trim()); 
+      document.getElementById("dCancel").onclick = () => finish(null); 
+    } else if (opts.confirm) { 
+      a.innerHTML = `<button class="${opts.danger ? 'btn-danger' : 'btn-primary'}" id="dOk">تأیید</button><button class="btn-cancel" id="dCancel">انصراف</button>`; 
+      document.getElementById("dOk").onclick = () => finish(true); 
+      document.getElementById("dCancel").onclick = () => finish(false); 
+    } else { 
+      a.innerHTML = `<button class="btn-primary" id="dOk">متوجه شدم</button>`; 
+      document.getElementById("dOk").onclick = () => finish(true); 
+    } 
+    o.classList.add("active"); 
+  }); 
+}
+
 const alertDlg = m => dialog({ message: m }), confirmDlg = (m, d) => dialog({ message: m, confirm: true, danger: d }), promptDlg = (m, def) => dialog({ message: m, input: true, def: def });
 
 async function init() {
   try {
+    if (typeof jalaali === "undefined") {
+      document.getElementById("loadingScreen").innerHTML = "<p style='color:red; font-weight:bold;'>خطا: کتابخانه تاریخ لود نشد. لطفاً فیلترشکن را روشن کنید.</p>";
+      return;
+    }
     initBaseDate();
-    const zf = document.getElementById("zoneFilter"); ZONES.forEach(z => { const o = document.createElement("option"); o.value = z.name; o.textContent = z.name; zf.appendChild(o); });
-    const timeout = new Promise(resolve => setTimeout(() => resolve({ data: { session: null }, timeout: true }), 5000));
+    const zf = document.getElementById("zoneFilter"); 
+    ZONES.forEach(z => { const o = document.createElement("option"); o.value = z.name; o.textContent = z.name; zf.appendChild(o); });
+    
+    const timeout = new Promise(resolve => setTimeout(() => resolve({ data: { session: null }, timeout: true }), 8000));
     const result = await Promise.race([sb.auth.getSession(), timeout]);
-    if (result.timeout) { document.getElementById("loadingScreen").style.display = "none"; document.getElementById("loginScreen").style.display = "block"; document.getElementById("loginError").textContent = "اتصال به سرور برقرار نشد. لطفاً فیلترشکن خود را روشن کنید."; loadLoginList(); return; }
+    
+    if (result.timeout) { 
+      document.getElementById("loadingScreen").style.display = "none"; 
+      document.getElementById("loginScreen").style.display = "block"; 
+      document.getElementById("loginError").textContent = "اتصال به سرور برقرار نشد. فیلترشکن خود را روشن کنید."; 
+      loadLoginList(); return; 
+    }
+    
     const { data: { session } } = result;
-    if (session && session.user) { const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single(); if (p) { currentUser = p; isAdmin = !!p.is_admin; await loadAll(); showMain(); return; } }
+    if (session && session.user) { 
+      const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single(); 
+      if (p) { currentUser = p; isAdmin = !!p.is_admin; isGuest = (p.name === "کاربر مهمان"); await loadAll(); showMain(); return; } 
+    }
     await loadLoginList();
-  } catch (e) { document.getElementById("loadingScreen").style.display = "none"; document.getElementById("loginScreen").style.display = "block"; document.getElementById("loginError").textContent = "خطا در اتصال به سرور."; loadLoginList(); }
+  } catch (e) { 
+    document.getElementById("loadingScreen").style.display = "none"; 
+    document.getElementById("loginScreen").style.display = "block"; 
+    document.getElementById("loginError").textContent = "خطا در اتصال به سرور."; 
+    loadLoginList(); 
+  }
 }
-async function loadLoginList() { try { const { data } = await sb.from("profiles").select("name,is_admin").order("name"); const s = document.getElementById("loginName"); s.innerHTML = '<option value="">انتخاب کنید...</option>'; (data || []).forEach(p => { const o = document.createElement("option"); o.value = p.name; o.textContent = p.name + (p.is_admin ? " (مدیر)" : ""); s.appendChild(o); }); } catch(e){} document.getElementById("loadingScreen").style.display = "none"; document.getElementById("loginScreen").style.display = "block"; }
-function showMain() { document.getElementById("loginScreen").style.display = "none"; document.getElementById("mainApp").style.display = "block"; document.body.classList.toggle("is-admin", isAdmin); document.getElementById("currentUserName").textContent = currentUser.name; renderAll(); }
+
+async function loadLoginList() { 
+  try { 
+    const { data } = await sb.from("profiles").select("name,is_admin").order("name"); 
+    const s = document.getElementById("loginName"); 
+    s.innerHTML = '<option value="">انتخاب کنید...</option>'; 
+    (data || []).forEach(p => { 
+      const o = document.createElement("option"); o.value = p.name; o.textContent = p.name + (p.is_admin ? " (مدیر)" : ""); s.appendChild(o); 
+    }); 
+  } catch(e){ console.error(e); } 
+  document.getElementById("loadingScreen").style.display = "none"; 
+  document.getElementById("loginScreen").style.display = "block"; 
+}
+
+function showMain() { 
+  document.getElementById("loginScreen").style.display = "none"; 
+  document.getElementById("mainApp").style.display = "block"; 
+  document.body.classList.toggle("is-admin", isAdmin); 
+  document.body.classList.toggle("is-guest", isGuest);
+  document.getElementById("currentUserName").textContent = currentUser.name; 
+  renderAll(); 
+}
+
 async function doLogin() {
   const name = document.getElementById("loginName").value, pass = document.getElementById("loginPassword").value, err = document.getElementById("loginError");
   if (!name || !pass) { err.textContent = "نام و رمز را وارد کنید"; return; }
@@ -266,10 +402,16 @@ async function doLogin() {
   if (error) { err.textContent = "رمز عبور اشتباه است."; return; }
   const { data: p } = await sb.from("profiles").select("*").eq("id", data.user.id).single();
   if (!p) { err.textContent = "پروفایل یافت نشد."; return; }
-  currentUser = p; isAdmin = !!p.is_admin;
-  if ((pass === "654321" || !p.password_set) && !p.is_admin) { pendingUserData = { id: p.id, name: p.name, email: email }; err.textContent = ""; document.getElementById("loginScreen").style.display = "none"; document.getElementById("mandatoryPasswordModal").classList.add("active"); return; }
+  currentUser = p; isAdmin = !!p.is_admin; isGuest = (p.name === "کاربر مهمان");
+  
+  if ((pass === "654321" || !p.password_set) && !p.is_admin && !isGuest) { 
+    pendingUserData = { id: p.id, name: p.name, email: email }; err.textContent = ""; 
+    document.getElementById("loginScreen").style.display = "none"; 
+    document.getElementById("mandatoryPasswordModal").classList.add("active"); return; 
+  }
   err.textContent = ""; await loadAll(); showMain();
 }
+
 async function setMandatoryPassword() {
   const newPw = document.getElementById("newPersonalPassword").value, confirmPw = document.getElementById("confirmPersonalPassword").value, errDiv = document.getElementById("mandatoryError");
   if (!newPw || newPw.length < 8) { errDiv.textContent = "رمز باید حداقل ۸ رقم باشد."; return; }
@@ -282,13 +424,16 @@ async function setMandatoryPassword() {
     if (error) throw error;
     await sb.from("audit_logs").insert({ user_id: pendingUserData.id, action: "تغییر رمز عبور", details: { message: "کاربر رمز عبور اولیه خود را تنظیم کرد." } });
     document.getElementById("mandatoryPasswordModal").classList.remove("active");
-    alertDlg("✅ رمز شما تنظیم شد. اکنون وارد سیستم می‌شوید.");
+    alertDlg("✅ رمز شما با موفقیت تنظیم شد. اکنون وارد سیستم می‌شوید.");
     const { data: loginData, error: loginErr } = await sb.auth.signInWithPassword({ email: pendingUserData.email, password: newPw });
     if (loginErr) { alertDlg("خطا در ورود: " + loginErr.message); return; }
-    const { data: p } = await sb.from("profiles").select("*").eq("id", loginData.user.id).single(); currentUser = p; isAdmin = !!p.is_admin; await loadAll(); showMain();
+    const { data: p } = await sb.from("profiles").select("*").eq("id", loginData.user.id).single(); 
+    currentUser = p; isAdmin = !!p.is_admin; isGuest = (p.name === "کاربر مهمان"); await loadAll(); showMain();
   } catch(e) { errDiv.textContent = "خطا: " + e.message; }
 }
-async function doLogout() { await sb.auth.signOut(); currentUser = null; isAdmin = false; await loadLoginList(); }
+
+async function doLogout() { await sb.auth.signOut(); currentUser = null; isAdmin = false; isGuest = false; await loadLoginList(); }
+
 async function openChangePassword() {
   const newPw = await promptDlg("رمز جدید (۸ رقمی):", "");
   if (!newPw || newPw.length < 8) return alertDlg("رمز باید حداقل ۸ رقم باشد.");
@@ -298,6 +443,7 @@ async function openChangePassword() {
     alertDlg("✅ رمز با موفقیت تغییر کرد.");
   } catch (e) { alertDlg("خطا: " + e.message); }
 }
+
 async function loadAll() {
   const { data: p } = await sb.from("profiles").select("*").order("name");
   PERSONNEL = (p || []).map(x => ({ id: x.id, name: x.name, req: x.required_hours || 0, is_admin: !!x.is_admin, password_set: x.password_set }));
@@ -307,33 +453,99 @@ async function loadAll() {
   (s || []).forEach(x => { const per = PERSONNEL.find(z => z.id === x.user_id); if (per) state.shifts[`${x.day}|${x.zone}|${x.shift_type}`] = per.name; });
   (l || []).forEach(x => { const per = PERSONNEL.find(z => z.id === x.user_id); if (per) { if (!state.leaves[per.name]) state.leaves[per.name] = {}; state.leaves[per.name][String(x.day)] = true; } });
 }
-function renderAll() { renderTable(); renderLeaves(); renderStats(); }
+
+function renderAll() { 
+  renderTable(); 
+  renderLeaves(); 
+  renderStats(); 
+}
+
 function renderTable() {
-  const selectedZone = document.getElementById("zoneFilter").value, zonesToRender = selectedZone === "all" ? ZONES : ZONES.filter(z => z.name === selectedZone), visiblePersonnel = PERSONNEL.filter(p => !p.is_admin);
-  const zr = document.getElementById("zoneHeaderRow"); Array.from(zr.children).forEach((el, i) => { if (i >= 2) el.remove(); });
-  const sh = document.getElementById("subHeader"); sh.innerHTML = "";
-  zonesToRender.forEach(z => { const th = document.createElement("th"); th.className = z.cls; th.colSpan = z.cols.length; th.textContent = z.name; zr.appendChild(th); z.cols.forEach(c => { const s = document.createElement("th"); s.className = z.cls; s.textContent = c; sh.appendChild(s); }); });
-  const tb = document.getElementById("tableBody"); tb.innerHTML = "";
+  const selectedZone = document.getElementById("zoneFilter").value;
+  const zonesToRender = selectedZone === "all" ? ZONES : ZONES.filter(z => z.name === selectedZone);
+  const visiblePersonnel = PERSONNEL.filter(p => !p.is_admin);
+  
+  const thead = document.getElementById("tableHead");
+  thead.innerHTML = "";
+  
+  const tr1 = document.createElement("tr");
+  const thDay = document.createElement("th"); thDay.rowSpan = 2; thDay.className = "day-cell"; thDay.textContent = "روز"; tr1.appendChild(thDay);
+  const thDate = document.createElement("th"); thDate.rowSpan = 2; thDate.className = "date-cell"; thDate.textContent = "تاریخ"; tr1.appendChild(thDate);
+  zonesToRender.forEach(z => {
+    const th = document.createElement("th"); th.className = z.cls; th.colSpan = z.cols.length; th.textContent = z.name; tr1.appendChild(th);
+  });
+  thead.appendChild(tr1);
+  
+  const tr2 = document.createElement("tr");
+  zonesToRender.forEach(z => z.cols.forEach(c => {
+    const th = document.createElement("th"); th.className = z.cls; th.textContent = c; tr2.appendChild(th);
+  }));
+  thead.appendChild(tr2);
+
+  const tb = document.getElementById("tableBody"); 
+  tb.innerHTML = "";
+  
   for (let d = 0; d < DAYS; d++) {
-    const info = getDayInfo(d), tr = document.createElement("tr"); if (info.isFriday) tr.classList.add("is-friday");
-    tr.innerHTML = `<td class="day-cell">${info.weekday}</td><td class="date-cell">${info.jDay} ${info.jMonth}</td>`;
+    const info = getDayInfo(d), tr = document.createElement("tr"); 
+    if (info.isFriday) tr.classList.add("is-friday");
+    
+    const tdDay = document.createElement("td"); tdDay.className = "day-cell"; tdDay.textContent = info.weekday; tr.appendChild(tdDay);
+    const tdDate = document.createElement("td"); tdDate.className = "date-cell"; tdDate.textContent = `${info.jDay} ${info.jMonth}`; tr.appendChild(tdDate);
+    
     zonesToRender.forEach(z => z.cols.forEach(c => {
       const td = document.createElement("td"), key = `${d}|${z.name}|${c}`, sel = document.createElement("select");
       sel.className = "s-cell"; sel.dataset.key = key; sel.dataset.day = d; sel.dataset.zone = z.name; sel.dataset.shift = c;
       const owner = state.shifts[key] || "", empty = document.createElement("option"); empty.value = ""; empty.textContent = "—"; sel.appendChild(empty);
-      if (isAdmin) { visiblePersonnel.forEach(p => { const o = document.createElement("option"); o.value = p.name; o.textContent = p.name; sel.appendChild(o); }); sel.value = owner; sel.addEventListener("change", () => onShiftChange(sel)); }
-      else { if (owner && owner !== currentUser.name) { const taken = document.createElement("option"); taken.value = "__taken__"; taken.textContent = owner; sel.appendChild(taken); sel.value = "__taken__"; sel.disabled = true; sel.classList.add("locked", "taken"); } else { const me = document.createElement("option"); me.value = currentUser.name; me.textContent = currentUser.name; sel.appendChild(me); sel.value = owner; sel.addEventListener("change", () => onShiftChange(sel)); if (owner === currentUser.name) sel.classList.add("mine"); } }
+      
+      // منطق دسترسی: مدیر و مهمان همه را می‌بینند. کاربر عادی فقط خودش را.
+      const canSeeAll = isAdmin || isGuest;
+      
+      if (canSeeAll) { 
+        visiblePersonnel.forEach(p => { const o = document.createElement("option"); o.value = p.name; o.textContent = p.name; sel.appendChild(o); }); 
+        sel.value = owner; 
+        sel.addEventListener("change", () => onShiftChange(sel)); 
+      } else { 
+        if (owner && owner !== currentUser.name) { 
+          // برای کاربر عادی، شیفت سایرین کاملاً قفل و مخفی است
+          const taken = document.createElement("option"); taken.value = "__taken__"; taken.textContent = "—"; sel.appendChild(taken); sel.value = "__taken__"; sel.disabled = true; sel.classList.add("locked"); 
+        } else { 
+          const me = document.createElement("option"); me.value = currentUser.name; me.textContent = currentUser.name; sel.appendChild(me); 
+          sel.value = owner; 
+          sel.addEventListener("change", () => onShiftChange(sel)); 
+          if (owner === currentUser.name) sel.classList.add("mine"); 
+        } 
+      }
       td.appendChild(sel); tr.appendChild(td);
     }));
     tb.appendChild(tr);
   }
 }
-function findPersonShiftOnDay(person, dayIdx) { const arr = []; ZONES.forEach(z => z.cols.forEach(s => { if (state.shifts[`${dayIdx}|${z.name}|${s}`] === person) arr.push(s); })); return arr; }
-function countFridayDays(person) { let c = 0; for (let d = 0; d < DAYS; d++) if (getDayInfo(d).isFriday && findPersonShiftOnDay(person, d).length > 0) c++; return c; }
+
+function findPersonShiftOnDay(person, dayIdx) { 
+  const arr = []; 
+  ZONES.forEach(z => z.cols.forEach(s => { if (state.shifts[`${dayIdx}|${z.name}|${s}`] === person) arr.push(s); })); 
+  return arr; 
+}
+
+function countFridayDays(person) { 
+  let c = 0; 
+  for (let d = 0; d < DAYS; d++) if (getDayInfo(d).isFriday && findPersonShiftOnDay(person, d).length > 0) c++; 
+  return c; 
+}
+
 async function onShiftChange(sel) {
   const key = sel.dataset.key, val = sel.value, d = +sel.dataset.day, zone = sel.dataset.zone, shiftType = sel.dataset.shift, prevOwner = state.shifts[key] || "";
-  if (!isAdmin && val && val !== currentUser.name) { alertDlg("فقط شیفت خودتان را تغییر دهید."); sel.value = prevOwner; return; }
-  if (!val) { if (prevOwner) { const p = PERSONNEL.find(x => x.name === prevOwner); if (p) await sb.from("shifts").delete().eq("day", d).eq("zone", zone).eq("shift_type", shiftType).eq("user_id", p.id); delete state.shifts[key]; renderAll(); alertDlg("شیفت حذف شد."); } return; }
+  
+  if (!isAdmin && !isGuest && val && val !== currentUser.name) { alertDlg("شما فقط مجاز به تغییر شیفت خودتان هستید."); sel.value = prevOwner; return; }
+  
+  if (!val) { 
+    if (prevOwner) { 
+      const p = PERSONNEL.find(x => x.name === prevOwner); 
+      if (p) await sb.from("shifts").delete().eq("day", d).eq("zone", zone).eq("shift_type", shiftType).eq("user_id", p.id); 
+      delete state.shifts[key]; renderAll(); alertDlg("شیفت حذف شد."); 
+    } return; 
+  }
+  
   const targetPerson = PERSONNEL.find(x => x.name === val); if (!targetPerson) { sel.value = prevOwner; return; }
   const todayShifts = findPersonShiftOnDay(val, d), simulatedToday = [...todayShifts, shiftType], uniqToday = [...new Set(simulatedToday)];
   const prevShifts = d > 0 ? findPersonShiftOnDay(val, d - 1) : [], nextShifts = d < DAYS - 1 ? findPersonShiftOnDay(val, d + 1) : [];
@@ -348,17 +560,19 @@ async function onShiftChange(sel) {
   if (prevShifts.includes("شب") && simulatedToday.length > 0) issues.push("دیشب شب داشتید.");
   if (getDayInfo(d).isFriday) { if (!(todayShifts.length > 0) && countFridayDays(val) >= 2) issues.push("۲ جمعه کامل است."); }
   const personLeaves = state.leaves[val] || {}; if (Object.prototype.hasOwnProperty.call(personLeaves, String(d))) issues.push("در این روز مرخصی دارید.");
+  
   if (issues.length > 0) { await alertDlg("قوانین:\n• " + issues.join("\n• ")); sel.value = prevOwner; return; }
   try {
     if (prevOwner) { const oldP = PERSONNEL.find(x => x.name === prevOwner); if (oldP) await sb.from("shifts").delete().eq("day", d).eq("zone", zone).eq("shift_type", shiftType).eq("user_id", oldP.id); }
     const { error } = await sb.from("shifts").insert({ day: d, zone, shift_type: shiftType, user_id: targetPerson.id });
     if (error) { if (error.code === "23505") { await alertDlg("این شیفت گرفته شد."); await loadAll(); renderAll(); } else await alertDlg("خطا: " + error.message); sel.value = prevOwner; return; }
-    state.shifts[key] = val; sel.classList.toggle("mine", !isAdmin && val === currentUser.name); alertDlg("شیفت ثبت شد."); renderStats();
+    state.shifts[key] = val; sel.classList.toggle("mine", !isAdmin && !isGuest && val === currentUser.name); alertDlg("شیفت ثبت شد."); renderStats();
   } catch (e) { await alertDlg("خطا: " + e.message); sel.value = prevOwner; }
 }
+
 function renderLeaves() {
   const tb = document.getElementById("leaveTableBody"); tb.innerHTML = "";
-  const list = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
+  const list = (isAdmin || isGuest) ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
   if (list.length === 0) { tb.innerHTML = "<tr><td colspan='6'>ردیفی نیست</td></tr>"; return; }
   list.forEach(p => {
     const tr = document.createElement("tr"), tdN = document.createElement("td"); tdN.className = "leave-name-cell"; tdN.textContent = p.name; tr.appendChild(tdN);
@@ -373,8 +587,9 @@ function renderLeaves() {
     tb.appendChild(tr);
   });
 }
+
 async function onLeaveChange(person, sel, td) {
-  if (!isAdmin && person !== currentUser.name) { sel.value = ""; return; }
+  if (!isAdmin && !isGuest && person !== currentUser.name) { sel.value = ""; return; }
   const newDayVal = sel.value, rowSelects = [];
   for (let k = 1; k <= 5; k++) { const s = td.parentElement.children[k]?.querySelector("select"); if (s) rowSelects.push(s); }
   const newLeaves = {}; let dup = false;
@@ -399,19 +614,29 @@ async function onLeaveChange(person, sel, td) {
     if (!state.leaves[person]) state.leaves[person] = {}; state.leaves[person][String(dayIdx)] = true; renderStats(); alertDlg("مرخصی ثبت شد.");
   } catch (e) { await alertDlg("خطا: " + e.message); sel.value = ""; }
 }
+
 function calcShiftHours(type, dayIdx, req) {
   const base = HOURS[type], is184 = req === 184, info = getDayInfo(dayIdx), nxt = getDayInfo(dayIdx + 1);
   if (type === "صبح" || type === "عصر") { if (info.isFriday) return { total: base * 1.5, holiday: base * 0.5 }; return { total: base, holiday: 0 }; }
   let h = 0; if (is184) { if (nxt.isFriday) h = 7.5; else if (info.isFriday) h = 4.5; } else { if (info.isFriday) h = 12; }
   return { total: base + h * 0.5, holiday: h * 0.5 };
 }
+
 function renderStats() {
   const tb = document.getElementById("statsBody"); tb.innerHTML = "";
-  const list = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
+  const list = (isAdmin || isGuest) ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
   if (list.length === 0) { tb.innerHTML = "<tr><td colspan='10'>ردیفی نیست</td></tr>"; return; }
-  const m = {}, e = {}, n = {}, h = {}, lc = {}; PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; });
+  const m = {}, e = {}, n = {}, h = {}, lc = {}; 
+  PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; });
   Object.keys(state.leaves).forEach(per => { if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length; });
-  for (let d = 0; d < DAYS; d++) { ZONES.forEach(z => z.cols.forEach(t => { const person = state.shifts[`${d}|${z.name}|${t}`]; if (!person) return; const p = PERSONNEL.find(x => x.name === person); if (!p) return; const { holiday } = calcShiftHours(t, d, p.req); h[person] += holiday; if (t === "صبح") m[person] += HOURS[t]; else if (t === "عصر") e[person] += HOURS[t]; else n[person] += HOURS[t]; })); }
+  for (let d = 0; d < DAYS; d++) { 
+    ZONES.forEach(z => z.cols.forEach(t => { 
+      const person = state.shifts[`${d}|${z.name}|${t}`]; if (!person) return; 
+      const p = PERSONNEL.find(x => x.name === person); if (!p) return; 
+      const { holiday } = calcShiftHours(t, d, p.req); h[person] += holiday; 
+      if (t === "صبح") m[person] += HOURS[t]; else if (t === "عصر") e[person] += HOURS[t]; else n[person] += HOURS[t]; 
+    })); 
+  }
   list.forEach(p => {
     const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name], lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100;
     const total = Math.round((ts + lh) * 10) / 10, diff = Math.round((total - p.req) * 10) / 10;
@@ -420,6 +645,7 @@ function renderStats() {
     tb.appendChild(tr);
   });
 }
+
 function switchTab(n, btn) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -427,14 +653,18 @@ function switchTab(n, btn) {
   btn.classList.add('active');
   document.getElementById("zoneFilterBox").classList.toggle("active", n === 'shifts');
 }
-function openStaff() { if (!isAdmin) return alertDlg("دسترسی غیرمجاز."); renderStaffList(); document.getElementById("staffModal").classList.add("active"); }
+
+function openStaff() { if (!isAdmin && !isGuest) return alertDlg("دسترسی غیرمجاز."); renderStaffList(); document.getElementById("staffModal").classList.add("active"); }
+
 function renderStaffList() {
   const l = document.getElementById("staffList"); l.innerHTML = "";
   PERSONNEL.filter(p => !p.is_admin).forEach(p => {
     const realIdx = PERSONNEL.indexOf(p), d = document.createElement("div"); d.className = "staff-item";
-    d.innerHTML = `<span style="font-weight:700">${p.name}</span><div style="display:flex;gap:8px;align-items:center"><input type="number" class="req-input" value="${p.req}" data-idx="${realIdx}"><button class="btn-del" data-del="${realIdx}">حذف</button></div>`;
+    d.innerHTML = `<span style="font-weight:700">${p.name}</span><div style="display:flex;gap:8px;align-items:center"><input type="number" class="req-input" value="${p.req}" data-idx="${realIdx}" ${isGuest ? 'disabled' : ''}><button class="btn-del" data-del="${realIdx}" ${isGuest ? 'disabled style="opacity:0.5;cursor:not-allowed"' : ''}>حذف</button></div>`;
     l.appendChild(d);
   });
+  if (isGuest) return; // مهمان فقط مشاهده می‌کند
+  
   l.querySelectorAll("input.req-input").forEach(inp => inp.addEventListener("change", async () => {
     const idx = +inp.dataset.idx, v = parseFloat(inp.value); if (isNaN(v) || v < 0) { inp.value = PERSONNEL[idx].req; return; }
     const { error } = await sb.from("profiles").update({ required_hours: v }).eq("id", PERSONNEL[idx].id); if (error) { await alertDlg("خطا"); inp.value = PERSONNEL[idx].req; return; }
@@ -445,57 +675,159 @@ function renderStaffList() {
     await sb.from("profiles").delete().eq("id", p.id); await loadAll(); renderStaffList(); renderAll();
   }));
 }
-function openLogs() { if (!isAdmin) return alertDlg("دسترسی غیرمجاز."); loadLogs(); document.getElementById("logsModal").classList.add("active"); }
+
+function openLogs() { 
+  if (!isAdmin && !isGuest) return alertDlg("دسترسی غیرمجاز."); 
+  loadLogs(); 
+  document.getElementById("logsModal").classList.add("active"); 
+}
+
 async function loadLogs() {
   const b = document.getElementById("logsBody"); b.innerHTML = "<div style='text-align:center;padding:20px;'>در حال بارگذاری...</div>";
   try {
     const { data, error } = await sb.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(100);
-    if (error) throw error; if (!data || data.length === 0) { b.innerHTML = "<p style='text-align:center;padding:30px;'>گزارشی یافت نشد.</p>"; return; }
-    b.innerHTML = "<div style='display:flex;flex-direction:column;gap:8px;'>" + data.map(l => {
+    if (error) throw error; 
+    if (!data || data.length === 0) { b.innerHTML = "<p style='text-align:center;padding:30px;'>گزارشی یافت نشد.</p>"; return; }
+    
+    b.innerHTML = "<div style='display:flex;flex-direction:column;gap:10px;'>" + data.map(l => {
       const name = PERSONNEL.find(p => p.id === l.user_id)?.name || 'نامشخص', exactDate = formatDateTime(l.created_at);
       let color = "#64748b", bg = "rgba(0,0,0,0.05)";
       if (l.action === 'ثبت شیفت') { color = "#15803d"; bg = "rgba(22,163,74,0.1)"; } else if (l.action === 'حذف شیفت') { color = "#991b1b"; bg = "rgba(220,38,38,0.1)"; } else if (l.action === 'ثبت مرخصی') { color = "#c2410c"; bg = "rgba(234,88,12,0.1)"; } else if (l.action === 'حذف مرخصی') { color = "#991b1b"; bg = "rgba(220,38,38,0.1)"; } else if (l.action === 'تغییر رمز عبور') { color = "#2563eb"; bg = "rgba(37,99,235,0.1)"; }
-      let details = ""; if (l.details) { if (l.details.zone) { details = `<span style="font-size:11px;background:${bg};color:${color};padding:2px 8px;border-radius:4px;margin-right:4px;font-weight:700;">${l.details.zone}</span><span style="font-size:11px;background:${bg};color:${color};padding:2px 8px;border-radius:4px;margin-right:4px;font-weight:700;">${l.details.type}</span><span style="font-size:11px;background:${bg};color:${color};padding:2px 8px;border-radius:4px;font-weight:700;">روز ${l.details.day + 1}</span>`; } else if (l.details.day !== undefined) { details = `<span style="font-size:11px;background:${bg};color:${color};padding:2px 8px;border-radius:4px;font-weight:700;">روز ${l.details.day + 1}</span>`; } else if (l.details.message) { details = `<span style="font-size:11px;background:${bg};color:${color};padding:2px 8px;border-radius:4px;font-weight:700;">${l.details.message}</span>`; } }
-      return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;border-right:4px solid ${color};"><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;margin-bottom:6px;">${l.action} <span style="font-weight:500;color:var(--text-muted);font-size:11px;">توسط ${name}</span></div><div style="display:flex;flex-wrap:wrap;gap:4px;">${details}</div></div><div style="font-size:11px;color:var(--text-muted);white-space:nowrap;font-weight:700;background:#fff;padding:4px 8px;border-radius:4px;border:1px solid var(--border)">${exactDate}</div></div>`;
+      let details = ""; if (l.details) { if (l.details.zone) { details = `<span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;margin-left:6px;font-weight:700;">${l.details.zone}</span><span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;margin-left:6px;font-weight:700;">${l.details.type}</span><span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;font-weight:700;">روز ${l.details.day + 1}</span>`; } else if (l.details.day !== undefined) { details = `<span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;font-weight:700;">روز ${l.details.day + 1}</span>`; } else if (l.details.message) { details = `<span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;font-weight:700;">${l.details.message}</span>`; } }
+      return `<div style="display:flex;align-items:center;gap:16px;padding:14px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;border-right:4px solid ${color};"><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;margin-bottom:8px;color:var(--text-main);">${l.action} <span style="font-weight:600;color:var(--text-muted);font-size:12px;margin-right:6px;">توسط ${name}</span></div><div style="display:flex;flex-wrap:wrap;gap:4px;">${details}</div></div><div style="font-size:12px;color:var(--text-muted);white-space:nowrap;font-weight:700;background:#fff;padding:6px 10px;border-radius:6px;border:1px solid var(--border);">${exactDate}</div></div>`;
     }).join('') + "</div>";
   } catch (e) { b.innerHTML = "<p style='color:red;text-align:center;padding:20px;'>خطا: " + e.message + "</p>"; }
 }
+
 function openExcel() {
   if (typeof XLSX === "undefined") { alertDlg("کتابخانه اکسل بارگذاری نشد."); return; }
   if (PERSONNEL.length === 0) { alertDlg("پرسنل خالی است."); return; }
   const selectedZone = document.getElementById("zoneFilter").value, zonesToExport = selectedZone === "all" ? ZONES : ZONES.filter(z => z.name === selectedZone);
   const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] };
   const ST = { font: { name: "Vazirmatn", sz: 11, color: { rgb: "1E293B" } }, fontBold: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "1E293B" } }, fontHeader: { name: "Vazirmatn", sz: 12, bold: true, color: { rgb: "FFFFFF" } }, border: { top: { style: "thin", color: { rgb: "CBD5E1" } }, bottom: { style: "thin", color: { rgb: "CBD5E1" } }, left: { style: "thin", color: { rgb: "CBD5E1" } }, right: { style: "thin", color: { rgb: "CBD5E1" } } }, alignCenter: { horizontal: "center", vertical: "center", wrapText: true, readingOrder: 2 }, alignRight: { horizontal: "right", vertical: "center", wrapText: true, readingOrder: 2 } };
-  const ZONE_HEADER_BG = { "بهارستان ۱": "0369A1", "بهارستان ۲": "15803D", "بهارستان ۳": "C2410C", "نجمه خاتون": "A16207", "گلشن": "6B21A8" };
+  const ZONE_HEADER_BG = { "بهارستان ۱": "1e3a8a", "بهارستان ۲": "14532d", "بهارستان ۳": "7c2d12", "نجمه خاتون": "713f12", "گلشن": "4c1d95" };
   function styleCell(ws, r, c, st) { const ref = XLSX.utils.encode_cell({ r, c }); if (!ws[ref]) ws[ref] = { v: "", t: "s" }; ws[ref].s = st; }
   function applyRange(ws, r1, c1, r2, c2, st) { for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) styleCell(ws, r, c, st); }
-  const sheet1 = [["روز", "تاریخ"]]; zonesToExport.forEach(z => z.cols.forEach(() => sheet1[0].push(z.name)));
-  const row2 = ["", ""]; zonesToExport.forEach(z => z.cols.forEach(c => row2.push(c))); sheet1.push(row2);
-  for (let d = 0; d < DAYS; d++) { const info = getDayInfo(d); const row = [info.weekday, `${info.jDay} ${info.jMonth}`]; zonesToExport.forEach(zone => zone.cols.forEach(shiftType => { const person = state.shifts[`${d}|${zone.name}|${shiftType}`] || ""; if (!isAdmin && person && person !== currentUser.name) row.push("—"); else row.push(person); })); sheet1.push(row); }
-  const ws1 = XLSX.utils.aoa_to_sheet(sheet1); const cols1 = [{ wch: 12 }, { wch: 14 }]; for (let i = 0; i < (zonesToExport.length * 3); i++) cols1.push({ wch: 16 });
-  ws1["!cols"] = cols1; ws1["!rows"] = [{ hpt: 35 }, { hpt: 25 }]; for (let i = 2; i < DAYS + 2; i++) ws1["!rows"].push({ hpt: 22 });
+  
+  const sheet1 = [["روز", "تاریخ"]]; 
+  zonesToExport.forEach(z => z.cols.forEach(() => sheet1[0].push(z.name)));
+  const row2 = ["", ""]; 
+  zonesToExport.forEach(z => z.cols.forEach(c => row2.push(c))); 
+  sheet1.push(row2);
+  
+  for (let d = 0; d < DAYS; d++) { 
+    const info = getDayInfo(d); 
+    const row = [info.weekday, `${info.jDay} ${info.jMonth}`]; 
+    zonesToExport.forEach(zone => zone.cols.forEach(shiftType => { 
+      const person = state.shifts[`${d}|${zone.name}|${shiftType}`] || ""; 
+      if (!isAdmin && !isGuest && person && person !== currentUser.name) row.push("—"); else row.push(person); 
+    })); 
+    sheet1.push(row); 
+  }
+  
+  const ws1 = XLSX.utils.aoa_to_sheet(sheet1); 
+  const cols1 = [{ wch: 12 }, { wch: 14 }]; 
+  for (let i = 0; i < (zonesToExport.length * 3); i++) cols1.push({ wch: 16 });
+  ws1["!cols"] = cols1; ws1["!rows"] = [{ hpt: 35 }, { hpt: 25 }]; 
+  for (let i = 2; i < DAYS + 2; i++) ws1["!rows"].push({ hpt: 22 });
+  
   applyRange(ws1, 0, 0, DAYS + 1, 1, { font: ST.fontHeader, fill: { fgColor: { rgb: "334155" } }, border: ST.border, alignment: ST.alignCenter });
-  let col = 2; zonesToExport.forEach(zone => { const bg = ZONE_HEADER_BG[zone.name] || "1E293B"; const st = { font: ST.fontHeader, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }; for (let i = 0; i < zone.cols.length; i++) { styleCell(ws1, 0, col + i, st); styleCell(ws1, 1, col + i, st); } col += zone.cols.length; });
-  for (let d = 0; d < DAYS; d++) { const info = getDayInfo(d); const rowBg = info.isFriday ? "FEF3C7" : "FFFFFF"; const dayFontColor = info.isFriday ? "DC2626" : "1E293B"; styleCell(ws1, d + 2, 0, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: dayFontColor } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); styleCell(ws1, d + 2, 1, { font: { name: "Vazirmatn", sz: 10, color: { rgb: "64748B" } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); for (let c = 2; c < row2.length; c++) { styleCell(ws1, d + 2, c, { font: ST.fontBold, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); } }
-  ws1["!freeze"] = { xSplit: 2, ySplit: 2 }; XLSX.utils.book_append_sheet(wb, ws1, selectedZone === "all" ? "کل شیفت‌ها" : `شیفت ${selectedZone}`);
-  const m = {}, e = {}, n = {}, h = {}, lc = {}; PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; }); Object.keys(state.leaves).forEach(per => { if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length; });
-  for (let d = 0; d < DAYS; d++) { ZONES.forEach(z => z.cols.forEach(t => { const person = state.shifts[`${d}|${z.name}|${t}`]; if (!person) return; const p = PERSONNEL.find(x => x.name === person); if (!p) return; const { holiday } = calcShiftHours(t, d, p.req); h[person] += holiday; if (t === "صبح") m[person] += HOURS[t]; else if (t === "عصر") e[person] += HOURS[t]; else n[person] += HOURS[t]; })); }
+  let col = 2; 
+  zonesToExport.forEach(zone => { 
+    const bg = ZONE_HEADER_BG[zone.name] || "1E293B"; 
+    const st = { font: ST.fontHeader, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }; 
+    for (let i = 0; i < zone.cols.length; i++) { styleCell(ws1, 0, col + i, st); styleCell(ws1, 1, col + i, st); } 
+    col += zone.cols.length; 
+  });
+  
+  for (let d = 0; d < DAYS; d++) { 
+    const info = getDayInfo(d); 
+    const rowBg = info.isFriday ? "FEF3C7" : "FFFFFF"; 
+    const dayFontColor = info.isFriday ? "DC2626" : "1E293B"; 
+    styleCell(ws1, d + 2, 0, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: dayFontColor } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); 
+    styleCell(ws1, d + 2, 1, { font: { name: "Vazirmatn", sz: 10, color: { rgb: "64748B" } }, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); 
+    for (let c = 2; c < row2.length; c++) { styleCell(ws1, d + 2, c, { font: ST.fontBold, fill: { fgColor: { rgb: rowBg } }, border: ST.border, alignment: ST.alignCenter }); } 
+  }
+  
+  ws1["!freeze"] = { xSplit: 2, ySplit: 2 }; 
+  XLSX.utils.book_append_sheet(wb, ws1, selectedZone === "all" ? "کل شیفت‌ها" : `شیفت ${selectedZone}`);
+  
+  const m = {}, e = {}, n = {}, h = {}, lc = {}; 
+  PERSONNEL.forEach(p => { m[p.name] = 0; e[p.name] = 0; n[p.name] = 0; h[p.name] = 0; lc[p.name] = 0; }); 
+  Object.keys(state.leaves).forEach(per => { if (lc[per] !== undefined) lc[per] = Object.keys(state.leaves[per]).length; });
+  
+  for (let d = 0; d < DAYS; d++) { 
+    ZONES.forEach(z => z.cols.forEach(t => { 
+      const person = state.shifts[`${d}|${z.name}|${t}`]; 
+      if (!person) return; 
+      const p = PERSONNEL.find(x => x.name === person); 
+      if (!p) return; 
+      const { holiday } = calcShiftHours(t, d, p.req); 
+      h[person] += holiday; 
+      if (t === "صبح") m[person] += HOURS[t]; else if (t === "عصر") e[person] += HOURS[t]; else n[person] += HOURS[t]; 
+    })); 
+  }
+  
   const sheet2 = [["نام", "موظفی", "صبح", "عصر", "شب", "تعطیلات", "مرخصی", "کارکرد کل", "اضافه کار", "کسری کار"]];
-  const statList = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
-  statList.forEach(p => { const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name], lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100; const total = Math.round((ts + lh) * 10) / 10, diff = Math.round((total - p.req) * 10) / 10; sheet2.push([p.name, p.req, m[p.name], e[p.name], n[p.name], Math.round(h[p.name] * 10) / 10, lh, total, diff > 0 ? diff : 0, diff < 0 ? Math.abs(diff) : 0]); });
-  const ws2 = XLSX.utils.aoa_to_sheet(sheet2); ws2["!cols"] = [{ wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 }]; ws2["!rows"] = [{ hpt: 32 }]; for (let i = 1; i <= statList.length; i++) ws2["!rows"].push({ hpt: 24 });
+  const statList = (isAdmin || isGuest) ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
+  statList.forEach(p => { 
+    const ts = m[p.name] + e[p.name] + n[p.name] + h[p.name], lh = Math.round(lc[p.name] * LEAVE_HOURS * 100) / 100; 
+    const total = Math.round((ts + lh) * 10) / 10, diff = Math.round((total - p.req) * 10) / 10; 
+    sheet2.push([p.name, p.req, m[p.name], e[p.name], n[p.name], Math.round(h[p.name] * 10) / 10, lh, total, diff > 0 ? diff : 0, diff < 0 ? Math.abs(diff) : 0]); 
+  });
+  
+  const ws2 = XLSX.utils.aoa_to_sheet(sheet2); 
+  ws2["!cols"] = [{ wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 10 }]; 
+  ws2["!rows"] = [{ hpt: 32 }]; 
+  for (let i = 1; i <= statList.length; i++) ws2["!rows"].push({ hpt: 24 });
+  
   applyRange(ws2, 0, 0, 0, 9, { font: ST.fontHeader, fill: { fgColor: { rgb: "0F172A" } }, border: ST.border, alignment: ST.alignCenter });
-  for (let r = 1; r <= statList.length; r++) { const bg = r % 2 === 0 ? "F8FAFC" : "FFFFFF"; applyRange(ws2, r, 0, r, 9, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }); styleCell(ws2, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight }); if (sheet2[r][8] > 0) styleCell(ws2, r, 8, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "059669" } }, fill: { fgColor: { rgb: "D1FAE5" } }, border: ST.border, alignment: ST.alignCenter }); if (sheet2[r][9] > 0) styleCell(ws2, r, 9, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "DC2626" } }, fill: { fgColor: { rgb: "FEE2E2" } }, border: ST.border, alignment: ST.alignCenter }); }
-  ws2["!freeze"] = { ySplit: 1 }; XLSX.utils.book_append_sheet(wb, ws2, "آمار کارکرد");
+  for (let r = 1; r <= statList.length; r++) { 
+    const bg = r % 2 === 0 ? "F8FAFC" : "FFFFFF"; 
+    applyRange(ws2, r, 0, r, 9, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }); 
+    styleCell(ws2, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight }); 
+    if (sheet2[r][8] > 0) styleCell(ws2, r, 8, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "059669" } }, fill: { fgColor: { rgb: "D1FAE5" } }, border: ST.border, alignment: ST.alignCenter }); 
+    if (sheet2[r][9] > 0) styleCell(ws2, r, 9, { font: { name: "Vazirmatn", sz: 11, bold: true, color: { rgb: "DC2626" } }, fill: { fgColor: { rgb: "FEE2E2" } }, border: ST.border, alignment: ST.alignCenter }); 
+  }
+  
+  ws2["!freeze"] = { ySplit: 1 }; 
+  XLSX.utils.book_append_sheet(wb, ws2, "آمار کارکرد");
+  
   const sheet3 = [["نام", "مرخصی ۱", "مرخصی ۲", "مرخصی ۳", "مرخصی ۴", "مرخصی ۵", "تعداد کل"]];
-  const leaveList = isAdmin ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
-  leaveList.forEach(p => { const leaves = state.leaves[p.name] || {}, days = Object.keys(leaves).map(Number).sort((a, b) => a - b); const row = [p.name]; for (let i = 0; i < 5; i++) { if (days[i] !== undefined) { const info = getDayInfo(days[i]); row.push(`${info.weekday} ${info.jDay} ${info.jMonth}`); } else { row.push("—"); } } row.push(days.length); sheet3.push(row); });
-  const ws3 = XLSX.utils.aoa_to_sheet(sheet3); ws3["!cols"] = [{ wch: 20 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 10 }]; ws3["!rows"] = [{ hpt: 32 }]; for (let i = 1; i <= leaveList.length; i++) ws3["!rows"].push({ hpt: 24 });
+  const leaveList = (isAdmin || isGuest) ? PERSONNEL.filter(p => !p.is_admin) : PERSONNEL.filter(p => p.name === currentUser.name);
+  leaveList.forEach(p => { 
+    const leaves = state.leaves[p.name] || {}, days = Object.keys(leaves).map(Number).sort((a, b) => a - b); 
+    const row = [p.name]; 
+    for (let i = 0; i < 5; i++) { 
+      if (days[i] !== undefined) { const info = getDayInfo(days[i]); row.push(`${info.weekday} ${info.jDay} ${info.jMonth}`); } else { row.push("—"); } 
+    } 
+    row.push(days.length); sheet3.push(row); 
+  });
+  
+  const ws3 = XLSX.utils.aoa_to_sheet(sheet3); 
+  ws3["!cols"] = [{ wch: 20 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 10 }]; 
+  ws3["!rows"] = [{ hpt: 32 }]; 
+  for (let i = 1; i <= leaveList.length; i++) ws3["!rows"].push({ hpt: 24 });
+  
   applyRange(ws3, 0, 0, 0, 6, { font: ST.fontHeader, fill: { fgColor: { rgb: "7C2D12" } }, border: ST.border, alignment: ST.alignCenter });
-  for (let r = 1; r <= leaveList.length; r++) { const bg = r % 2 === 0 ? "FFF7ED" : "FFFFFF"; applyRange(ws3, r, 0, r, 6, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }); styleCell(ws3, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight }); }
-  ws3["!freeze"] = { ySplit: 1 }; XLSX.utils.book_append_sheet(wb, ws3, "مرخصی‌ها");
-  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" }); const blob = new Blob([wbout], { type: "application/octet-stream" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = selectedZone === "all" ? `گزارش-شیفت-${MONTH}-۱۴۰۵.xlsx` : `گزارش-شیفت-${selectedZone}-${MONTH}-۱۴۰۵.xlsx`; a.click(); URL.revokeObjectURL(a.href); alertDlg("فایل اکسل دانلود شد.");
+  for (let r = 1; r <= leaveList.length; r++) { 
+    const bg = r % 2 === 0 ? "FFF7ED" : "FFFFFF"; 
+    applyRange(ws3, r, 0, r, 6, { font: ST.font, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignCenter }); 
+    styleCell(ws3, r, 0, { font: ST.fontBold, fill: { fgColor: { rgb: bg } }, border: ST.border, alignment: ST.alignRight }); 
+  }
+  
+  ws3["!freeze"] = { ySplit: 1 }; 
+  XLSX.utils.book_append_sheet(wb, ws3, "مرخصی‌ها");
+  
+  const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" }); 
+  const blob = new Blob([wbout], { type: "application/octet-stream" }); 
+  const a = document.createElement("a"); 
+  a.href = URL.createObjectURL(blob); 
+  a.download = selectedZone === "all" ? `گزارش-شیفت-${MONTH}-۱۴۰۵.xlsx` : `گزارش-شیفت-${selectedZone}-${MONTH}-۱۴۰۵.xlsx`; 
+  a.click(); URL.revokeObjectURL(a.href); 
+  alertDlg("فایل اکسل دانلود شد.");
 }
+
 window.addEventListener("load", init);
 </script>
 </body>
