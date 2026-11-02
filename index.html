@@ -7,11 +7,10 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<!-- فقط کتابخانه اکسل از اینترنت لود می‌شود -->
 <script src="https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
 <script>
-  const APP_VERSION = "47.0.0"; 
+  const APP_VERSION = "50.0.0"; 
   if (localStorage.getItem('app_version') !== APP_VERSION) {
     if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
     localStorage.setItem('app_version', APP_VERSION);
@@ -20,7 +19,6 @@
 </script>
 
 <style>
-/* ... استایل‌ها بدون تغییر ... */
 :root { 
   --bg-body: #f1f5f9; --bg-card: #ffffff; --bg-header: #1e293b;
   --text-main: #334155; --text-muted: #64748b; --border: #cbd5e1; 
@@ -278,7 +276,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let currentSession = null;
 
 // ==========================================
-// پیاده‌سازی بومی برای Supabase (اصلاح شده)
+// پیاده‌سازی بومی برای Supabase
 // ==========================================
 const sb = {
   auth: {
@@ -342,7 +340,6 @@ const sb = {
         return req;
       },
       order: (col, opts) => { 
-        // اگر opts ارسال نشده بود، پیش‌فرض را در نظر بگیر
         const ascending = opts && typeof opts.ascending !== 'undefined' ? opts.ascending : true;
         query += `&order=${col}.${ascending ? 'asc' : 'desc'}`; 
         return req; 
@@ -421,7 +418,11 @@ function getDayInfo(i) {
   return { weekday: weekdayNames[faWd], isFriday: faWd === 6, jDay: j.jd, jMonth: MONTH }; 
 }
 function formatDateTime(isoString) { 
-  try { const d = new Date(isoString); const j = toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate()); return `${j.jd} ${MONTH} ${j.jy} - ساعت ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; } catch(e) { return isoString; }
+  try { 
+    const d = new Date(isoString); 
+    const j = toJalaali(d.getFullYear(), d.getMonth() + 1, d.getDate()); 
+    return `${j.jd} ${MONTH} ${j.jy} - ساعت ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; 
+  } catch(e) { return isoString; }
 }
 
 // ==========================================
@@ -654,7 +655,10 @@ async function onShiftChange(sel) {
   if (!val) { 
     if (prevOwner) { 
       const p = PERSONNEL.find(x => x.name === prevOwner); 
-      if (p) await sb.from("shifts").delete().eq("day", d).eq("zone", zone).eq("shift_type", shiftType).eq("user_id", p.id); 
+      if (p) {
+        await sb.from("shifts").delete().eq("day", d).eq("zone", zone).eq("shift_type", shiftType).eq("user_id", p.id); 
+        await sb.from("audit_logs").insert({ user_id: currentUser.id, action: "حذف شیفت", details: { zone: zone, type: shiftType, day: d } });
+      }
       delete state.shifts[key]; renderAll(); alertDlg("شیفت حذف شد."); 
     } return; 
   }
@@ -678,10 +682,23 @@ async function onShiftChange(sel) {
   if (issues.length > 0) { await alertDlg("قوانین:\n• " + issues.join("\n• ")); sel.value = prevOwner; return; }
   
   try {
-    if (prevOwner) { const oldP = PERSONNEL.find(x => x.name === prevOwner); if (oldP) await sb.from("shifts").delete().eq("day", d).eq("zone", zone).eq("shift_type", shiftType).eq("user_id", oldP.id); }
+    if (prevOwner) { 
+      const oldP = PERSONNEL.find(x => x.name === prevOwner); 
+      if (oldP) {
+        await sb.from("shifts").delete().eq("day", d).eq("zone", zone).eq("shift_type", shiftType).eq("user_id", oldP.id); 
+        await sb.from("audit_logs").insert({ user_id: currentUser.id, action: "حذف شیفت", details: { zone: zone, type: shiftType, day: d } });
+      }
+    }
+    
     const { error } = await sb.from("shifts").insert({ day: d, zone, shift_type: shiftType, user_id: targetPerson.id });
     if (error) { if (error.code === "23505") { await alertDlg("این شیفت گرفته شد."); await loadAll(); renderAll(); } else await alertDlg("خطا: " + error.message); sel.value = prevOwner; return; }
-    state.shifts[key] = val; sel.classList.toggle("mine", !isAdmin && !isGuest && val === currentUser.name); alertDlg("شیفت ثبت شد."); renderStats();
+    
+    await sb.from("audit_logs").insert({ user_id: currentUser.id, action: "ثبت شیفت", details: { zone: zone, type: shiftType, day: d } });
+
+    state.shifts[key] = val; 
+    sel.classList.toggle("mine", !isAdmin && !isGuest && val === currentUser.name); 
+    alertDlg("شیفت ثبت شد."); 
+    renderStats();
   } catch (e) { await alertDlg("خطا: " + e.message); sel.value = prevOwner; }
 }
 
@@ -711,22 +728,36 @@ async function onLeaveChange(person, sel, td) {
   rowSelects.forEach(s => { if (!s.value) return; if (newLeaves[s.value]) dup = true; else newLeaves[s.value] = true; });
   if (dup) { await alertDlg("تاریخ تکراری"); sel.value = ""; return; }
   const pObj = PERSONNEL.find(x => x.name === person); if (!pObj) return;
+  
   if (!newDayVal) {
     const old = state.leaves[person] || {};
-    for (const day of Object.keys(old)) { if (!newLeaves[day]) { await sb.from("leaves").delete().eq("day", parseInt(day)).eq("user_id", pObj.id); delete old[day]; } }
+    for (const day of Object.keys(old)) { 
+      if (!newLeaves[day]) { 
+        await sb.from("leaves").delete().eq("day", parseInt(day)).eq("user_id", pObj.id); 
+        await sb.from("audit_logs").insert({ user_id: currentUser.id, action: "حذف مرخصی", details: { day: parseInt(day) } });
+        delete old[day]; 
+      } 
+    }
     if (Object.keys(old).length === 0) delete state.leaves[person]; else state.leaves[person] = old;
     renderStats(); return;
   }
+  
   const dayIdx = parseInt(newDayVal);
   if (getDayInfo(dayIdx).isFriday) { await alertDlg("جمعه مجاز نیست."); sel.value = ""; return; }
   if (findPersonShiftOnDay(person, dayIdx).length > 0) { await alertDlg("در این روز شیفت دارید."); sel.value = ""; return; }
   const { count, error: countErr } = await sb.from("leaves").select("*", { count: "exact", head: true }).eq("day", dayIdx);
   if (countErr) { await alertDlg("خطا: " + countErr.message); sel.value = ""; return; }
   if (count >= 2) { await alertDlg("ظرفیت پر است."); sel.value = ""; return; }
+  
   try {
     const { error } = await sb.from("leaves").insert({ day: dayIdx, user_id: pObj.id });
     if (error) { if (error.code === "23505") await alertDlg("قبلاً ثبت شده."); else await alertDlg("خطا: " + error.message); sel.value = ""; return; }
-    if (!state.leaves[person]) state.leaves[person] = {}; state.leaves[person][String(dayIdx)] = true; renderStats(); alertDlg("مرخصی ثبت شد.");
+    
+    await sb.from("audit_logs").insert({ user_id: currentUser.id, action: "ثبت مرخصی", details: { day: dayIdx } });
+    
+    if (!state.leaves[person]) state.leaves[person] = {}; 
+    state.leaves[person][String(dayIdx)] = true; 
+    renderStats(); alertDlg("مرخصی ثبت شد.");
   } catch (e) { await alertDlg("خطا: " + e.message); sel.value = ""; }
 }
 
@@ -790,20 +821,60 @@ function renderStaffList() {
 }
 
 function openLogs() { if (!isAdmin && !isGuest) return alertDlg("دسترسی غیرمجاز."); loadLogs(); document.getElementById("logsModal").classList.add("active"); }
+
 async function loadLogs() {
-  const b = document.getElementById("logsBody"); b.innerHTML = "<div style='text-align:center;padding:20px;'>در حال بارگذاری...</div>";
+  const b = document.getElementById("logsBody"); 
+  b.innerHTML = "<div style='text-align:center;padding:20px;'>در حال بارگذاری...</div>";
   try {
-    const { data, error } = await sb.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(100);
-    if (error) throw error; 
-    if (!data || data.length === 0) { b.innerHTML = "<p style='text-align:center;padding:30px;'>گزارشی یافت نشد.</p>"; return; }
-    b.innerHTML = "<div style='display:flex;flex-direction:column;gap:10px;'>" + data.map(l => {
-      const name = PERSONNEL.find(p => p.id === l.user_id)?.name || 'نامشخص', exactDate = formatDateTime(l.created_at);
+    const { data: logs, error: logsErr } = await sb.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(100);
+    if (logsErr) throw logsErr; 
+    
+    if (!logs || logs.length === 0) { 
+      b.innerHTML = "<p style='text-align:center;padding:30px;'>گزارشی یافت نشد.</p>"; 
+      return; 
+    }
+
+    const { data: personnelList, error: perErr } = await sb.from("profiles").select("id, name");
+    if (perErr) throw perErr;
+
+    const nameMap = {};
+    (personnelList || []).forEach(p => { nameMap[p.id] = p.name; });
+
+    b.innerHTML = "<div style='display:flex;flex-direction:column;gap:10px;'>" + logs.map(l => {
+      let name = nameMap[l.user_id] || "نامشخص";
+      const exactDate = formatDateTime(l.created_at);
+      
       let color = "#64748b", bg = "rgba(0,0,0,0.05)";
-      if (l.action === 'ثبت شیفت') { color = "#15803d"; bg = "rgba(22,163,74,0.1)"; } else if (l.action === 'حذف شیفت') { color = "#991b1b"; bg = "rgba(220,38,38,0.1)"; } else if (l.action === 'ثبت مرخصی') { color = "#c2410c"; bg = "rgba(234,88,12,0.1)"; } else if (l.action === 'حذف مرخصی') { color = "#991b1b"; bg = "rgba(220,38,38,0.1)"; } else if (l.action === 'تغییر رمز عبور') { color = "#2563eb"; bg = "rgba(37,99,235,0.1)"; }
-      let details = ""; if (l.details) { if (l.details.zone) { details = `<span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;margin-left:6px;font-weight:700;">${l.details.zone}</span><span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;margin-left:6px;font-weight:700;">${l.details.type}</span><span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;font-weight:700;">روز ${l.details.day + 1}</span>`; } else if (l.details.day !== undefined) { details = `<span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;font-weight:700;">روز ${l.details.day + 1}</span>`; } else if (l.details.message) { details = `<span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;font-weight:700;">${l.details.message}</span>`; } }
-      return `<div style="display:flex;align-items:center;gap:16px;padding:14px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;border-right:4px solid ${color};"><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:800;margin-bottom:8px;color:var(--text-main);">${l.action} <span style="font-weight:600;color:var(--text-muted);font-size:12px;margin-right:6px;">توسط ${name}</span></div><div style="display:flex;flex-wrap:wrap;gap:4px;">${details}</div></div><div style="font-size:12px;color:var(--text-muted);white-space:nowrap;font-weight:700;background:#fff;padding:6px 10px;border-radius:6px;border:1px solid var(--border);">${exactDate}</div></div>`;
+      if (l.action === 'ثبت شیفت') { color = "#15803d"; bg = "rgba(22,163,74,0.1)"; } 
+      else if (l.action === 'حذف شیفت') { color = "#991b1b"; bg = "rgba(220,38,38,0.1)"; } 
+      else if (l.action === 'ثبت مرخصی') { color = "#c2410c"; bg = "rgba(234,88,12,0.1)"; } 
+      else if (l.action === 'حذف مرخصی') { color = "#991b1b"; bg = "rgba(220,38,38,0.1)"; } 
+      else if (l.action === 'تغییر رمز عبور') { color = "#2563eb"; bg = "rgba(37,99,235,0.1)"; }
+      
+      let details = ""; 
+      if (l.details) { 
+        if (l.details.zone) { 
+          details = `<span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;margin-left:6px;font-weight:700;">${l.details.zone}</span><span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;margin-left:6px;font-weight:700;">${l.details.type}</span><span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;font-weight:700;">روز ${l.details.day + 1}</span>`; 
+        } else if (l.details.day !== undefined) { 
+          details = `<span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;font-weight:700;">روز ${l.details.day + 1}</span>`; 
+        } else if (l.details.message) { 
+          details = `<span style="font-size:11px;background:${bg};color:${color};padding:4px 8px;border-radius:4px;font-weight:700;">${l.details.message}</span>`; 
+        } 
+      }
+      
+      return `<div style="display:flex;align-items:center;gap:16px;padding:14px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;border-right:4px solid ${color};">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:8px;color:var(--text-main);">${l.action} <span style="font-weight:600;color:var(--text-muted);font-size:12px;margin-right:6px;">توسط ${name}</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">${details}</div>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);white-space:nowrap;font-weight:700;background:#fff;padding:6px 10px;border-radius:6px;border:1px solid var(--border);">
+          ${exactDate}
+        </div>
+      </div>`;
     }).join('') + "</div>";
-  } catch (e) { b.innerHTML = "<p style='color:red;text-align:center;padding:20px;'>خطا: " + e.message + "</p>"; }
+  } catch (e) { 
+    b.innerHTML = "<p style='color:red;text-align:center;padding:20px;'>خطا: " + e.message + "</p>"; 
+  }
 }
 
 function openExcel() {
@@ -947,7 +1018,7 @@ function openExcel() {
   a.href = URL.createObjectURL(blob); 
   a.download = selectedZone === "all" ? `گزارش-شیفت-${MONTH}-۱۴۰۵.xlsx` : `گزارش-شیفت-${selectedZone}-${MONTH}-۱۴۰۵.xlsx`; 
   a.click(); URL.revokeObjectURL(a.href); 
-  alertDlg("فایل اکسل با موفقیت دانلود شد.");
+  alertDlg("فایل اکسل حرفه‌ای با موفقیت دانلود شد.");
 }
 
 window.addEventListener("load", init);
