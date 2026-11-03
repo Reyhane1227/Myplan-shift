@@ -1047,7 +1047,7 @@ function openExcel() {
   a.href = URL.createObjectURL(blob); 
   a.download = selectedZone === "all" ? `گزارش-شیفت-${MONTH}-۱۴۰۵.xlsx` : `گزارش-شیفت-${selectedZone}-${MONTH}-۱۴۰۵.xlsx`; 
   a.click(); URL.revokeObjectURL(a.href); 
-  alertDlg("فایل اکسل حرفه‌ای با موفقیت دانلود شد.");
+  alertDlg("فایل اکسل با موفقیت دانلود شد.");
 }
 
 window.addEventListener("load", init);
