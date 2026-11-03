@@ -7,18 +7,33 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://unpkg.com/xlsx-js-style@1.2.0/dist/xlsx.bundle.js" async></script>
 
+<!-- مکانیزم قوی برای پاک کردن کش -->
 <script>
-  const APP_VERSION = "50.0.0"; 
-  if (localStorage.getItem('app_version') !== APP_VERSION) {
-    if ('caches' in window) caches.keys().then(names => names.forEach(n => caches.delete(n)));
+  const APP_VERSION = "52.0.0"; // نسخه را افزایش دادیم تا کش قدیمی پاک شود
+  const storedVersion = localStorage.getItem('app_version');
+  
+  if (storedVersion !== APP_VERSION) {
+    // 1. پاک کردن حافظه کش مرورگر (Service Workers)
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        names.forEach(name => caches.delete(name));
+      });
+    }
+    
+    // 2. ذخیره نسخه جدید
     localStorage.setItem('app_version', APP_VERSION);
-    if (localStorage.getItem('app_version') !== null) window.location.reload(true);
+    
+    // 3. رفرش اجباری صفحه (بدون استفاده از کش)
+    if (storedVersion !== null) {
+      window.location.reload(true);
+    }
   }
 </script>
 
 <style>
+/* ... استایل‌ها بدون تغییر ... */
 :root { 
   --bg-body: #f1f5f9; --bg-card: #ffffff; --bg-header: #1e293b;
   --text-main: #334155; --text-muted: #64748b; --border: #cbd5e1; 
@@ -233,7 +248,7 @@ table.stats-table th { background: var(--bg-header); color: #fff; border: 1px so
 
 <script>
 // ==========================================
-// توابع تاریخ شمسی
+// توابع تاریخ شمسی (بدون کتابخانه)
 // ==========================================
 function toJalaali(gy, gm, gd) {
   const g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
@@ -268,16 +283,13 @@ function toGregorian(jy, jm, jd) {
 }
 
 // ==========================================
-// تنظیمات Supabase
+// تنظیمات Supabase (با پیاده‌سازی بومی)
 // ==========================================
 const SUPABASE_URL = "https://gicnlpxzbchnjmawjtry.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY25scHh6YmNobmptYXdqdHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNTEwNTEsImV4cCI6MjEwODgyNzA1MX0.d6fgrBVmSoZ13KVzQg1m9V4DBwhR4aQNpf-ImfSPmVo";
 
 let currentSession = null;
 
-// ==========================================
-// پیاده‌سازی بومی برای Supabase
-// ==========================================
 const sb = {
   auth: {
     signInWithPassword: async ({ email, password }) => {
@@ -409,14 +421,20 @@ const MONTH = "آبان", DAYS = 30, HOURS = { "صبح": 6.5, "عصر": 5.5, "ش
 const ZONES = [{ name: "بهارستان ۱", cols: ["صبح", "عصر", "شب"], cls: "bg-z1" }, { name: "بهارستان ۲", cols: ["صبح", "عصر", "شب"], cls: "bg-z2" }, { name: "بهارستان ۳", cols: ["صبح", "عصر", "شب"], cls: "bg-z3" }, { name: "نجمه خاتون", cols: ["صبح", "عصر", "شب"], cls: "bg-z4" }, { name: "گلشن", cols: ["صبح", "عصر"], cls: "bg-z5" }];
 let BASE_DATE_UTC;
 
-function initBaseDate() { const g = toGregorian(1405, 8, 1); BASE_DATE_UTC = Date.UTC(g.gy, g.gm - 1, g.gd); }
+function initBaseDate() { 
+  const g = toGregorian(1405, 8, 1); 
+  BASE_DATE_UTC = Date.UTC(g.gy, g.gm - 1, g.gd); 
+}
+
 function getDayInfo(i) { 
   const d = new Date(BASE_DATE_UTC + i * 86400000);
   const j = toJalaali(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
-  const utcDay = d.getUTCDay(); const faWd = (utcDay + 1) % 7; 
+  const utcDay = d.getUTCDay(); 
+  const faWd = (utcDay + 1) % 7; 
   const weekdayNames = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"];
   return { weekday: weekdayNames[faWd], isFriday: faWd === 6, jDay: j.jd, jMonth: MONTH }; 
 }
+
 function formatDateTime(isoString) { 
   try { 
     const d = new Date(isoString); 
@@ -452,6 +470,12 @@ const alertDlg = m => dialog({ message: m }), confirmDlg = (m, d) => dialog({ me
 // شروع برنامه
 // ==========================================
 async function init() {
+  const loadingTimeout = setTimeout(() => {
+    document.getElementById("loadingScreen").style.display = "none";
+    document.getElementById("loginScreen").style.display = "block";
+    document.getElementById("loginError").textContent = "زمان اتصال به سرور به پایان رسید. لطفاً اینترنت خود را بررسی کنید.";
+  }, 10000);
+
   try {
     initBaseDate();
     const zf = document.getElementById("zoneFilter"); 
@@ -462,10 +486,16 @@ async function init() {
     
     if (session && session.user) { 
       const { data: p } = await sb.from("profiles").select("*").eq("id", session.user.id).single(); 
-      if (p) { currentUser = p; isAdmin = !!p.is_admin; isGuest = (p.name === "کاربر مهمان"); await loadAll(); showMain(); return; } 
+      if (p) { 
+        clearTimeout(loadingTimeout);
+        currentUser = p; isAdmin = !!p.is_admin; isGuest = (p.name === "کاربر مهمان"); await loadAll(); showMain(); return; 
+      } 
     }
+    
+    clearTimeout(loadingTimeout);
     await loadLoginList();
   } catch (e) { 
+    clearTimeout(loadingTimeout);
     document.getElementById("loadingScreen").style.display = "none"; 
     document.getElementById("loginScreen").style.display = "block"; 
     document.getElementById("loginError").textContent = "خطا در اتصال به سرور: " + e.message; 
@@ -821,7 +851,6 @@ function renderStaffList() {
 }
 
 function openLogs() { if (!isAdmin && !isGuest) return alertDlg("دسترسی غیرمجاز."); loadLogs(); document.getElementById("logsModal").classList.add("active"); }
-
 async function loadLogs() {
   const b = document.getElementById("logsBody"); 
   b.innerHTML = "<div style='text-align:center;padding:20px;'>در حال بارگذاری...</div>";
